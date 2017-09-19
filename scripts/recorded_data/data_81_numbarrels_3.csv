@@ -1,0 +1,12 @@
+"test 81"
+-3.52726200848,4.36292997711 -2.79082381983,2.06381282164 -3.76190780894,1.33700196112
+"Base Result" ['success']
+"Base Time" [18.85924005508423]
+"Eband Result" ['success']
+"Eband Time" [20.029787063598633]
+"TEB Result" ['success']
+"TEB Time" [14.586150169372559]
+"DWA Result" ['success']
+"DWA Time" [16.025388956069946]
+"PIPS Result" ['success']
+"PIPS Time" [29.95138192176819]

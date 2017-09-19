@@ -1,0 +1,49 @@
+<launch>
+  <arg name="nodelet" default="true"/>
+  <arg name="nodelet_manager" default="pips_test_nodelet_manager"/> <!-- Must be globally qualified -->
+  <arg name="respawn" default="false" />
+  <arg name="use_provided_manager" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="camera" default="duo3d"/>
+  <arg name="perception_ns" default="slope"/>
+  <arg     if="$(arg debug)"   name="debug_args" value="xterm -e gdb --args"/>
+  <arg unless="$(arg debug)"   name="debug_args" value=""/>
+
+  <arg     if="$(arg respawn)" name="bond" value="" />
+  <arg unless="$(arg respawn)" name="bond" value="--no-bond" />
+
+  <arg     if="$(arg use_provided_manager)" name="provided_manager" value="false" />
+  <arg unless="$(arg use_provided_manager)" name="provided_manager" value="true" />
+  <group>
+    
+    <group if="$(arg nodelet)">
+      <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager)" args="manager" respawn="$(arg respawn)" launch-prefix="$(arg debug_args)" unless="$(arg use_provided_manager)">
+	<param name="num_worker_threads" value="8"/>
+      </node>
+    </group>
+      <node name="map" pkg="map_server" type="map_server" args="$(find pips_main)/maps/rectangular_room.yaml"/>
+      
+      <include file="$(find duo3d_driver)/launch/duo3d_driver.launch">
+	<arg name="nodelet" value="$(arg nodelet)" />
+	<arg name="nodelet_manager" value="$(arg nodelet_manager)"/> <!-- Must be globally qualified -->
+	<arg name="respawn" value="$(arg respawn)" />
+	<arg name="use_provided_manager" value="$(arg provided_manager)"/>
+	<arg name="debug" value="$(arg debug)"/>
+	<arg name="camera" value="$(arg camera)"/>
+      </include>
+      
+      <include file="$(find perception_costmap)/launch/pipeline.launch">
+	<arg name="nodelet" value="$(arg nodelet)" />
+	<arg name="nodelet_manager" value="$(arg nodelet_manager)"/> <!-- Must be globally qualified -->
+	<arg name="respawn" value="$(arg respawn)" />
+	<arg name="use_provided_manager" value="$(arg provided_manager)"/>
+	<arg name="debug" value="$(arg debug)"/>
+	<arg name="camera" value="$(arg camera)"/>
+	<arg name="perception_ns" value="$(arg perception_ns)"/>
+      </include>
+      
+  </group>
+
+
+
+</launch>

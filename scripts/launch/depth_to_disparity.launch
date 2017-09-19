@@ -1,0 +1,12 @@
+<launch>
+
+  <node pkg="nodelet" type="nodelet" name="depth2disparity_manager" args="manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="disparity"
+      args="load depth_image_proc/disparity depth2disparity_manager">
+    <remap from="left/image_rect" to="/camera/depth/image_raw"/>
+    <remap from="right/camera_info" to="/gazebo_sim/camera_info"/>
+    <remap from="left/disparity" to="/gazebo_sim/disparity"/>
+  </node>
+
+</launch>

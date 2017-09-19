@@ -1,0 +1,12 @@
+"test 71"
+-1.5392385847,4.03139206436 -3.51809920645,1.44632397348 -0.602242129971,1.32439339228
+"Base Result" ['success']
+"Base Time" [18.39056897163391]
+"Eband Result" ['success']
+"Eband Time" [19.396142959594727]
+"TEB Result" ['success']
+"TEB Time" [14.185475826263428]
+"DWA Result" ['success']
+"DWA Time" [15.53122091293335]
+"PIPS Result" ['success']
+"PIPS Time" [28.941087007522583]

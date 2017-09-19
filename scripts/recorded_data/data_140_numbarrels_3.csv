@@ -1,0 +1,12 @@
+"test 140"
+-1.89165387737,1.25280949874 -0.788028177331,2.00310413475 -3.81922294374,2.27116048799
+"Base Result" ['success']
+"Base Time" [34.71399784088135]
+"Eband Result" ['success']
+"Eband Time" [36.75162410736084]
+"TEB Result" ['success']
+"TEB Time" [26.652400970458984]
+"DWA Result" ['success']
+"DWA Time" [29.205212116241455]
+"PIPS Result" ['success']
+"PIPS Time" [55.572654008865356]

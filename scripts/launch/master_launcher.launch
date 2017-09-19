@@ -1,0 +1,28 @@
+<launch>
+
+  <node name="cameraInfoPipeline" pkg="pips_test" type="gazebo_disparity_shim" />
+
+  <include file="$(find pips_test)/launch/depth_to_disparity.launch"/>
+
+  <node name="slope_generator" pkg="perception_costmap" type="slope_generator_node">
+    <param name="e_s" value="0.7"/>
+    <remap from="/disparity" to ="/gazebo_sim/disparity"/>
+    <remap from="/camera_info" to="/gazebo_sim/camera_info"/>
+  </node>
+  
+  <node name="costmap_generator" pkg="perception_costmap" type="cost_map_node">
+    <remap from="disparity" to="/gazebo_sim/disparity"/>
+    <remap from="slope" to="/slope/slope"/>
+    <remap from="bl" to="slope/bl"/>
+    <remap from="/camera_info" to="/gazebo_sim/camera_info"/>
+  </node>
+
+  
+  <node name="costmap_expansion" pkg="perception_costmap" type="costmap_expansion_node">
+    <remap from="/disparity" to="/gazebo_sim/disparity"/>
+    <remap from="/costmap" to="/costmap"/>
+    <remap from="/camera_info" to="/gazebo_sim/camera_info"/>
+  </node> 
+ 
+  
+</launch>

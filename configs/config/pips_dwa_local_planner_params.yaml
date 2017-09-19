@@ -1,0 +1,53 @@
+PipsDWAPlannerROS:
+    # Debug output
+    publish_traj_pc: true
+
+    # Limits
+    acc_lim_theta: 1.6 # 3.2
+    acc_lim_x: 2.5
+    acc_lim_y: 2.5
+    acc_limit_trans: 0.3
+    max_scaling_factor: 0.2
+    max_trans_vel: 0.8
+    max_vel_x: 0.5
+    max_vel_y: 0
+
+    max_rot_vel: 0.3
+    min_rot_vel: 0.1
+
+    min_trans_vel: 0.1
+    min_vel_x: 0
+    min_vel_y: 0
+
+    # Forward simulation parameters
+    use_dwa: true
+    angular_sim_granularity: 0.1
+    sim_granularity: 0.1 # 0.025
+    sim_time: 8    # 1.7
+    trajectory_following_time: 4
+    vth_samples: 10  # 20
+    vx_samples: 20
+    vy_samples: 1  # 10
+
+    # Stop params
+    prune_plan: false
+    restore_defaults: false
+    rot_stopped_vel: 0.1
+    stop_time_buffer: 0.2
+    trans_stopped_vel: 0.1
+    xy_goal_tolerance: 1.5
+    yaw_goal_tolerance: 1.57
+
+
+    # Cost function params
+    forward_point_distance: 0.325
+    goal_distance_bias: 24.0
+    occdist_scale: 8000.0
+    oscillation_reset_angle: 0.2
+    oscillation_reset_dist: 0.05
+    path_distance_bias: 32.0
+    scaling_speed: 0.25
+
+    isDataRecord: 0
+    visualize: true
+    realDemo: true

@@ -1,0 +1,41 @@
+<launch>
+
+  <!-- Turtlebot bringup -->
+  <include file="$(find turtlebot_bringup)/launch/minimal.launch" />
+
+  <!-- Hokuyo lidar bringup -->
+  <node name="lidar" pkg="hokuyo_node" type="hokuyo_node"/>
+
+  <!-- Make map of TSRB 4th Floor available -->
+  <node name="map" pkg="map_server" type="map_server"
+    args="$(find pips_main)/maps/temp4.yaml" />
+
+  <!-- Turn on AMCL -->
+  <node name="localization" pkg="amcl" type="amcl" />
+
+  <!-- Activate move_base for navigation -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log">
+  	<rosparam file="$(find pips_main)/config/common_costmap_params.yaml" command="load" ns="global_costmap" />
+  	<rosparam file="$(find pips_main)/config/common_costmap_params.yaml" command="load" ns="local_costmap" />
+  	<rosparam file="$(find pips_main)/config/local_costmap_params.yaml" command="load" />
+  	<rosparam file="$(find pips_main)/config/global_costmap_params.yaml" command="load" />
+  	<rosparam file="$(find pips_main)/config/base_local_planner_params.yaml" command="load" />
+
+    <!-- This is where the Turtlebot expects its commands -->
+    <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi" />
+
+    <!-- This will use our planner -->
+    <param name="base_local_planner" value="pips::PipsLocalPlanner" />
+    <param name="controller_frequency" value="10" type="double"/>
+  </node>
+
+
+  <!-- Base to laser transform -->
+  <node name="base_laser_transform" pkg="tf" type="static_transform_publisher"
+    args="0 0 0.4 0 0 3.14 /base_link /laser 100"/>
+
+  <node name="base_camera_transform" pkg="tf" type="static_transform_publisher"
+    args="0.0762 0.01501 0.5361 -1.57 0 -1.57 /base_link /left_camera_optical_frame 100" />
+
+
+</launch>

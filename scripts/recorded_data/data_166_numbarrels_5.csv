@@ -1,0 +1,12 @@
+"test 166"
+-2.99584590381,2.39837785788 -1.63110489308,2.03505607301 -0.55833676495,2.3704891655 -2.65536937191,4.32347396076 -0.575073119945,4.26793064667
+"Base Result" ['fail_noFinding']
+"Base Time" [220.46931886672974]
+"Eband Result" ['fail_noFinding']
+"Eband Time" [221.1861379146576]
+"TEB Result" ['fail_noFinding']
+"TEB Time" [221.052237033844]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [221.78543210029602]
+"PIPS Result" ['fail_noFinding']
+"PIPS Time" [222.1501739025116]

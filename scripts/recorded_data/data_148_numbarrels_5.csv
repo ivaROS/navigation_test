@@ -1,0 +1,12 @@
+"test 148"
+-1.95865920194,3.15330622418 -3.8949779445,4.25369915903 -3.8851783499,1.21443786622 -2.84947345295,3.08538672959 -0.967857131584,2.2572274649
+"Base Result" ['fail_noFinding']
+"Base Time" [176.63465094566345]
+"Eband Result" ['fail_noFinding']
+"Eband Time" [177.71401381492615]
+"TEB Result" ['fail_noFinding']
+"TEB Time" [177.08448195457458]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [176.93735599517822]
+"PIPS Result" ['success']
+"PIPS Time" [118.86917495727539]

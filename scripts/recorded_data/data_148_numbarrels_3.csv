@@ -1,0 +1,12 @@
+"test 148"
+-2.56783598452,4.45501800429 -3.71450963482,3.47201922028 -1.97944836655,1.1297803047
+"Base Result" ['success']
+"Base Time" [37.952276945114136]
+"Eband Result" ['success']
+"Eband Time" [40.61806011199951]
+"TEB Result" ['success']
+"TEB Time" [29.57453989982605]
+"DWA Result" ['success']
+"DWA Time" [31.70987892150879]
+"PIPS Result" ['success']
+"PIPS Time" [61.699434995651245]

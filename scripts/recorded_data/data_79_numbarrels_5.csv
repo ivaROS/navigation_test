@@ -1,0 +1,12 @@
+"test 79"
+-2.63187718813,3.25189736004 -3.87794768336,2.02234783993 -1.6221592087,3.10943902921 -0.976419953983,3.13282634778 -1.52459433231,4.15422058962
+"Base Result" ['success']
+"Base Time" [22.94005799293518]
+"Eband Result" ['fail_noFinding']
+"Eband Time" [64.35992288589478]
+"TEB Result" ['success']
+"TEB Time" [22.84375309944153]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [60.54267907142639]
+"PIPS Result" ['success']
+"PIPS Time" [39.30368494987488]

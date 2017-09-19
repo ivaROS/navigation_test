@@ -1,0 +1,25 @@
+<launch>
+  <arg name="camera" default="duo3d"/>
+
+  <node name="map_to_odom" pkg="tf" type="static_transform_publisher"
+      args="2 3 0 3.14 0 0 map odom 10" />
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
+      <rosparam file="$(find pips_main)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find pips_main)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find pips_main)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find pips_main)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find pips_main)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
+      <param name="base_local_planner" value="pips_dwa/PipsDWAPlannerROS" />
+      <remap from="camera_info" to="$(arg camera)/left/camera_info"/>
+      <remap from="expanded" to="/costmap_expansion_node/expanded"/>
+      <param name="controller_frequency" value="10.0" />
+      <param name="publish_traj_pc" value="true" />
+      <param name="point_tolerance" value="5" />
+  </node>
+
+  <node name="base_camera_transform" pkg="tf" type="static_transform_publisher"
+    args="0.0762 0.01501 0.29 -1.57 0 -1.57 /base_link /left_camera_optical_frame 100" />
+
+</launch>

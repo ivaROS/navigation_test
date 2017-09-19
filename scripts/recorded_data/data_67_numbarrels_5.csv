@@ -1,0 +1,12 @@
+"test 67"
+-2.50720916854,3.46982467525 -0.946453529983,1.17643648058 -0.912092746029,3.01923158466 -3.89887013864,3.1803669216 -1.5760579408,3.32553540839
+"Base Result" ['fail_noFinding']
+"Base Time" [49.52575397491455]
+"Eband Result" ['fail_noFinding']
+"Eband Time" [26.501291036605835]
+"TEB Result" ['success']
+"TEB Time" [16.829583168029785]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [53.157711029052734]
+"PIPS Result" ['success']
+"PIPS Time" [35.449946880340576]

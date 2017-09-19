@@ -1,0 +1,8 @@
+obstacle_range: 10.0
+raytrace_range: 10.0
+robot_radius: 0.177
+inflation_radius: 0.2
+
+#observation_sources: laser_scan_sensor
+
+#laser_scan_sensor: {sensor_frame: "/camera_depth_frame", data_type: LaserScan, topic: "/scan", marking: true, clearing: true}

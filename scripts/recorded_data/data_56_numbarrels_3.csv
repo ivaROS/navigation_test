@@ -1,0 +1,12 @@
+"test 56"
+-2.98976769253,2.4682926737 -1.73916665096,4.39474066889 -1.58491670079,1.03643811433
+"Base Result" ['success']
+"Base Time" [17.890428066253662]
+"Eband Result" ['success']
+"Eband Time" [19.663410186767578]
+"TEB Result" ['success']
+"TEB Time" [13.952883958816528]
+"DWA Result" ['success']
+"DWA Time" [15.089982032775879]
+"PIPS Result" ['success']
+"PIPS Time" [28.44051694869995]

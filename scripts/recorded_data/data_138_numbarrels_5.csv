@@ -1,0 +1,12 @@
+"test 138"
+-3.72549265711,1.38979685771 -2.74432066593,1.1192816896 -3.65238907901,3.17971616632 -2.5992292127,2.19016754221 -1.9560353529,1.09765454016
+"Base Result" ['success']
+"Base Time" [63.48968005180359]
+"Eband Result" ['fail_bumped']
+"Eband Time" [91.8813328742981]
+"TEB Result" ['success']
+"TEB Time" [58.77656698226929]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [157.5207281112671]
+"PIPS Result" ['success']
+"PIPS Time" [98.62610292434692]
