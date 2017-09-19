@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES pips_test
+  LIBRARIES nav_scripts
   CATKIN_DEPENDS
 )
 
@@ -25,13 +25,13 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_library(pips_test src/gazebo_disparity_shim.cpp)
+add_library(nav_scripts src/gazebo_disparity_shim.cpp)
 
-target_link_libraries(pips_test
+target_link_libraries(nav_scripts
    ${catkin_LIBRARIES}
    ${OpenCV_LIBS}
 )
 
 add_executable(gazebo_disparity_shim src/shim_main.cpp)
 
-target_link_libraries(gazebo_disparity_shim pips_test)
+target_link_libraries(gazebo_disparity_shim nav_scripts)

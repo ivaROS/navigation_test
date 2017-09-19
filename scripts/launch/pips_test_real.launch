@@ -21,7 +21,7 @@
 	<param name="num_worker_threads" value="8"/>
       </node>
     </group>
-      <node name="map" pkg="map_server" type="map_server" args="$(find pips_main)/maps/rectangular_room.yaml"/>
+      <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/rectangular_room.yaml"/>
       
       <include file="$(find duo3d_driver)/launch/duo3d_driver.launch">
 	<arg name="nodelet" value="$(arg nodelet)" />

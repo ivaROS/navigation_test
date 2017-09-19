@@ -8,5 +8,5 @@
  -->
 
   <node pkg="rviz" type="rviz" name="rviz"
-		args="-d $(find pips_main)/rviz/lidar_nav.rviz"/>
+		args="-d $(find nav_configs)/rviz/lidar_nav.rviz"/>
 </launch>
