@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
   image_transport
+  tf2_ros
 )
 catkin_package(
   INCLUDE_DIRS include
