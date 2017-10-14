@@ -11,10 +11,12 @@ from gazebo_driver_v2 import GazeboDriver
 import rospy
 from actionlib_msgs.msg import GoalStatusArray
 import rosgraph
+import threading
+from std_msgs.msg import Empty
 
 class MultiMasterCoordinator:
   def __init__(self):
-    self.num_masters = 1
+    self.num_masters = 4
     self.task_queue_capacity = 2*self.num_masters
     self.task_queue = mp.Queue(maxsize=self.task_queue_capacity)
     self.result_queue_capacity = 2*self.num_masters
@@ -25,13 +27,20 @@ class MultiMasterCoordinator:
     self.startProcesses()
     self.addTasks()
 
+  def processResults(self,queue):
+    while True:
+      task = queue.get()
+      print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
+
   def startResultsProcessing(self):
-    self.result_thread = None
+    self.result_thread = mp.Process(target=self.processResults,args=[self.result_queue])
+    self.result_thread.daemon=True
+    self.result_thread.start()
 
   def startProcesses(self):
     self.gazebo_masters = []
     for ind in xrange(self.num_masters):
-      ros_port = 11314 + ind
+      ros_port = 11318 + ind
       gazebo_port = ros_port + 100
       gazebo_master = GazeboMaster(self.task_queue, self.result_queue, ros_port, gazebo_port)
       gazebo_master.start()
@@ -44,8 +53,10 @@ class MultiMasterCoordinator:
   def addTasks(self):
     task1 = {'world': 'rectangular','controller':'pips_dwa'}
     task2 = {'world': 'rectangular','controller':'pips_dwa'}
-    self.task_queue.put(task1)
-    self.task_queue.put(task2)
+
+    for a in range(4):
+      self.task_queue.put(task1)
+      self.task_queue.put(task2)
 
 
 class GazeboMaster(mp.Process):
@@ -58,7 +69,7 @@ class GazeboMaster(mp.Process):
     self.core = None
     self.gazebo_launch = None
     self.controller_launch = None
-    self.gazebo_driver = GazeboDriver(as_node=False)
+    self.gazebo_driver = None
 
     print "New master"
 
@@ -71,20 +82,25 @@ class GazeboMaster(mp.Process):
 
     self.start_core()
     rospy.init_node('test_driver', anonymous=True)
+    self.odom_pub = rospy.Publisher(
+      '/mobile_base/commands/reset_odometry', Empty, queue_size=10)
     while True:
       task = self.task_queue.get()
       self.roslaunch_gazebo() #pass in world info
+      if self.gazebo_driver is None:
+        self.gazebo_driver = GazeboDriver(as_node=False)
       self.roslaunch_controller("dwa_controller.launch")
 
       #This is where things could be put in a different file: all the nodes have been
       #started, so just have to make service calls, etc to configure environment
       print "Resetting robot..."
       self.gazebo_driver.resetRobot()
+      self.odom_pub.publish()
       
       print "Waiting for move base message..."
       #msg = rospy.wait_for_msg("/move_base/status", GoalStatusArray)
 
-      time.sleep(15)
+      time.sleep(3)
 
       print "Running test..."
 
@@ -94,7 +110,7 @@ class GazeboMaster(mp.Process):
       result = test_driver.run_test()
 
       self.controller_launch.shutdown()
-      self.gazebo_launch.shutdown() #if possible, should probably world instead
+      #self.gazebo_launch.shutdown() #if possible, should probably world instead
 
       task["result"] = result
       self.result_queue.put(task)
@@ -135,6 +151,8 @@ class GazeboMaster(mp.Process):
 
 
   def roslaunch_gazebo(self):
+    if self.gazebo_launch is not None:
+      return
     #if world == current_world
     controller_name = "gazebo_depth.launch"
 

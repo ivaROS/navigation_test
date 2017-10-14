@@ -71,16 +71,6 @@ class GazeboDriver():
     self.models = data
 
 
-  
-  def haveTransform(self):
-    if self.transform==None:
-      try:
-        self.transform = self.tfBuffer.lookup_transform('camera_depth_optical_frame', 'base_footprint', rospy.Time())
-        return True
-      except (LookupException, ConnectivityException, ExtrapolationException):
-        return False
-    else:
-      return True
 
   def newScene(self):
     self.pauseService()
@@ -179,8 +169,6 @@ class GazeboDriver():
     self.resetWorldService()
 
   def run(self):
-    self.depthSub = rospy.Subscriber('image', Image, self.depthCallback, queue_size=self.queue_size)
-    publish_static_transform()
     rospy.spin()
 
   def reset(self):
@@ -238,11 +226,6 @@ class GazeboDriver():
     pause_service_name = '/gazebo/pause_physics'
     unpause_service_name = '/gazebo/unpause_physics'
     get_model_state_service_name = 'gazebo/get_model_state'
-    
-    
-    self.tfBuffer = Buffer()
-    self.tfListener = TransformListener(self.tfBuffer)
-    
 
     
     
@@ -277,7 +260,7 @@ class GazeboDriver():
 
 if __name__ == '__main__':
   try:
-    a = Prototype()
+    a = GazeboDriver()
     a.run()
   except rospy.ROSInterruptException:
     rospy.loginfo("exception")
