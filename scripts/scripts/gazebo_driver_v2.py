@@ -46,7 +46,7 @@ def load_model_xml(filename):
 
   return model_xml
 
-class Prototype():
+class GazeboDriver():
   # Copied from pips_test: gazebo_driver.py
   def barrel_points(self,xmin, ymin, xmax, ymax, grid_size, num_barrels):
     # Get a dense grid of points
