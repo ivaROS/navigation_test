@@ -4,7 +4,7 @@ import rospkg
 import roslaunch
 
 import test_driver
-from gazebo_driver_v2 import Prototype
+from gazebo_driver_v2 import GazeboDriver
 import std_msgs.msg
 import sys
 import time

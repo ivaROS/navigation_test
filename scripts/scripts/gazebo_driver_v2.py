@@ -6,7 +6,7 @@ import sys, os, time
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Quaternion, Transform, TransformStamped
 from sensor_msgs.msg import Image, CameraInfo
 from copy import deepcopy
-from depth_learning.msg import GazeboState
+
 from tf2_ros import TransformListener, Buffer, LookupException, ConnectivityException, ExtrapolationException, StaticTransformBroadcaster
 import tf
 #from pips_test import gazebo_driver
@@ -69,15 +69,8 @@ class GazeboDriver():
 
   def statesCallback(self, data): #This comes in at ~100hz
     self.models = data
-  
-  def camInfoCallback(self, data):
-    self.camInfo = data
-    
-  def depthCallback(self, data):
-    if self.haveTransform():
-      if self.models and self.camInfo:
-        self.saveState(data,self.models,self.camInfo,self.transform)
-        self.newScene()
+
+
   
   def haveTransform(self):
     if self.transform==None:
@@ -88,11 +81,7 @@ class GazeboDriver():
         return False
     else:
       return True
-    
-  def saveState(self, depthIm, modelStates, camInfo, transform):
-    state = GazeboState(header=depthIm.header, image=depthIm, camera_info=camInfo, model_states=modelStates, transform=transform)
-    self.statePub.publish(state)
-  
+
   def newScene(self):
     self.pauseService()
     self.resetRobot()
@@ -273,9 +262,7 @@ class GazeboDriver():
     rospy.loginfo("Service found...")
     
     self.stateSub = rospy.Subscriber('gazebo/model_states', ModelStates, self.statesCallback, queue_size=self.queue_size)
-    
-    self.camInfoSub = rospy.Subscriber('camera_info', CameraInfo, self.camInfoCallback, queue_size=self.queue_size)
-    self.statePub = rospy.Publisher('gazebo_data', GazeboState, queue_size=self.queue_size)
+        #self.statePub = rospy.Publisher('gazebo_data', GazeboState, queue_size=self.queue_size)
     
     self.resetWorldService()
     self.unpauseService()
