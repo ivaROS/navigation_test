@@ -32,12 +32,16 @@ class GazeboMaster(mp.Process):
     self.gazebo_port = gazebo_port
     self.launch = None
     self.core = None
-    
-  
+
+    self.ros_master_uri = "http://localhost:" + str(self.ros_port)    
+    self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
+    os.environ["ROS_MASTER_URI"] = self.ros_master_uri
+    os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
 
   def run(self):
+    self.use_roslaunch()
     #self.start_core()
-    self.start_gazebo(None)
+    #self.start_gazebo(None)
     while True:
       #task = self.task_queue.get()
       #self.start_gazebo(task.world_state)
@@ -46,8 +50,7 @@ class GazeboMaster(mp.Process):
 
 
   def start_core(self):
-    ros_master_uri = "http://localhost:" + str(self.ros_port)
-    gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
+
     env_prefix = "ROS_MASTER_URI="+ros_master_uri + " GAZEBO_MASTER_URI=" + gazebo_master_uri + " "
 
     my_command = env_prefix + "roscore -p " + str(self.ros_port)
@@ -68,13 +71,14 @@ class GazeboMaster(mp.Process):
     path = rospack.get_path("pips_dwa_implementation")
 
     # We'll assume Gazebo is launched are ready to go
+
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-    roslaunch.configure_logging(uuid)
+    #roslaunch.configure_logging(uuid)
     print path
 
     self.launch = roslaunch.parent.ROSLaunchParent(
       run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name],
-      is_core=False, port=self.ros_port
+      is_core=True, port=self.ros_port
       )
     self.launch.start()
 
@@ -121,7 +125,7 @@ class GazeboMaster(mp.Process):
 
 if __name__ == "__main__":
     try:
-        a = GazeboMaster(None, None, 11312, 11512)
+        a = GazeboMaster(None, None, 11313, 11512)
         a.start()
     except e:
         print "Keyboard Interrupt"
