@@ -47,10 +47,9 @@ class MultiMasterCoordinator:
     self.result_queue = mp.Queue(maxsize=self.result_queue_capacity)
 
   def start(self):
-    #self.startResultsProcessing()
+    self.startResultsProcessing()
     self.startProcesses()
     self.addTasks()
-    self.processResults(self.result_queue)
 
   def processResults(self,queue):
     while not self.is_shutdown:
@@ -87,8 +86,8 @@ class MultiMasterCoordinator:
 
   #This list should be elsewhere, possibly in the configs package
   def addTasks(self):
-    task1 = {'world': 'rectangular','controller':'pips_dwa'}
-    task2 = {'world': 'rectangular','controller':'pips_dwa'}
+    task1 = {'world': 'rectangular','controller':'dwa'}
+    task2 = {'world': 'rectangular','controller':'dwa'}
 
     for a in range(4):
       self.task_queue.put(task1)
@@ -150,7 +149,7 @@ class GazeboMaster(mp.Process):
       
       #print "Waiting for move base message..."
 
-      time.sleep(3)
+      #time.sleep(3)
 
       print "Running test..."
 
@@ -163,7 +162,7 @@ class GazeboMaster(mp.Process):
       #self.gazebo_launch.shutdown() #if possible, should probably world instead
 
       task["result"] = result
-      self.result_queue.put(task)
+      self.return_result(task)
 
 
   def start_core(self):
@@ -207,6 +206,8 @@ class GazeboMaster(mp.Process):
     if self.gazebo_launch is not None:
       self.gazebo_launch.shutdown()
 
+    self.current_world = world
+
     #Really, the logic of what launch file to start should be elsewhere
 
     rospack = rospkg.RosPack()
@@ -216,7 +217,7 @@ class GazeboMaster(mp.Process):
     # in start_roscore, we should be fine
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
     #roslaunch.configure_logging(uuid) #What does this do?
-    print path
+    #print path
 
     self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
       run_id=uuid, roslaunch_files=[path + "/launch/gazebo_" + world + "_world.launch"],
@@ -235,41 +236,10 @@ class GazeboMaster(mp.Process):
   def shutdown(self):
     self.core.kill
 
-
-  '''
-  def start_gazebo(self, world_state):
-    if self.launch is not None:
-      return
-
-
-    #Make sure that necessary nodes are running; restart them if needed; also restart if new world
-    #if gazebo server running
-    #if correct world
-    #if robot running
-
-    start_gazebo="roslaunch pips_dwa_implementation gazebo_depth.launch"
-
-    ros_master_uri = "http://localhost:" + str(self.ros_port)
-    gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
-
-    env_prefix = "ROS_MASTER_URI="+ros_master_uri + " GAZEBO_MASTER_URI=" + gazebo_master_uri + " "
-
-    my_command = env_prefix + start_gazebo + " -p " + str(self.ros_port)
-
-    my_env = os.environ.copy()
-    my_env["ROS_MASTER_URI"] = ros_master_uri
-    p = subprocess.Popen(my_command, env=my_env, shell=True)
-
-    #p = subprocess.Popen(['external_program', 'arg1', 'arg2'])
-    # Process is now running in the background, do other stuff...
-    
-    # Check if process has completed
-    #if p.poll() is not None:
-    
-    # Wait for process to complete
-    #p.wait()
-  '''
-
+  # TODO: add conditional logic to trigger this
+  def task_error(self, task):
+    self.task_queue.put(task)
+    self.shutdown()
 
   def return_result(self,result):
     self.result_queue.put(result)
