@@ -42,7 +42,7 @@ class MultiMasterCoordinator:
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.is_shutdown = mp.Value(c_bool,False)
 
-        self.num_masters = 8
+        self.num_masters = 1
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
@@ -115,7 +115,7 @@ class MultiMasterCoordinator:
         task1 = {'world': 'rectangular','controller':'dwa'}
         task2 = {'world': 'rectangular','controller':'dwa'}
 
-        for a in range(8):
+        for a in range(1):
             self.task_queue.put(task1)
             self.task_queue.put(task2)
 
@@ -146,6 +146,9 @@ class GazeboMaster(mp.Process):
         self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
         os.environ["ROS_MASTER_URI"] = self.ros_master_uri
         os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
+
+        if 'DISPLAY' in os.environ:
+            del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
 
     def run(self):
 
@@ -290,14 +293,11 @@ class GazeboMaster(mp.Process):
 
 
 if __name__ == "__main__":
-    try:
-        start_time = time.time()
-        master = MultiMasterCoordinator()
-        master.start()
-        master.waitToFinish()
-        master.shutdown()
-        end_time = time.time()
-        print "Total time: " + str(end_time - start_time)
 
-    except:
-        print "Keyboard Interrupt"
+    start_time = time.time()
+    master = MultiMasterCoordinator()
+    master.start()
+    master.waitToFinish()
+    master.shutdown()
+    end_time = time.time()
+    print "Total time: " + str(end_time - start_time)
