@@ -47,6 +47,7 @@ class MultiMasterCoordinator:
         self.result_queue_capacity = 20 #*self.num_masters
         self.result_queue = mp.JoinableQueue(maxsize=self.result_queue_capacity)
 
+
     def start(self):
         self.startResultsProcessing()
         self.startProcesses()
@@ -76,6 +77,9 @@ class MultiMasterCoordinator:
     def shutdown(self):
         for process in self.gazebo_masters:
             process.shutdown()
+
+        for process in self.gazebo_masters:
+            process.join()
         #sys.exit(0)
         self.is_shutdown = True
 
@@ -94,8 +98,8 @@ class MultiMasterCoordinator:
                 print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                 queue.task_done()
             except Queue.Empty, e:
-                print "No results!"
-                time.sleep(10)
+                #print "No results!"
+                time.sleep(1)
 
 
     #This list should be elsewhere, possibly in the configs package
@@ -111,7 +115,7 @@ class MultiMasterCoordinator:
 
 
 class GazeboMaster(mp.Process):
-    def __init__(self, task_queue, result_queue, ros_port, gazebo_port, **kwargs):
+    def __init__(self, task_queue, result_queue, kill_flag, ros_port, gazebo_port, **kwargs):
         super(GazeboMaster, self).__init__()
         self.daemon = False
 
@@ -124,6 +128,7 @@ class GazeboMaster(mp.Process):
         self.controller_launch = None
         self.gazebo_driver = None
         self.current_world = None
+        self.is_shutdown = kill_flag
 
 
         print "New master"
@@ -140,45 +145,51 @@ class GazeboMaster(mp.Process):
         rospy.on_shutdown(self.shutdown)
         self.odom_pub = rospy.Publisher(
             '/mobile_base/commands/reset_odometry', Empty, queue_size=10)
-        while True:
+        while not self.is_shutdown:
             # TODO: If fail to run task, put task back on task queue
-            task = self.task_queue.get()
+            try:
 
-            self.roslaunch_gazebo(task["world"]) #pass in world info
+                task = self.task_queue.get(block=False)
 
-            if self.gazebo_driver is None:
-                self.gazebo_driver = GazeboDriver(as_node=False)
+                self.roslaunch_gazebo(task["world"]) #pass in world info
 
-            self.roslaunch_controller("dwa_controller.launch")
+                if self.gazebo_driver is None:
+                    self.gazebo_driver = GazeboDriver(as_node=False)
 
-            #This is where things could be put in a different file: all the nodes have been
-            #started, so just have to make service calls, etc to configure environment
+                self.roslaunch_controller("dwa_controller.launch")
 
-
-            print "Resetting robot..."
-            # TODO: Check if reset successful; if not, wait briefly and try again,
-            # eventually fail and throw error
-            self.gazebo_driver.resetRobot()
-            self.odom_pub.publish()
-
-            #print "Waiting for move base message..."
-
-            #time.sleep(3)
-
-            print "Running test..."
+                #This is where things could be put in a different file: all the nodes have been
+                #started, so just have to make service calls, etc to configure environment
 
 
-            #master = rosgraph.Master('/mynode')
+                print "Resetting robot..."
+                # TODO: Check if reset successful; if not, wait briefly and try again,
+                # eventually fail and throw error
+                self.gazebo_driver.resetRobot()
+                self.odom_pub.publish()
 
-            #TODO: make this a more informative type
-            result = test_driver.run_test()
+                #print "Waiting for move base message..."
 
-            self.controller_launch.shutdown()
-            #self.gazebo_launch.shutdown() #if possible, should probably world instead
+                #time.sleep(3)
 
-            task["result"] = result
-            self.return_result(task)
+                print "Running test..."
 
+
+                #master = rosgraph.Master('/mynode')
+
+                #TODO: make this a more informative type
+                result = test_driver.run_test()
+
+                self.controller_launch.shutdown()
+                #self.gazebo_launch.shutdown() #if possible, should probably world instead
+
+                task["result"] = result
+                self.return_result(task)
+            except Queue.Empty, e:
+                time.sleep(1)
+
+        print "GazeboMaster shutdown: killing core..."
+        self.core.kill()
 
 
     def start_core(self):
@@ -250,8 +261,7 @@ class GazeboMaster(mp.Process):
         return True
 
     def shutdown(self):
-        print "GazeboMaster shutdown: killing core..."
-        self.core.kill()
+        self.is_shutdown = True
 
     # TODO: add conditional logic to trigger this
     def task_error(self, task):
