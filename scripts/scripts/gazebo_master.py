@@ -14,6 +14,19 @@ import rosgraph
 import threading
 from std_msgs.msg import Empty
 
+import socket
+import contextlib
+
+
+def port_in_use(port):
+  with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+    if sock.connect_ex(('127.0.0.1', port)) == 0:
+      print "Port " + str(port) + " is in use"
+      return True
+    else:
+      print "Port " + str(port) + " is not in use"
+      return False
+
 class MultiMasterCoordinator:
   def __init__(self):
     self.num_masters = 4
@@ -39,9 +52,16 @@ class MultiMasterCoordinator:
 
   def startProcesses(self):
     self.gazebo_masters = []
+    ros_port = 11311
+    gazebo_port = ros_port + 100
     for ind in xrange(self.num_masters):
-      ros_port = 11318 + ind
-      gazebo_port = ros_port + 100
+
+      while port_in_use(ros_port):
+        ros_port += 1
+
+      while port_in_use(gazebo_port):
+        gazebo_port += 1
+
       gazebo_master = GazeboMaster(self.task_queue, self.result_queue, ros_port, gazebo_port)
       gazebo_master.start()
       self.gazebo_masters.append(gazebo_master)
@@ -57,6 +77,8 @@ class MultiMasterCoordinator:
     for a in range(4):
       self.task_queue.put(task1)
       self.task_queue.put(task2)
+
+
 
 
 class GazeboMaster(mp.Process):
@@ -82,6 +104,7 @@ class GazeboMaster(mp.Process):
 
     self.start_core()
     rospy.init_node('test_driver', anonymous=True)
+    rospy.on_shutdown(self.shutdown())
     self.odom_pub = rospy.Publisher(
       '/mobile_base/commands/reset_odometry', Empty, queue_size=10)
     while True:
@@ -173,6 +196,7 @@ class GazeboMaster(mp.Process):
 
   def shutdown(self):
     self.core.kill
+
 
   '''
   def start_gazebo(self, world_state):
