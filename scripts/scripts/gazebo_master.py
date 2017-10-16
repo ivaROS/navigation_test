@@ -13,6 +13,7 @@ import rosgraph
 import threading
 from std_msgs.msg import Empty
 import Queue
+from ctypes import c_bool
 
 import signal
 
@@ -39,7 +40,7 @@ class MultiMasterCoordinator:
     def __init__(self):
         signal.signal(signal.SIGINT, self.shutdown)
         signal.signal(signal.SIGTERM, self.shutdown)
-        self.is_shutdown = False
+        self.is_shutdown = mp.Value(c_bool,False)
 
         self.num_masters = 1
         self.task_queue_capacity = 20 #2*self.num_masters
@@ -70,18 +71,28 @@ class MultiMasterCoordinator:
             while port_in_use(gazebo_port):
                 gazebo_port += 1
 
-            gazebo_master = GazeboMaster(self.task_queue, self.result_queue, ros_port, gazebo_port)
+            gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.is_shutdown, ros_port, gazebo_port)
             gazebo_master.start()
             self.gazebo_masters.append(gazebo_master)
 
+
+    def processResults(self,queue):
+        while not self.is_shutdown.value:
+            try:
+                task = queue.get(block=False)
+                print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
+                queue.task_done()
+            except Queue.Empty, e:
+                #print "No results!"
+                time.sleep(1)
+
     def shutdown(self):
-        for process in self.gazebo_masters:
-            process.shutdown()
+        with self.is_shutdown.get_lock():
+            self.is_shutdown.value = True
 
         for process in self.gazebo_masters:
             process.join()
         #sys.exit(0)
-        self.is_shutdown = True
 
     def waitToFinish(self):
         print "Waiting until everything done!"
@@ -91,15 +102,6 @@ class MultiMasterCoordinator:
         print "All results processed!"
         pass
 
-    def processResults(self,queue):
-        while not self.is_shutdown:
-            try:
-                task = queue.get(block=False)
-                print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
-                queue.task_done()
-            except Queue.Empty, e:
-                #print "No results!"
-                time.sleep(1)
 
 
     #This list should be elsewhere, possibly in the configs package
@@ -109,7 +111,7 @@ class MultiMasterCoordinator:
 
         for a in range(1):
             self.task_queue.put(task1)
-            self.task_queue.put(task2)
+            #self.task_queue.put(task2)
 
 
 
@@ -128,7 +130,8 @@ class GazeboMaster(mp.Process):
         self.controller_launch = None
         self.gazebo_driver = None
         self.current_world = None
-        self.is_shutdown = kill_flag
+        self.kill_flag = kill_flag
+        self.is_shutdown = False
 
 
         print "New master"
@@ -187,6 +190,10 @@ class GazeboMaster(mp.Process):
                 self.return_result(task)
             except Queue.Empty, e:
                 time.sleep(1)
+
+            with self.kill_flag.get_lock():
+                if self.kill_flag.value:
+                    self.shutdown()
 
         print "GazeboMaster shutdown: killing core..."
         self.core.kill()
