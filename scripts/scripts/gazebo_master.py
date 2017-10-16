@@ -38,15 +38,16 @@ def port_in_use(port):
 
 class MultiMasterCoordinator:
     def __init__(self):
-        signal.signal(signal.SIGINT, self.shutdown)
-        signal.signal(signal.SIGTERM, self.shutdown)
+        signal.signal(signal.SIGINT, self.signal_shutdown)
+        signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.is_shutdown = mp.Value(c_bool,False)
 
-        self.num_masters = 1
+        self.num_masters = 8
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
         self.result_queue = mp.JoinableQueue(maxsize=self.result_queue_capacity)
+        self.gazebo_masters = []
 
 
     def start(self):
@@ -60,7 +61,6 @@ class MultiMasterCoordinator:
         self.result_thread.start()
 
     def startProcesses(self):
-        self.gazebo_masters = []
         ros_port = 11311
         gazebo_port = ros_port + 100
         for ind in xrange(self.num_masters):
@@ -75,6 +75,9 @@ class MultiMasterCoordinator:
             gazebo_master.start()
             self.gazebo_masters.append(gazebo_master)
 
+            ros_port +=1
+            gazebo_port +=1
+
 
     def processResults(self,queue):
         while not self.is_shutdown.value:
@@ -85,6 +88,9 @@ class MultiMasterCoordinator:
             except Queue.Empty, e:
                 #print "No results!"
                 time.sleep(1)
+
+    def signal_shutdown(self,signum,frame):
+        self.shutdown()
 
     def shutdown(self):
         with self.is_shutdown.get_lock():
@@ -109,9 +115,9 @@ class MultiMasterCoordinator:
         task1 = {'world': 'rectangular','controller':'dwa'}
         task2 = {'world': 'rectangular','controller':'dwa'}
 
-        for a in range(1):
+        for a in range(8):
             self.task_queue.put(task1)
-            #self.task_queue.put(task2)
+            self.task_queue.put(task2)
 
 
 
@@ -285,10 +291,13 @@ class GazeboMaster(mp.Process):
 
 if __name__ == "__main__":
     try:
+        start_time = time.time()
         master = MultiMasterCoordinator()
         master.start()
         master.waitToFinish()
         master.shutdown()
+        end_time = time.time()
+        print "Total time: " + str(end_time - start_time)
 
     except:
         print "Keyboard Interrupt"
