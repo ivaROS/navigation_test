@@ -1,0 +1,13 @@
+<launch>
+
+  <!-- Turtlebot Gazebo bringup -->
+  <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch">
+    <arg name="world_file" value="$(find nav_configs)/world/rectangular_room.world"/>
+  </include>
+
+  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/rectangular_room.yaml"/>
+
+  <node name="map_to_odom" pkg="tf" type="static_transform_publisher"
+      args="2 3 0 3.14 0 0 map odom 10" />
+
+</launch>

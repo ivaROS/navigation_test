@@ -3,19 +3,24 @@
 import subprocess
 import multiprocessing as mp
 import os
+import sys
 import rospkg
 import roslaunch
 import time
 import test_driver
 from gazebo_driver_v2 import GazeboDriver
-import rospy
-from actionlib_msgs.msg import GoalStatusArray
 import rosgraph
 import threading
 from std_msgs.msg import Empty
 
+import signal
+
 import socket
 import contextlib
+
+from actionlib_msgs.msg import GoalStatusArray
+from nav_msgs.msg import Odometry
+import rospy
 
 
 def port_in_use(port):
@@ -27,21 +32,28 @@ def port_in_use(port):
       print "Port " + str(port) + " is not in use"
       return False
 
+
+
 class MultiMasterCoordinator:
   def __init__(self):
-    self.num_masters = 4
+    signal.signal(signal.SIGINT, self.shutdown)
+    signal.signal(signal.SIGTERM, self.shutdown)
+    self.is_shutdown = False
+
+    self.num_masters = 1
     self.task_queue_capacity = 2*self.num_masters
     self.task_queue = mp.Queue(maxsize=self.task_queue_capacity)
     self.result_queue_capacity = 2*self.num_masters
     self.result_queue = mp.Queue(maxsize=self.result_queue_capacity)
 
   def start(self):
-    self.startResultsProcessing()
+    #self.startResultsProcessing()
     self.startProcesses()
     self.addTasks()
+    self.processResults(self.result_queue)
 
   def processResults(self,queue):
-    while True:
+    while not self.is_shutdown:
       task = queue.get()
       print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
 
@@ -69,7 +81,11 @@ class MultiMasterCoordinator:
   def shutdown(self):
     for process in self.gazebo_masters:
       process.shutdown()
+    #sys.exit(0)
+    self.is_shutdown = True
 
+
+  #This list should be elsewhere, possibly in the configs package
   def addTasks(self):
     task1 = {'world': 'rectangular','controller':'pips_dwa'}
     task2 = {'world': 'rectangular','controller':'pips_dwa'}
@@ -84,6 +100,8 @@ class MultiMasterCoordinator:
 class GazeboMaster(mp.Process):
   def __init__(self, task_queue, result_queue, ros_port, gazebo_port, **kwargs):
     super(GazeboMaster, self).__init__()
+    self.daemon = False
+
     self.task_queue = task_queue
     self.result_queue = result_queue
     self.ros_port = ros_port
@@ -92,6 +110,8 @@ class GazeboMaster(mp.Process):
     self.gazebo_launch = None
     self.controller_launch = None
     self.gazebo_driver = None
+    self.current_world = None
+
 
     print "New master"
 
@@ -104,31 +124,38 @@ class GazeboMaster(mp.Process):
 
     self.start_core()
     rospy.init_node('test_driver', anonymous=True)
-    rospy.on_shutdown(self.shutdown())
+    rospy.on_shutdown(self.shutdown)
     self.odom_pub = rospy.Publisher(
       '/mobile_base/commands/reset_odometry', Empty, queue_size=10)
     while True:
+      # TODO: If fail to run task, put task back on task queue
       task = self.task_queue.get()
-      self.roslaunch_gazebo() #pass in world info
+
+      self.roslaunch_gazebo(task["world"]) #pass in world info
+
       if self.gazebo_driver is None:
         self.gazebo_driver = GazeboDriver(as_node=False)
+
       self.roslaunch_controller("dwa_controller.launch")
 
       #This is where things could be put in a different file: all the nodes have been
       #started, so just have to make service calls, etc to configure environment
+
+
       print "Resetting robot..."
+      # TODO: Check if reset successful; if not, wait briefly and try again,
+      # eventually fail and throw error
       self.gazebo_driver.resetRobot()
       self.odom_pub.publish()
       
-      print "Waiting for move base message..."
-      #msg = rospy.wait_for_msg("/move_base/status", GoalStatusArray)
+      #print "Waiting for move base message..."
 
       time.sleep(3)
 
       print "Running test..."
 
 
-      master = rosgraph.Master('/mynode')
+      #master = rosgraph.Master('/mynode')
 
       result = test_driver.run_test()
 
@@ -173,26 +200,37 @@ class GazeboMaster(mp.Process):
     self.controller_launch.start()
 
 
-  def roslaunch_gazebo(self):
-    if self.gazebo_launch is not None:
+  def roslaunch_gazebo(self, world ="rectangular"):
+    if world == self.current_world:
       return
-    #if world == current_world
-    controller_name = "gazebo_depth.launch"
+
+    if self.gazebo_launch is not None:
+      self.gazebo_launch.shutdown()
+
+    #Really, the logic of what launch file to start should be elsewhere
 
     rospack = rospkg.RosPack()
-    path = rospack.get_path("pips_dwa_implementation")
+    path = rospack.get_path("nav_configs")
 
-    # We'll assume Gazebo is launched are ready to go
-
+    # This will wait for a roscore if necessary, so as long as we detect any failures
+    # in start_roscore, we should be fine
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
-    #roslaunch.configure_logging(uuid)
+    #roslaunch.configure_logging(uuid) #What does this do?
     print path
 
     self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
-      run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name],
+      run_id=uuid, roslaunch_files=[path + "/launch/gazebo_" + world + "_world.launch"],
       is_core=False, port=self.ros_port
       )
     self.gazebo_launch.start()
+
+    try:
+      msg = rospy.wait_for_message("/odom", Odometry, 2)
+    except rospy.exceptions.ROSException:
+      print "Error! odometry not received!"
+      return False
+
+    return True
 
   def shutdown(self):
     self.core.kill
@@ -241,8 +279,9 @@ class GazeboMaster(mp.Process):
 
 
 if __name__ == "__main__":
-    #try:
+    try:
         master = MultiMasterCoordinator()
         master.start()
-    #except:
+
+    except:
         print "Keyboard Interrupt"
