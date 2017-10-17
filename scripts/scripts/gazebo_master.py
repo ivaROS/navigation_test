@@ -98,7 +98,7 @@ class MultiMasterCoordinator:
 
         for process in self.gazebo_masters:
             process.join()
-        sys.exit(0)
+        #sys.exit(0)
 
     def waitToFinish(self):
         print "Waiting until everything done!"
@@ -112,12 +112,13 @@ class MultiMasterCoordinator:
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks(self):
+        #time.sleep(20)
         task1 = {'world': 'rectangular','controller':'dwa'}
         task2 = {'world': 'rectangular','controller':'dwa'}
 
         for a in range(1):
             self.task_queue.put(task1)
-            self.task_queue.put(task2)
+            #self.task_queue.put(task2)
 
 
 
@@ -152,7 +153,8 @@ class GazeboMaster(mp.Process):
 
     def run(self):
 
-        self.start_core()
+        #self.start_core()
+        self.roslaunch_core()
         rospy.init_node('test_driver', anonymous=True)
         rospy.on_shutdown(self.shutdown)
         self.odom_pub = rospy.Publisher(
@@ -204,8 +206,15 @@ class GazeboMaster(mp.Process):
                 if self.kill_flag.value:
                     self.shutdown()
 
+        # It seems like killing the core should kill all of the nodes,
+        # but it doesn't
+        self.gazebo_launch.shutdown()
+        self.controller_launch.shutdown()
+
         print "GazeboMaster shutdown: killing core..."
-        self.core.kill()
+        self.core.shutdown()
+        #self.core.kill()
+        #os.killpg(os.getpgid(self.core.pid), signal.SIGTERM)
 
 
     def start_core(self):
@@ -214,15 +223,25 @@ class GazeboMaster(mp.Process):
 
         my_command = "roscore -p " + str(self.ros_port)
 
-        my_env = os.environ.copy()
-        my_env["ROS_MASTER_URI"] = self.ros_master_uri
-        my_env["GAZEBO_MASTER_URI"] = self.gazebo_master_uri
+        #my_env = os.environ.copy()
+        #my_env["ROS_MASTER_URI"] = self.ros_master_uri
+        #my_env["GAZEBO_MASTER_URI"] = self.gazebo_master_uri
 
         print "Starting core..."
-        self.core = subprocess.Popen("exec " + my_command, env=my_env, shell=True)
-        print "Core started!"
+        self.core = subprocess.Popen(my_command.split()) # preexec_fn=os.setsid
+        print "Core started! [" + str(self.core.pid) + "]"
 
 
+    def roslaunch_core(self):
+
+        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+        #roslaunch.configure_logging(uuid)
+
+        self.core = roslaunch.parent.ROSLaunchParent(
+            run_id=uuid, roslaunch_files=[],
+            is_core=True, port=self.ros_port
+        )
+        self.core.start()
 
     def roslaunch_controller(self, controller_name):
 
