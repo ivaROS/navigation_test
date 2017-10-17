@@ -42,7 +42,7 @@ class MultiMasterCoordinator:
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.is_shutdown = mp.Value(c_bool,False)
 
-        self.num_masters = 1
+        self.num_masters = 4
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
@@ -116,9 +116,9 @@ class MultiMasterCoordinator:
         task1 = {'world': 'rectangular','controller':'dwa'}
         task2 = {'world': 'rectangular','controller':'dwa'}
 
-        for a in range(1):
+        for a in range(4):
             self.task_queue.put(task1)
-            #self.task_queue.put(task2)
+            self.task_queue.put(task2)
 
 
 
