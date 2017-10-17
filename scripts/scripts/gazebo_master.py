@@ -98,7 +98,7 @@ class MultiMasterCoordinator:
 
         for process in self.gazebo_masters:
             process.join()
-        #sys.exit(0)
+        sys.exit(0)
 
     def waitToFinish(self):
         print "Waiting until everything done!"
@@ -219,7 +219,7 @@ class GazeboMaster(mp.Process):
         my_env["GAZEBO_MASTER_URI"] = self.gazebo_master_uri
 
         print "Starting core..."
-        self.core = subprocess.Popen(my_command, env=my_env, shell=True)
+        self.core = subprocess.Popen("exec " + my_command, env=my_env, shell=True)
         print "Core started!"
 
 
