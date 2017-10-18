@@ -49,6 +49,7 @@ class MultiMasterCoordinator:
         self.result_queue_capacity = 20 #*self.num_masters
         self.result_queue = mp.JoinableQueue(maxsize=self.result_queue_capacity)
         self.gazebo_masters = []
+        self.result_list = []
 
 
     def start(self):
@@ -57,7 +58,7 @@ class MultiMasterCoordinator:
         self.addTasks()
 
     def startResultsProcessing(self):
-        self.result_thread = mp.Process(target=self.processResults,args=[self.result_queue])
+        self.result_thread = threading.Thread(target=self.processResults,args=[self.result_queue])
         self.result_thread.daemon=True
         self.result_thread.start()
 
@@ -91,9 +92,15 @@ class MultiMasterCoordinator:
                 for k,v in task.iteritems():
                     #if "result" not in k:
                         result_string+= str(k) + ":" + str(v) + ","
-                result_string += "]: "
+                result_string += "]"
 
                 print result_string
+
+                if "error" not in task:
+                    self.result_list.append(result_string)
+                else:
+                    del task["error"]
+                    self.task_queue.put(task)
 
                 #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                 queue.task_done()
@@ -109,7 +116,8 @@ class MultiMasterCoordinator:
             self.is_shutdown.value = True
 
         for process in self.gazebo_masters:
-            process.join()
+            if process.is_alive():
+                process.join()
         #sys.exit(0)
 
     def waitToFinish(self):
@@ -118,7 +126,9 @@ class MultiMasterCoordinator:
         print "All tasks processed!"
         self.result_queue.join()
         print "All results processed!"
-        pass
+
+        for result in self.result_list:
+            print result
 
 
 
@@ -141,7 +151,7 @@ class MultiMasterCoordinator:
         for controller in controllers:
             for num_barrels in barrel_arrangements:
                 for a in range(10):
-                    task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller}
+                    task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
 
 
@@ -200,22 +210,36 @@ class GazeboMaster(mp.Process):
 
                 if scenario is not None:
 
+
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile()) #pass in world info
 
+                    if not self.gazebo_launch._shutting_down:
+    
+    
+                        self.roslaunch_controller(task["controller"])
+    
+                        try:
+    
+                            scenario.setupScenario()
+    
+                            print "Running test..."
+    
+                            #master = rosgraph.Master('/mynode')
+    
+                            #TODO: make this a more informative type
+                            result = test_driver.run_test(goal_pose=scenario.getGoal())
+    
+                        except rospy.ROSException as e:
+                            result = "service_timeout: " + str(e)
+                            task["error"]= True
+    
+    
+                        self.controller_launch.shutdown()
+                        
+                    else:
+                        result = "gazebo_crash"
+                        task["error"] = True
 
-                    self.roslaunch_controller(task["controller"])
-
-                    scenario.setupScenario()
-
-                    print "Running test..."
-
-                    #master = rosgraph.Master('/mynode')
-
-                    #TODO: make this a more informative type
-                    result = test_driver.run_test(goal_pose=scenario.getGoal())
-
-                    self.controller_launch.shutdown()
-                    #self.gazebo_launch.shutdown() #if possible, should probably world instead
                 else:
                     result = "bad_task"
 
@@ -290,7 +314,10 @@ class GazeboMaster(mp.Process):
 
     def roslaunch_gazebo(self, world):
         if world == self.current_world:
-            return
+            if not self.gazebo_launch._shutting_down:
+                return
+            else:
+                print "Gazebo crashed, restarting"
 
         if self.gazebo_launch is not None:
             self.gazebo_launch.shutdown()

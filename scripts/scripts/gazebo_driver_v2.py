@@ -88,30 +88,30 @@ class GazeboDriver():
       response = self.setModelState(state)
 
       if(response.success):
-        rospy.loginfo("Successfully set model pose")
+        #rospy.loginfo("Successfully set model pose")
         return True
     
-    rospy.loginfo("failed to set model pose")
+    #rospy.loginfo("failed to set model pose")
     return False
 
   def pause(self):
-    rospy.wait_for_service(self.pause_service_name)
+    rospy.wait_for_service(self.pause_service_name, timeout=self.service_timeout)
     return self.pauseService()
 
   def unpause(self):
-    rospy.wait_for_service(self.unpause_service_name)
+    rospy.wait_for_service(self.unpause_service_name, timeout=self.service_timeout)
     return self.unpauseService()
 
   def resetWorld(self):
-    rospy.wait_for_service(self.reset_world_service_name)
+    rospy.wait_for_service(self.reset_world_service_name, timeout=self.service_timeout)
     return self.resetWorldService()
 
   def setModelState(self, state):
-    rospy.wait_for_service(self.set_model_state_service_name)
+    rospy.wait_for_service(self.set_model_state_service_name, timeout=self.service_timeout)
     return self.setModelStateService(state)
 
   def deleteModel(self, name):
-    rospy.wait_for_service(self.delete_model_service_name)
+    rospy.wait_for_service(self.delete_model_service_name, timeout=self.service_timeout)
     return self.deleteModelService(model_name=name)
 
   def resetRobotImpl(self, pose):
@@ -236,7 +236,7 @@ class GazeboDriver():
     self.maxy = 5.0
     self.grid_spacing = 1.0
     
-    
+    self.service_timeout = 2.0
     
     self.poses = []
     self.robotPose = Pose()
