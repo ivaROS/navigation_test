@@ -84,14 +84,6 @@ class TrashAuto():
       time.sleep(15) #TODO: replace with 'wait for message/service' so can start as soon as possible
 
 
-  def kill_controller(self):
-      # This kills the launch, not the script! Beautiful.
-      self.launch.shutdown()
-      # print "I can still do stuff here"
-
-
-  def reset_odom(self):
-      self.odom_pub.publish()
 
 
   def writeCSVfile(self):
@@ -133,7 +125,7 @@ class TrashAuto():
       currentPos[2] = data.pose.pose.position.z
 
 
-  def callService(self):
+  def getRobotPose(self):
       rospy.wait_for_service('/gazebo/get_model_state')
       try:
           gms = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
@@ -144,7 +136,7 @@ class TrashAuto():
 
 
   def getState(self):
-      data = callService()
+      data = self.getRobotPose()
       current_x = data.pose.position.x
       print("My Position is ", current_x)
       current_y = data.pose.position.y
@@ -158,26 +150,6 @@ class TrashAuto():
           return False
 
 
-  def clearLists(self):
-      self.baseResult = []
-      self.baseTime = []
-      self.ebandResult = []
-      self.ebandTime = []
-      self.tebResult = []
-      self.tebTime = []
-      self.LPipsToGoResult = []
-      self.LPipsToGoTime = []
-      self.LPipsGoalBiasedResult = []
-      self.LPipsGoalBiasedTime = []
-      self.LDWAToGoResult = []
-      self.LDWAToGoTime = []
-      self.LDWAGoalBiasedResult = []
-      self.LDWAGoalBiasedTime = []
-      self.LNaiveResult = []
-      self.LNaiveTime = []
-      self.returnedPosition = []
-      self.masterResult = [baseResult, ebandResult, tebResult, LPipsToGoResult, LPipsGoalBiasedResult, LDWAToGoResult, LDWAGoalBiasedResult, LNaiveResult]
-      self.masterTime = [baseTime, ebandTime, tebTime, LPipsToGoTime, LPipsGoalBiasedTime, LDWAToGoTime, LDWAGoalBiasedTime, LNaiveTime]
 
   def __init__(controller_name):
       self.odom_pub = rospy.Publisher(

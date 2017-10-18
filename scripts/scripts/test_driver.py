@@ -5,6 +5,23 @@ from move_base_msgs.msg import *
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from pprint import pprint
 import tf
+from actionlib_msgs.msg import GoalStatus
+from nav_msgs.msg import Odometry
+from kobuki_msgs.msg import BumperEvent
+
+
+
+class BumperChecker:
+    def __init__(self):
+        self.sub = rospy.Subscriber("mobile_base/events/bumper", BumperEvent, self.bumperCB, queue_size=5)
+        self.collided = False
+
+    def bumperCB(self,data):
+        if data.state == BumperEvent.PRESSED:
+            self.collided = True
+
+
+
 def run_testImpl(pose):
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print "waiting for server"
@@ -40,7 +57,7 @@ def run_testImpl(pose):
     print "returning state number"
     return client.get_state() == 3
   
-def run_test():
+def run_test(goal_pose):
     # Get a node handle and start the move_base action server
     # init_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1)
 
@@ -64,6 +81,7 @@ def run_test():
     #init_pub.publish(init_pose)
 
     # Action client for sending position commands
+    bumper_checker = BumperChecker()
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print "waiting for server"
     client.wait_for_server()
@@ -71,21 +89,32 @@ def run_test():
 
     # Create the goal point
     goal = MoveBaseGoal()
-    goal.target_pose.pose.position.x = -5.0
-    goal.target_pose.pose.position.y = 3.0
-    goal.target_pose.pose.orientation.x = 0.0
-    goal.target_pose.pose.orientation.y = 0.0
-    goal.target_pose.pose.orientation.z = 1.0
-    goal.target_pose.pose.orientation.w = 0.0
-    goal.target_pose.header.frame_id = 'map'
+    goal.target_pose = goal_pose
     goal.target_pose.header.stamp = rospy.Time.now()
 
     # Send the goal!
     print "sending goal"
     client.send_goal(goal)
     print "waiting for result"
-    client.wait_for_result(rospy.Duration(45))
+
+    r = rospy.Rate(5)
+
+    keep_waiting = True
+    while keep_waiting:
+        state = client.get_state()
+        if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
+            keep_waiting = False
+        elif bumper_checker.collided:
+            keep_waiting = False
+        else:
+            r.sleep()
+
+
+    #client.wait_for_result(rospy.Duration(45))
     print "done!"
+
+
+
 
     # 3 means success, according to the documentation
     # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
@@ -93,7 +122,11 @@ def run_test():
     print(client.get_goal_status_text())
     print "done!"
     print "returning state number"
-    return client.get_state() == 3
+    #return client.get_state() == 3
+    if client.get_state() == GoalStatus.SUCCEEDED:
+        return True
+    else:
+        return False
 
 if __name__ == "__main__":
     try:

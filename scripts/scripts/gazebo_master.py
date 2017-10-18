@@ -11,7 +11,6 @@ import test_driver
 from gazebo_driver_v2 import GazeboDriver
 import rosgraph
 import threading
-from std_msgs.msg import Empty
 import Queue
 from ctypes import c_bool
 
@@ -19,6 +18,8 @@ import signal
 
 import socket
 import contextlib
+
+from testing_scenarios import TestingScenarios
 
 from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import Odometry
@@ -42,7 +43,7 @@ class MultiMasterCoordinator:
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.is_shutdown = mp.Value(c_bool,False)
 
-        self.num_masters = 4
+        self.num_masters = 1
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
@@ -83,6 +84,13 @@ class MultiMasterCoordinator:
         while not self.is_shutdown.value:
             try:
                 task = queue.get(block=False)
+
+                result_string = "Result of ["
+                for [k,v] in task:
+                    #if "result" not in k:
+                        result_string+= str(k) + ":" + str(v) + ","
+                result_string += "]: "
+
                 print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                 queue.task_done()
             except Queue.Empty, e:
@@ -113,10 +121,12 @@ class MultiMasterCoordinator:
     #This list should be elsewhere, possibly in the configs package
     def addTasks(self):
         #time.sleep(20)
-        task1 = {'world': 'rectangular','controller':'dwa'}
-        task2 = {'world': 'rectangular','controller':'dwa'}
+        task1 = {'scenario': 'trashcans', 'num_barrels': 3, 'controller':'dwa'}
+        task2 = {'scenario': 'trashcans', 'num_barrels': 5, 'controller':'dwa'}
 
-        for a in range(4):
+        #task2 = {'world': 'rectangular','controller':'dwa'}
+
+        for a in range(2):
             self.task_queue.put(task1)
             self.task_queue.put(task2)
 
@@ -157,45 +167,37 @@ class GazeboMaster(mp.Process):
         self.roslaunch_core()
         rospy.init_node('test_driver', anonymous=True)
         rospy.on_shutdown(self.shutdown)
-        self.odom_pub = rospy.Publisher(
-            '/mobile_base/commands/reset_odometry', Empty, queue_size=10)
+
+        scenarios = TestingScenarios()
+
         while not self.is_shutdown:
             # TODO: If fail to run task, put task back on task queue
             try:
 
                 task = self.task_queue.get(block=False)
 
-                self.roslaunch_gazebo(task["world"]) #pass in world info
+                scenario = scenarios.getScenario(task)
 
-                if self.gazebo_driver is None:
-                    self.gazebo_driver = GazeboDriver(as_node=False)
+                if scenario is not None:
 
-                self.roslaunch_controller("dwa_controller.launch")
-
-                #This is where things could be put in a different file: all the nodes have been
-                #started, so just have to make service calls, etc to configure environment
+                    self.roslaunch_gazebo(scenario.getGazeboLaunchFile()) #pass in world info
 
 
-                print "Resetting robot..."
-                # TODO: Check if reset successful; if not, wait briefly and try again,
-                # eventually fail and throw error
-                self.gazebo_driver.resetRobot()
-                self.odom_pub.publish()
+                    self.roslaunch_controller(task["controller"])
 
-                #print "Waiting for move base message..."
+                    scenario.setupScenario()
 
-                #time.sleep(3)
+                    print "Running test..."
 
-                print "Running test..."
+                    #master = rosgraph.Master('/mynode')
 
+                    #TODO: make this a more informative type
+                    result = test_driver.run_test(goal_pose=scenario.getGoal())
 
-                #master = rosgraph.Master('/mynode')
-
-                #TODO: make this a more informative type
-                result = test_driver.run_test()
-
-                self.controller_launch.shutdown()
-                #self.gazebo_launch.shutdown() #if possible, should probably world instead
+                    self.controller_launch.shutdown()
+                    #self.gazebo_launch.shutdown() #if possible, should probably world instead
+                else:
+                    result = "bad_task"
 
                 task["result"] = result
                 self.return_result(task)
@@ -208,8 +210,11 @@ class GazeboMaster(mp.Process):
 
         # It seems like killing the core should kill all of the nodes,
         # but it doesn't
-        self.gazebo_launch.shutdown()
-        self.controller_launch.shutdown()
+        if self.gazebo_launch is not None:
+            self.gazebo_launch.shutdown()
+
+        if self.controller_launch is not None:
+            self.controller_launch.shutdown()
 
         print "GazeboMaster shutdown: killing core..."
         self.core.shutdown()
@@ -245,6 +250,8 @@ class GazeboMaster(mp.Process):
 
     def roslaunch_controller(self, controller_name):
 
+        #controller_path =
+
         rospack = rospkg.RosPack()
         path = rospack.get_path("nav_scripts")
 
@@ -255,13 +262,13 @@ class GazeboMaster(mp.Process):
         print path
 
         self.controller_launch = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name],
+            run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name + "_controller.launch"],
             is_core=False, port=self.ros_port
         )
         self.controller_launch.start()
 
 
-    def roslaunch_gazebo(self, world ="rectangular"):
+    def roslaunch_gazebo(self, world):
         if world == self.current_world:
             return
 
@@ -270,10 +277,6 @@ class GazeboMaster(mp.Process):
 
         self.current_world = world
 
-        #Really, the logic of what launch file to start should be elsewhere
-
-        rospack = rospkg.RosPack()
-        path = rospack.get_path("nav_configs")
 
         # This will wait for a roscore if necessary, so as long as we detect any failures
         # in start_roscore, we should be fine
@@ -282,7 +285,7 @@ class GazeboMaster(mp.Process):
         #print path
 
         self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[path + "/launch/gazebo_" + world + "_world.launch"],
+            run_id=uuid, roslaunch_files=[world],
             is_core=False, port=self.ros_port
         )
         self.gazebo_launch.start()

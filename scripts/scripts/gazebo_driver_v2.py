@@ -15,11 +15,11 @@ from gazebo_msgs.msg import ModelStates, ModelState
 from gazebo_msgs.srv import SetModelState
 from gazebo_msgs.srv import GetModelState
 import numpy as np
-from std_srvs.srv import Empty
 
 from gazebo_ros import gazebo_interface
-import std_srvs.srv
+import std_srvs.srv as std_srvs
   
+import std_msgs.msg as std_msgs
 
 
 
@@ -71,20 +71,19 @@ class GazeboDriver():
     self.models = data
 
 
-
   def newScene(self):
-    self.pauseService()
+    self.pause()
     self.resetRobot()
     self.moveBarrels(self.num_barrels)
-    self.unpauseService()
+    self.unpause()
 
   def setPose(self, model_name, pose):
     ## Check if our model exists yet
     if(model_name in self.models.name):
     
       state = ModelState(model_name=model_name, pose=pose)
-      
-      response = self.modelStateService(state)
+
+      response = self.setModelState(state)
 
       if(response.success):
         rospy.loginfo("Successfully set model pose")
@@ -93,10 +92,24 @@ class GazeboDriver():
     rospy.loginfo("failed to set model pose")
     return False
 
+  def pause(self):
+    rospy.wait_for_service(self.pause_service_name)
+    return self.pauseService()
 
-      
+  def unpause(self):
+    rospy.wait_for_service(self.unpause_service_name)
+    return self.unpauseService()
+
+  def resetWorld(self):
+    rospy.wait_for_service(self.reset_world_service_name)
+    return self.resetWorldService()
+
+  def setModelState(self, state):
+    rospy.wait_for_service(self.set_model_state_service_name)
+    return self.setModelStateService(state)
+
   def resetRobotImpl(self, pose):
-    self.pauseService()
+    self.pause()
     p = Pose()
     p.position.x = pose[0]
     p.position.y = pose[1]
@@ -108,11 +121,13 @@ class GazeboDriver():
     p.orientation.z = quaternion[2]
     p.orientation.w = quaternion[3]
     self.setPose('mobile_base', p)
-    self.unpauseService()
+    self.unpause()
+
+  def resetOdom(self):
+    self.odom_pub.publish()
     
-    
-  def resetRobot(self):
-    self.setPose(self.robotName, self.robotPose)
+  def moveRobot(self, pose):
+    self.setPose(self.robotName, pose)
 
   def resetBarrels(self, n):
       name = None
@@ -144,7 +159,7 @@ class GazeboDriver():
       pose.orientation.w = 1
       self.poses.append(pose)
       if not self.setPose(name, pose):
-	self.spawn_barrel(name, pose)
+	    self.spawn_barrel(name, pose)
 	
   def moveBarrels(self,n):
     self.poses = []
@@ -165,13 +180,16 @@ class GazeboDriver():
         self.spawn_barrel(name, pose)
       
   def shutdown(self):
-    self.unpauseService()
-    self.resetWorldService()
+    self.unpause()
+    self.resetWorld()
 
   def run(self):
     rospy.spin()
 
-  def reset(self):
+
+  def reset(self, seed=None):
+    if seed is not None:
+      self.seed = seed
     self.random.seed(self.seed)
     self.nprandom = np.random.RandomState(self.seed)
   
@@ -205,50 +223,49 @@ class GazeboDriver():
     
     self.poses = []
     self.robotPose = Pose()
-    self.robotPose.position.x = 2
-    self.robotPose.position.y = 3
-    self.robotPose.orientation.x = 0
-    self.robotPose.orientation.y = 0
-    self.robotPose.orientation.z = 1
-    self.robotPose.orientation.w = 0
+
 
     self.random = random.Random()
-    seed = 2
-    self.seed = seed
+    self.seed = 0
     self.random.seed(seed)
     self.nprandom = np.random.RandomState(seed)
 
-    self.models = None
-    self.camInfo = None
-    self.transform = None
-    
-    model_state_service_name = 'gazebo/set_model_state'
-    pause_service_name = '/gazebo/pause_physics'
-    unpause_service_name = '/gazebo/unpause_physics'
-    get_model_state_service_name = 'gazebo/get_model_state'
+    self.odom_pub = rospy.Publisher(
+      '/mobile_base/commands/reset_odometry', std_msgs.Empty, queue_size=1)
 
+    self.models = None
     
+    self.set_model_state_service_name = 'gazebo/set_model_state'
+    self.pause_service_name = 'gazebo/pause_physics'
+    self.unpause_service_name = 'gazebo/unpause_physics'
+    self.get_model_state_service_name = 'gazebo/get_model_state'
+    self.reset_world_service_name = "gazebo/reset_world"
+
+
+    #NOTE: removed all 'wait_for_service' statements here, so should probably
+    # add them in front of each actual service call
     
     rospy.loginfo("Waiting for service...")
-    rospy.wait_for_service(get_model_state_service_name)
-    self.modelStateService = rospy.ServiceProxy(model_state_service_name, SetModelState)
+    #rospy.wait_for_service(self.get_model_state_service_name)
+    self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
     rospy.loginfo("Service found...")
     
-    rospy.wait_for_service(pause_service_name)
-    self.pauseService = rospy.ServiceProxy(pause_service_name, Empty)
+    #rospy.wait_for_service(self.pause_service_name)
+    self.pauseService = rospy.ServiceProxy(self.pause_service_name, std_srvs.Empty)
     rospy.loginfo("Service found...")
     
-    self.resetWorldService = rospy.ServiceProxy('/gazebo/reset_world', std_srvs.srv.Empty)
+    self.resetWorldService = rospy.ServiceProxy(self.reset_world_service_name, std_srvs.Empty)
+    rospy.loginfo("Service found...")
 
-    rospy.wait_for_service(unpause_service_name)
-    self.unpauseService = rospy.ServiceProxy(unpause_service_name, Empty)
+    #rospy.wait_for_service(self.unpause_service_name)
+    self.unpauseService = rospy.ServiceProxy(self.unpause_service_name, std_srvs.Empty)
     rospy.loginfo("Service found...")
     
     self.stateSub = rospy.Subscriber('gazebo/model_states', ModelStates, self.statesCallback, queue_size=self.queue_size)
         #self.statePub = rospy.Publisher('gazebo_data', GazeboState, queue_size=self.queue_size)
     
-    self.resetWorldService()
-    self.unpauseService()
+    #self.resetWorldService()
+    #self.unpauseService()
     
     #rospy.on_shutdown(self.shutdown)
 
