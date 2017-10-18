@@ -43,7 +43,7 @@ class MultiMasterCoordinator:
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.is_shutdown = mp.Value(c_bool,False)
 
-        self.num_masters = 1
+        self.num_masters = 8
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
@@ -78,6 +78,8 @@ class MultiMasterCoordinator:
 
             ros_port +=1
             gazebo_port +=1
+
+            time.sleep(1)
 
 
     def processResults(self,queue):
@@ -121,18 +123,26 @@ class MultiMasterCoordinator:
 
 
     #This list should be elsewhere, possibly in the configs package
+    def addAllTasks(self):
+
+        controllers = ["dwa", "eband", "teb"]
+        barrel_arrangements = [3,5,7]
+
+        for controller in controllers:
+            for num_barrels in barrel_arrangements:
+                for a in range(3):
+                    task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller}
+                    self.task_queue.put(task)
+
     def addTasks(self):
-        #time.sleep(20)
-        task1 = {'scenario': 'trashcans', 'num_barrels': 3, 'controller':'dwa'}
-        task2 = {'scenario': 'trashcans', 'num_barrels': 5, 'controller':'dwa'}
+        controllers = ["eband"]
+        barrel_arrangements = [3]
 
-        #task2 = {'world': 'rectangular','controller':'dwa'}
-
-        for a in range(2):
-            self.task_queue.put(task1)
-            self.task_queue.put(task2)
-
-
+        for controller in controllers:
+            for num_barrels in barrel_arrangements:
+                for a in range(10):
+                    task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller}
+                    self.task_queue.put(task)
 
 
 class GazeboMaster(mp.Process):
@@ -152,6 +162,8 @@ class GazeboMaster(mp.Process):
         self.kill_flag = kill_flag
         self.is_shutdown = False
 
+        self.gui = True
+
 
         print "New master"
 
@@ -160,8 +172,14 @@ class GazeboMaster(mp.Process):
         os.environ["ROS_MASTER_URI"] = self.ros_master_uri
         os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
 
-        if 'DISPLAY' in os.environ:
-            del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
+        if self.gui==False:
+            if 'DISPLAY' in os.environ:
+                del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
+        else:
+            if 'DISPLAY' not in os.environ:
+                os.environ['DISPLAY']=':0'
+
+
 
     def run(self):
 
