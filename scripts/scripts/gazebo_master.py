@@ -86,12 +86,14 @@ class MultiMasterCoordinator:
                 task = queue.get(block=False)
 
                 result_string = "Result of ["
-                for [k,v] in task:
+                for k,v in task.iteritems():
                     #if "result" not in k:
                         result_string+= str(k) + ":" + str(v) + ","
                 result_string += "]: "
 
-                print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
+                print result_string
+
+                #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                 queue.task_done()
             except Queue.Empty, e:
                 #print "No results!"
