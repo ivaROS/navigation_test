@@ -196,7 +196,7 @@ class GazeboMaster(mp.Process):
         while not self.is_shutdown:
             self.process_tasks()
             if not self.is_shutdown:
-                print >> sys.stderr, "Relaunching!"
+                print >> sys.stderr, "Relaunching on " + str(os.getpid())
 
     def process_tasks(self):
         self.roslaunch_core()
@@ -237,7 +237,7 @@ class GazeboMaster(mp.Process):
                             result = test_driver.run_test(goal_pose=scenario.getGoal())
 
                         except rospy.ROSException as e:
-                            result = "service_timeout: " + str(e)
+                            result = "ROSException! (probably service_timeout): " + str(e)
                             task["error"]= True
                             self.had_error = True
 
@@ -254,6 +254,11 @@ class GazeboMaster(mp.Process):
                 task["result"] = result
                 task["pid"] = os.getpid()
                 self.return_result(task)
+
+                if self.had_error:
+                    print >> sys.stderr, result
+
+
             except Queue.Empty, e:
                 time.sleep(1)
 
