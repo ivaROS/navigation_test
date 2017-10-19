@@ -77,7 +77,7 @@ class TrashCanScenario(TestingScenario):
 
 
     def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics()
+        self.gazebo_driver.checkServicesTopics(10)
         self.gazebo_driver.pause()
         self.gazebo_driver.moveRobot(self.init_pose)
         self.gazebo_driver.resetOdom()

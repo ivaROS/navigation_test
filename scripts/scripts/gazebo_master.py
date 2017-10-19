@@ -50,6 +50,7 @@ class MultiMasterCoordinator:
         self.result_queue = mp.JoinableQueue(maxsize=self.result_queue_capacity)
         self.gazebo_masters = []
         self.result_list = []
+        self.gazebo_launch_mutex = mp.Lock()
 
 
     def start(self):
@@ -63,22 +64,22 @@ class MultiMasterCoordinator:
         self.result_thread.start()
 
     def startProcesses(self):
-        ros_port = 11311
-        gazebo_port = ros_port + 100
+        self.ros_port = 11311
+        self.gazebo_port = self.ros_port + 100
         for ind in xrange(self.num_masters):
 
-            while port_in_use(ros_port):
-                ros_port += 1
+            while port_in_use(self.ros_port):
+                self.ros_port += 1
 
-            while port_in_use(gazebo_port):
-                gazebo_port += 1
+            while port_in_use(self.gazebo_port):
+                self.gazebo_port += 1
 
-            gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.is_shutdown, ros_port, gazebo_port)
+            gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.is_shutdown, self.ros_port, self.gazebo_port, gazebo_launch_mutex = self.gazebo_launch_mutex)
             gazebo_master.start()
             self.gazebo_masters.append(gazebo_master)
 
-            ros_port +=1
-            gazebo_port +=1
+            self.ros_port +=1
+            self.gazebo_port +=1
 
             time.sleep(1)
 
@@ -134,18 +135,18 @@ class MultiMasterCoordinator:
 
     #This list should be elsewhere, possibly in the configs package
     def addAllTasks(self):
-
-        controllers = ["dwa", "eband", "teb"]
+        controllers = ["eband", "dwa"]
         barrel_arrangements = [3,5,7]
 
         for controller in controllers:
             for num_barrels in barrel_arrangements:
-                for a in range(3):
-                    task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller}
-                    self.task_queue.put(task)
+                for a in range(10):
+                    for repetition in range(3):
+                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
+                        self.task_queue.put(task)
 
     def addTasks(self):
-        controllers = ["eband", "dwa"]
+        controllers = ["eband"]
         barrel_arrangements = [3]
 
         for controller in controllers:
@@ -157,7 +158,7 @@ class MultiMasterCoordinator:
 
 
 class GazeboMaster(mp.Process):
-    def __init__(self, task_queue, result_queue, kill_flag, ros_port, gazebo_port, **kwargs):
+    def __init__(self, task_queue, result_queue, kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
         super(GazeboMaster, self).__init__()
         self.daemon = False
 
@@ -165,6 +166,7 @@ class GazeboMaster(mp.Process):
         self.result_queue = result_queue
         self.ros_port = ros_port
         self.gazebo_port = gazebo_port
+        self.gazebo_launch_mutex = gazebo_launch_mutex
         self.core = None
         self.gazebo_launch = None
         self.controller_launch = None
@@ -196,7 +198,7 @@ class GazeboMaster(mp.Process):
         while not self.is_shutdown:
             self.process_tasks()
             if not self.is_shutdown:
-                print >> sys.stderr, "Relaunching on " + str(os.getpid())
+                print >> sys.stderr, "Relaunching on " + str(os.getpid()) + ", ROS_MASTER_URI=" + self.ros_master_uri
 
     def process_tasks(self):
         self.roslaunch_core()
@@ -237,7 +239,7 @@ class GazeboMaster(mp.Process):
                             result = test_driver.run_test(goal_pose=scenario.getGoal())
 
                         except rospy.ROSException as e:
-                            result = "ROSException! (probably service_timeout): " + str(e)
+                            result = "ROSException: " + str(e)
                             task["error"]= True
                             self.had_error = True
 
@@ -345,11 +347,12 @@ class GazeboMaster(mp.Process):
         #roslaunch.configure_logging(uuid) #What does this do?
         #print path
 
-        self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[world],
-            is_core=False, port=self.ros_port
-        )
-        self.gazebo_launch.start()
+        with self.gazebo_launch_mutex:
+            self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
+                run_id=uuid, roslaunch_files=[world],
+                is_core=False, port=self.ros_port
+            )
+            self.gazebo_launch.start()
 
         try:
             msg = rospy.wait_for_message("/odom", Odometry, 2)
@@ -369,6 +372,7 @@ class GazeboMaster(mp.Process):
         self.shutdown()
 
     def return_result(self,result):
+        print "Returning completed task: " + str(result)
         self.result_queue.put(result)
         self.task_queue.task_done()
 

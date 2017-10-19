@@ -223,13 +223,13 @@ class GazeboDriver():
     return output
   
 
-  def checkServicesTopics(self):
-    rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=self.service_timeout)
-    rospy.wait_for_service(self.get_model_state_service_name, timeout=self.service_timeout)
-    rospy.wait_for_service(self.pause_service_name, timeout=self.service_timeout)
-    rospy.wait_for_service(self.reset_world_service_name, timeout=self.service_timeout)
-    rospy.wait_for_service(self.unpause_service_name, timeout=self.service_timeout)
-    rospy.wait_for_service(self.delete_model_service_name, timeout=self.service_timeout)
+  def checkServicesTopics(self, timeout):
+    rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=timeout)
+    rospy.wait_for_service(self.get_model_state_service_name, timeout=timeout)
+    rospy.wait_for_service(self.pause_service_name, timeout=timeout)
+    rospy.wait_for_service(self.reset_world_service_name, timeout=timeout)
+    rospy.wait_for_service(self.unpause_service_name, timeout=timeout)
+    rospy.wait_for_service(self.delete_model_service_name, timeout=timeout)
 
   def __init__(self, as_node = True, seed=None):
     if as_node:
