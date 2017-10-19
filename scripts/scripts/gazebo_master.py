@@ -145,14 +145,15 @@ class MultiMasterCoordinator:
                     self.task_queue.put(task)
 
     def addTasks(self):
-        controllers = ["eband"]
+        controllers = ["eband", "dwa"]
         barrel_arrangements = [3]
 
         for controller in controllers:
             for num_barrels in barrel_arrangements:
                 for a in range(10):
-                    task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
+                    for repetition in range(3):
+                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
+                        self.task_queue.put(task)
 
 
 class GazeboMaster(mp.Process):

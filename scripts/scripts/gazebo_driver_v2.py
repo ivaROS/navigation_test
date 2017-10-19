@@ -223,6 +223,13 @@ class GazeboDriver():
     return output
   
 
+  def checkServicesTopics(self):
+    rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=self.service_timeout)
+    rospy.wait_for_service(self.get_model_state_service_name, timeout=self.service_timeout)
+    rospy.wait_for_service(self.pause_service_name, timeout=self.service_timeout)
+    rospy.wait_for_service(self.reset_world_service_name, timeout=self.service_timeout)
+    rospy.wait_for_service(self.unpause_service_name, timeout=self.service_timeout)
+    rospy.wait_for_service(self.delete_model_service_name, timeout=self.service_timeout)
 
   def __init__(self, as_node = True, seed=None):
     if as_node:
@@ -263,32 +270,33 @@ class GazeboDriver():
     self.reset_world_service_name = "gazebo/reset_world"
     self.delete_model_service_name = "gazebo/delete_model"
 
+    self.model_state_topic_name = 'gazebo/model_states'
 
     rospy.loginfo("Waiting for service...")
-    rospy.wait_for_service(self.get_model_state_service_name)
+    #rospy.wait_for_service(self.get_model_state_service_name)
     self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
     rospy.loginfo("Service found...")
     
-    rospy.wait_for_service(self.pause_service_name)
+    #rospy.wait_for_service(self.pause_service_name)
     self.pauseService = rospy.ServiceProxy(self.pause_service_name, std_srvs.Empty)
     rospy.loginfo("Service found...")
 
-    rospy.wait_for_service(self.reset_world_service_name)
+    #rospy.wait_for_service(self.reset_world_service_name)
     self.resetWorldService = rospy.ServiceProxy(self.reset_world_service_name, std_srvs.Empty)
     rospy.loginfo("Service found...")
 
-    rospy.wait_for_service(self.unpause_service_name)
+    #rospy.wait_for_service(self.unpause_service_name)
     self.unpauseService = rospy.ServiceProxy(self.unpause_service_name, std_srvs.Empty)
     rospy.loginfo("Service found...")
 
-    rospy.wait_for_service(self.delete_model_service_name)
+    #rospy.wait_for_service(self.delete_model_service_name)
     self.deleteModelService = rospy.ServiceProxy(self.delete_model_service_name, DeleteModel)
     rospy.loginfo("Service found...")
 
     
-    self.stateSub = rospy.Subscriber('gazebo/model_states', ModelStates, self.statesCallback, queue_size=self.queue_size)
+    self.stateSub = rospy.Subscriber(self.model_state_topic_name, ModelStates, self.statesCallback, queue_size=self.queue_size)
 
-    rospy.wait_for_message('gazebo/model_states', ModelStates)
+    #rospy.wait_for_message(self.model_state_topic_name, ModelStates)
         #self.statePub = rospy.Publisher('gazebo_data', GazeboState, queue_size=self.queue_size)
     
     #self.resetWorldService()

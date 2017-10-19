@@ -99,6 +99,8 @@ def run_test(goal_pose):
 
     r = rospy.Rate(5)
 
+    start_time = rospy.Time.now()
+
     keep_waiting = True
     while keep_waiting:
         state = client.get_state()
@@ -106,6 +108,10 @@ def run_test(goal_pose):
             keep_waiting = False
         elif bumper_checker.collided:
             keep_waiting = False
+            return "BUMPER_COLLISION"
+        elif (rospy.Time.now() - start_time > rospy.Duration(45)):
+            keep_waiting = False
+            return "TIMED_OUT"
         else:
             r.sleep()
 
@@ -124,9 +130,18 @@ def run_test(goal_pose):
     print "returning state number"
     #return client.get_state() == 3
     if client.get_state() == GoalStatus.SUCCEEDED:
-        return True
+        return "SUCCEEDED"
+    elif client.get_state() == GoalStatus.ABORTED:
+        return "ABORTED"
+    elif client.get_state() == GoalStatus.LOST:
+        return "LOST"
+    elif client.get_state() == GoalStatus.REJECTED:
+        return "REJECTED"
+    elif client.get_state() == GoalStatus.ACTIVE:
+        return "TIMED_OUT"
+
     else:
-        return False
+        return "UNKNOWN"
 
 if __name__ == "__main__":
     try:
