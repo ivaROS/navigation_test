@@ -81,18 +81,22 @@ class GazeboDriver():
 
   def setPose(self, model_name, pose):
     ## Check if our model exists yet
-    if(model_name in self.models.name):
-    
-      state = ModelState(model_name=model_name, pose=pose)
+    #if(model_name in self.models.name):
 
-      response = self.setModelState(state)
+      try:
+        state = ModelState(model_name=model_name, pose=pose)
 
-      if(response.success):
-        #rospy.loginfo("Successfully set model pose")
-        return True
+        response = self.setModelState(state)
+
+        if(response.success):
+          #rospy.loginfo("Successfully set model pose")
+          return True
+      except rospy.ServiceException as e:
+        pass
+      return False
     
     #rospy.loginfo("failed to set model pose")
-    return False
+    #return False
 
   def pause(self):
     rospy.wait_for_service(self.pause_service_name, timeout=self.service_timeout)

@@ -192,15 +192,21 @@ class GazeboMaster(mp.Process):
 
 
     def run(self):
+        while not self.is_shutdown:
+            self.process_tasks()
+            if not self.is_shutdown:
+                print >> sys.stderr, "Relaunching!"
 
-        #self.start_core()
+    def process_tasks(self):
         self.roslaunch_core()
         rospy.init_node('test_driver', anonymous=True)
         rospy.on_shutdown(self.shutdown)
 
         scenarios = TestingScenarios()
 
-        while not self.is_shutdown:
+        self.had_error = False
+
+        while not self.is_shutdown and not self.had_error:
             # TODO: If fail to run task, put task back on task queue
             try:
 
@@ -214,36 +220,38 @@ class GazeboMaster(mp.Process):
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile()) #pass in world info
 
                     if not self.gazebo_launch._shutting_down:
-    
-    
+
+
                         self.roslaunch_controller(task["controller"])
-    
+
                         try:
-    
+
                             scenario.setupScenario()
-    
+
                             print "Running test..."
-    
+
                             #master = rosgraph.Master('/mynode')
-    
+
                             #TODO: make this a more informative type
                             result = test_driver.run_test(goal_pose=scenario.getGoal())
-    
+
                         except rospy.ROSException as e:
                             result = "service_timeout: " + str(e)
                             task["error"]= True
-    
-    
+                            self.had_error = True
+
                         self.controller_launch.shutdown()
-                        
+
                     else:
                         result = "gazebo_crash"
                         task["error"] = True
+                        self.had_error = True
 
                 else:
                     result = "bad_task"
 
                 task["result"] = result
+                task["pid"] = os.getpid()
                 self.return_result(task)
             except Queue.Empty, e:
                 time.sleep(1)
