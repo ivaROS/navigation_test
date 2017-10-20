@@ -177,9 +177,9 @@ class GazeboDriver():
     barrel_names = [name for name in self.models.name if  "barrel" in name]
 
     for i, xy in enumerate(self.barrel_points(self.minx,self.miny,self.maxx,self.maxy,self.grid_spacing, n)):
-      print i, xy
+      #print i, xy
       name = "barrel{}".format(i)
-      print name
+      #print name
 
       if name in barrel_names : barrel_names.remove(name)
       
@@ -272,26 +272,26 @@ class GazeboDriver():
 
     self.model_state_topic_name = 'gazebo/model_states'
 
-    rospy.loginfo("Waiting for service...")
+    #rospy.loginfo("Waiting for service...")
     #rospy.wait_for_service(self.get_model_state_service_name)
     self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
-    rospy.loginfo("Service found...")
+    #rospy.loginfo("Service found...")
     
     #rospy.wait_for_service(self.pause_service_name)
     self.pauseService = rospy.ServiceProxy(self.pause_service_name, std_srvs.Empty)
-    rospy.loginfo("Service found...")
+    #rospy.loginfo("Service found...")
 
     #rospy.wait_for_service(self.reset_world_service_name)
     self.resetWorldService = rospy.ServiceProxy(self.reset_world_service_name, std_srvs.Empty)
-    rospy.loginfo("Service found...")
+    #rospy.loginfo("Service found...")
 
     #rospy.wait_for_service(self.unpause_service_name)
     self.unpauseService = rospy.ServiceProxy(self.unpause_service_name, std_srvs.Empty)
-    rospy.loginfo("Service found...")
+    #rospy.loginfo("Service found...")
 
     #rospy.wait_for_service(self.delete_model_service_name)
     self.deleteModelService = rospy.ServiceProxy(self.delete_model_service_name, DeleteModel)
-    rospy.loginfo("Service found...")
+    #rospy.loginfo("Service found...")
 
     
     self.stateSub = rospy.Subscriber(self.model_state_topic_name, ModelStates, self.statesCallback, queue_size=self.queue_size)

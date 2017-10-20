@@ -24,6 +24,8 @@ from testing_scenarios import TestingScenarios
 from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import Odometry
 import rospy
+import csv
+import datetime
 
 
 def port_in_use(port):
@@ -41,7 +43,8 @@ class MultiMasterCoordinator:
     def __init__(self):
         signal.signal(signal.SIGINT, self.signal_shutdown)
         signal.signal(signal.SIGTERM, self.signal_shutdown)
-        self.is_shutdown = mp.Value(c_bool,False)
+        self.children_shutdown = mp.Value(c_bool, False)
+        self.should_shutdown = False
 
         self.num_masters = 8
         self.task_queue_capacity = 20 #2*self.num_masters
@@ -51,6 +54,10 @@ class MultiMasterCoordinator:
         self.gazebo_masters = []
         self.result_list = []
         self.gazebo_launch_mutex = mp.Lock()
+
+        self.fieldnames = ["controller"]
+        self.fieldnames.extend(TestingScenarios.getFieldNames())
+        self.fieldnames.extend(["pid","result"])
 
 
     def start(self):
@@ -67,58 +74,76 @@ class MultiMasterCoordinator:
         self.ros_port = 11311
         self.gazebo_port = self.ros_port + 100
         for ind in xrange(self.num_masters):
+            self.addProcess()
 
-            while port_in_use(self.ros_port):
-                self.ros_port += 1
 
-            while port_in_use(self.gazebo_port):
-                self.gazebo_port += 1
+    def addProcess(self):
+        while port_in_use(self.ros_port):
+            self.ros_port += 1
 
-            gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.is_shutdown, self.ros_port, self.gazebo_port, gazebo_launch_mutex = self.gazebo_launch_mutex)
-            gazebo_master.start()
-            self.gazebo_masters.append(gazebo_master)
+        while port_in_use(self.gazebo_port):
+            self.gazebo_port += 1
 
-            self.ros_port +=1
-            self.gazebo_port +=1
+        gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.children_shutdown, self.ros_port,
+                                     self.gazebo_port, gazebo_launch_mutex=self.gazebo_launch_mutex)
+        gazebo_master.start()
+        self.gazebo_masters.append(gazebo_master)
 
-            time.sleep(1)
+        self.ros_port += 1
+        self.gazebo_port += 1
+
+        time.sleep(1)
 
 
     def processResults(self,queue):
-        while not self.is_shutdown.value:
-            try:
-                task = queue.get(block=False)
 
-                result_string = "Result of ["
-                for k,v in task.iteritems():
-                    #if "result" not in k:
-                        result_string+= str(k) + ":" + str(v) + ","
-                result_string += "]"
+        outputfile_name = "~/Documents/gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = os.path.expanduser(outputfile_name)
 
-                print result_string
+        with open(outputfile_name, 'wb') as csvfile:
+            datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames, restval='', extrasaction='ignore')
+            datawriter.writeheader()
 
-                if "error" not in task:
-                    self.result_list.append(result_string)
-                else:
-                    del task["error"]
-                    self.task_queue.put(task)
+            while not self.should_shutdown:
+                try:
+                    task = queue.get(block=False)
 
-                #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
-                queue.task_done()
-            except Queue.Empty, e:
-                #print "No results!"
-                time.sleep(1)
+                    result_string = "Result of ["
+                    for k,v in task.iteritems():
+                        #if "result" not in k:
+                            result_string+= str(k) + ":" + str(v) + ","
+                    result_string += "]"
+
+                    print result_string
+
+                    if "error" not in task:
+                        self.result_list.append(result_string)
+                        datawriter.writerow(task)
+                    else:
+                        del task["error"]
+                        self.task_queue.put(task)
+
+                    #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
+                    queue.task_done()
+                except Queue.Empty, e:
+                    print "No results!"
+                    time.sleep(1)
 
     def signal_shutdown(self,signum,frame):
         self.shutdown()
 
     def shutdown(self):
-        with self.is_shutdown.get_lock():
-            self.is_shutdown.value = True
+        with self.children_shutdown.get_lock():
+            self.children_shutdown.value = True
 
-        for process in self.gazebo_masters:
-            if process.is_alive():
-                process.join()
+        for process in mp.active_children():
+            process.join()
+
+        self.should_shutdown = True
+
+        #for process in self.gazebo_masters:
+        #    if process.is_alive():
+        #        process.join()
         #sys.exit(0)
 
     def waitToFinish(self):
@@ -152,10 +177,20 @@ class MultiMasterCoordinator:
         for controller in controllers:
             for num_barrels in barrel_arrangements:
                 for a in range(10):
-                    for repetition in range(3):
+                    for repetition in range(1):
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
                         self.task_queue.put(task)
 
+    def addTasks1(self):
+        controllers = ["dwa", "eband", "teb", "pips_dwa"]
+        barrel_arrangements = [3,5,7]
+
+        for controller in controllers:
+            for num_barrels in barrel_arrangements:
+                for a in range(50):
+                    for repetition in range(1):
+                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
 
 class GazeboMaster(mp.Process):
     def __init__(self, task_queue, result_queue, kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
@@ -197,6 +232,7 @@ class GazeboMaster(mp.Process):
     def run(self):
         while not self.is_shutdown:
             self.process_tasks()
+            time.sleep(5)
             if not self.is_shutdown:
                 print >> sys.stderr, "Relaunching on " + str(os.getpid()) + ", ROS_MASTER_URI=" + self.ros_master_uri
 
@@ -319,13 +355,17 @@ class GazeboMaster(mp.Process):
 
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
         #roslaunch.configure_logging(uuid)
-        print path
+        #print path
+
+        sys.stdout = open(os.devnull, "w")
 
         self.controller_launch = roslaunch.parent.ROSLaunchParent(
             run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name + "_controller.launch"],
             is_core=False, port=self.ros_port
         )
         self.controller_launch.start()
+
+        sys.stdout = sys.__stdout__
 
 
     def roslaunch_gazebo(self, world):
@@ -347,6 +387,8 @@ class GazeboMaster(mp.Process):
         #roslaunch.configure_logging(uuid) #What does this do?
         #print path
 
+        #Without the mutex, we frequently encounter this problem:
+        # https://bitbucket.org/osrf/gazebo/issues/821/apparent-transport-race-condition-on
         with self.gazebo_launch_mutex:
             self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
                 run_id=uuid, roslaunch_files=[world],

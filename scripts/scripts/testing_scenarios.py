@@ -16,7 +16,18 @@ class TestingScenarios:
         else:
             return None
 
+    @staticmethod
+    def getScenarioTypes():
+        scenarios = [TrashCanScenario]
+        return scenarios
 
+
+    @staticmethod
+    def getFieldNames():
+        fieldnames = ["scenario"]
+        for scenario in TestingScenarios.getScenarioTypes():
+            fieldnames.extend(scenario.getUniqueFieldNames())
+        return fieldnames
 
 class TestingScenario:
     def __init__(self, world, init_pose, target_pose, gazebo_driver):
@@ -45,7 +56,9 @@ class TestingScenario:
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.unpause()
 
-
+    @staticmethod
+    def getUniqueFieldNames():
+        return [""]
 
 
 class TrashCanScenario(TestingScenario):
@@ -74,7 +87,9 @@ class TrashCanScenario(TestingScenario):
         self.target_pose.pose.orientation.w = 0.0
         self.target_pose.header.frame_id = 'map'
 
-
+    @staticmethod
+    def getUniqueFieldNames():
+        return ["num_barrels", "seed"]
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
