@@ -122,6 +122,7 @@ class MultiMasterCoordinator:
                     else:
                         del task["error"]
                         self.task_queue.put(task)
+                        self.addProcess()
 
                     #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                     queue.task_done()
@@ -170,7 +171,7 @@ class MultiMasterCoordinator:
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
                         self.task_queue.put(task)
 
-    def addTasks(self):
+    def addTasks1(self):
         controllers = ["eband"]
         barrel_arrangements = [3]
 
@@ -181,7 +182,7 @@ class MultiMasterCoordinator:
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
                         self.task_queue.put(task)
 
-    def addTasks1(self):
+    def addTasks(self):
         controllers = ["dwa", "eband", "teb", "pips_dwa"]
         barrel_arrangements = [3,5,7]
 
@@ -209,6 +210,7 @@ class GazeboMaster(mp.Process):
         self.current_world = None
         self.kill_flag = kill_flag
         self.is_shutdown = False
+        self.had_error = False
 
         self.gui = True
 
@@ -230,11 +232,11 @@ class GazeboMaster(mp.Process):
 
 
     def run(self):
-        while not self.is_shutdown:
+        while not self.is_shutdown and not self.had_error:
             self.process_tasks()
             time.sleep(5)
             if not self.is_shutdown:
-                print >> sys.stderr, "Relaunching on " + str(os.getpid()) + ", ROS_MASTER_URI=" + self.ros_master_uri
+                print >> sys.stderr, "(Not) Relaunching on " + str(os.getpid()) + ", ROS_MASTER_URI=" + self.ros_master_uri
 
     def process_tasks(self):
         self.roslaunch_core()
