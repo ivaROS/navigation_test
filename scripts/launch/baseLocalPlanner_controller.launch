@@ -1,8 +1,4 @@
 <launch>
-  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/rectangular_room.yaml"/>
-
-  <node name="map_to_odom" pkg="tf" type="static_transform_publisher"
-      args="2 3 0 3.14 0 0 map odom 10" />
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
@@ -13,8 +9,5 @@
       <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS" />
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
   </node>
-
-  <node name="base_camera_transform" pkg="tf" type="static_transform_publisher"
-    args="0.0762 0.01501 0.5361 -1.57 0 -1.57 /base_link /left_camera_optical_frame 100" />
 
 </launch>

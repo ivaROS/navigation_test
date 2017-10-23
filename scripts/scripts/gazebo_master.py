@@ -188,7 +188,7 @@ class MultiMasterCoordinator:
 
         for controller in controllers:
             for num_barrels in barrel_arrangements:
-                for a in range(50):
+                for a in range(500):
                     for repetition in range(1):
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)

@@ -11,6 +11,11 @@ class TestingScenarios:
             scenario_type = task["scenario"]
             if scenario_type == "trashcans":
                 return TrashCanScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "fourth_floor":
+                return FourthFloorScenario(task=task, gazebo_driver=self.gazebo_driver)
+            else:
+                print "Error! Unknown scenario type [" + scenario_type + "]"
+                return None
         elif "init_pose" in task and "goal" in task and "world" in task:
             return TestingScenario(task["world"],task["init_pose"],task["goal"],self.gazebo_driver)
         else:
@@ -98,4 +103,43 @@ class TrashCanScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels)
+        self.gazebo_driver.unpause()
+
+
+
+class FourthFloorScenario(TestingScenario):
+    def __init__(self, task, gazebo_driver):
+        self.gazebo_driver = gazebo_driver
+
+        self.world = "fourth_floor"
+
+        self.seed = task["seed"] if "seed" in task else 0
+
+        self.init_pose = Pose()
+        self.init_pose.position.x = -48
+        self.init_pose.position.y = 17
+        self.init_pose.orientation.x = 0
+        self.init_pose.orientation.y = 0
+        self.init_pose.orientation.z = 0
+        self.init_pose.orientation.w = 1
+
+        self.target_pose = PoseStamped()
+        self.target_pose.pose.position.x = 4
+        self.target_pose.pose.position.y = 16
+        self.target_pose.pose.orientation.x = 0.0
+        self.target_pose.pose.orientation.y = 0.0
+        self.target_pose.pose.orientation.z = 0.0
+        self.target_pose.pose.orientation.w = 1.0
+        self.target_pose.header.frame_id = 'map'
+
+    @staticmethod
+    def getUniqueFieldNames():
+        return ["num_barrels", "seed"]
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.init_pose)
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.unpause()
