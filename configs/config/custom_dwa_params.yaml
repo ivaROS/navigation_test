@@ -1,0 +1,14 @@
+global_costmap:
+  obstacle_layer:
+    track_unknown_space:  true
+
+local_costmap:
+  obstacle_layer:
+    track_unknown_space:  true
+
+
+NavfnROS:
+  allow_unknown: true
+
+GlobalPlanner:
+  allow_unknown: true                           # Allow planner to plan through unknown space, default true

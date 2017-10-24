@@ -11,4 +11,4 @@ TrajectoryPlannerROS:
 
   xy_goal_tolerance: 1.0
   yaw_goal_tolerance: 1.57
-  sim_time: 1
+  sim_time: 4
