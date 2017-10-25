@@ -2,11 +2,11 @@ EBandPlannerROS:
 
 #TRAJECTORY CONTROL
  differential_drive: true
- max_acceleration: 0.5
+ max_acceleration: 1.0
 
 # velocity limits
- max_vel_lin: 0.4
- max_vel_th: 1.0
+ max_vel_lin: 0.5
+ max_vel_th: 5.0
  min_vel_lin: 0.0
  min_vel_th: 0.0
  min_in_place_vel_th: 0.0
@@ -20,3 +20,5 @@ EBandPlannerROS:
  k_prop_: 0.75
 
 #eband parameters
+
+

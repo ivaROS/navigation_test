@@ -1,5 +1,5 @@
 <launch>
-
+  <rosparam command="delete" param="/move_base"/>
   <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
     <arg name="custom_param_file" value="$(find nav_configs)/config/custom_dwa_params.yaml"/>
   </include>

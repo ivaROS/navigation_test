@@ -1,14 +1,5 @@
 <launch>
-  <!--<node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/rectangular_room.yaml"/>
-
-  <node name="map_to_odom" pkg="tf" type="static_transform_publisher"
-      args="2 3 0 3.14 0 0 map odom 10" />
-
-   <node name="localization" pkg="amcl" type="amcl">
-    <param name="initial_pose_x" value = "2.0"/>
-    <param name="initial_pose_y" value = "3.0"/>
-    <param name="initial_pose_a" value = "3.141592"/>
-  </node> -->
+  <rosparam command="delete" param="/move_base"/>
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>

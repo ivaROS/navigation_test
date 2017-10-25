@@ -1,10 +1,10 @@
 global_costmap:
   obstacle_layer:
-    track_unknown_space:  true
+    track_unknown_space:  false
 
 local_costmap:
   obstacle_layer:
-    track_unknown_space:  true
+    track_unknown_space:  false
 
 
 NavfnROS:
@@ -12,3 +12,8 @@ NavfnROS:
 
 GlobalPlanner:
   allow_unknown: true                           # Allow planner to plan through unknown space, default true
+
+  lethal_cost: 253                              # default 253
+  neutral_cost: 50                              # default 50
+  cost_factor: 3.0                              # Factor to multiply each cost from costmap by, default 3.0
+  planner_costmap_publish_frequency: 0.0        # default 0.0
