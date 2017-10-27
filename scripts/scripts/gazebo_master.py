@@ -183,10 +183,10 @@ class MultiMasterCoordinator:
                         self.task_queue.put(task)
 
     def addTasks(self):
-        controllers = ["dwa", "new_dwa","custom_dwa", "new_dwa_params", "eband", "teb"]
+        controllers = ["baseLocalPlanner", "dwa","custom_dwa", "eband", "teb"]
         barrel_arrangements = [3,5,7]
 
-        for a in range(50):
+        for a in range(500):
             for num_barrels in barrel_arrangements:
                 for controller in controllers:
                     for repetition in range(1):

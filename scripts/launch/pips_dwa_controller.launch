@@ -14,18 +14,26 @@
   
   <arg name="display_type" default="xterm -e gdb --args"/>
 
+
       
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg display_type)" >
       <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/> 
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/> 
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
+
+      <param name="base_local_planner" value="pips_dwa_implementation/PipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg depth_image)" />
       <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg depth_info)" />
       <remap from="$(arg pips_namespace)/camera/rgb/image_raw" to="$(arg rgb_image_raw)" />
-      <param name="base_local_planner" value="pips_dwa_implementation/PipsDWAPlannerROS"/>
+
+
       <param name="controller_frequency" value="10"/>
 
   </node>
