@@ -2,8 +2,8 @@ clear; clc;
 %%Inputs%%
 numTestPerBarrel = 50;
 
-filename = 'out.csv';
-fp = importfile('out.csv');
+filename = 'output_10_26.csv';
+fp = importfile(filename);
 controller_names = unique(fp(:,1))';
 
 state_enums = unique(fp(:,6))';
