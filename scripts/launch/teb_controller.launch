@@ -1,15 +1,22 @@
 <launch>
   <rosparam command="delete" param="/move_base"/>
 
+  <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
+
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
-      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
-      <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
+
       <param name="controller_frequency" value="10.0" />
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+
+      <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+      <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
   </node>
 
 

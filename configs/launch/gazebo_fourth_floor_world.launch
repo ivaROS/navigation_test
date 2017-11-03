@@ -108,7 +108,7 @@
     <param name="update_freq" value="1.0"/>
   </node>
   -->
-<!--
+
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
--->
+
 </launch>
