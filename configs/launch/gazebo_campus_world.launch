@@ -23,7 +23,7 @@
            rendering, but instead enables recording). The arg definition has been left here to prevent breaking downstream
            launch files, but it does nothing. -->
       <arg name="headless" default="false"/>
-      <arg name="debug" default="true"/>
+      <arg name="debug" default="false"/>
       <arg name="physics" default="ode"/>
       <arg name="verbose" default="false"/>
       <arg name="respawn_gazebo" default="false"/>

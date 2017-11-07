@@ -2,7 +2,7 @@ clear; clc;
 %%Inputs%%
 numTestPerBarrel = 50;
 
-filename = 'output_10_26.csv';
+filename = '/home/justin/Documents/gazebo_results_2017-11-06 19:55:13.337258';
 fp = importfile(filename);
 controller_names = unique(fp(:,1))';
 

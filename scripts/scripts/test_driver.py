@@ -130,7 +130,7 @@ def run_test(goal_pose):
     print "returning state number"
     #return client.get_state() == 3
     if client.get_state() == GoalStatus.SUCCEEDED:
-        return "SUCCEEDED"
+        return {'result':"SUCCEEDED", 'time': str(rospy.Time.now() - start_time) }
     elif client.get_state() == GoalStatus.ABORTED:
         return "ABORTED"
     elif client.get_state() == GoalStatus.LOST:

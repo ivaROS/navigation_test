@@ -34,6 +34,15 @@ def groupResults(result_list, grouping_fields):
     return scenarios
 
 
+def computeStatistics(results,case):
+    if isinstance(results, dict):
+        for key in results:
+            new_case = case + ":" + str(key)
+            computeStatistics(results[key], new_case)
+    else:
+         print case + str(len(results))
+
+
 class ResultAnalyzer:
 
 
@@ -52,6 +61,7 @@ class ResultAnalyzer:
     # go through all results, if level = "result", get len of dict and add to scenario/num_barrel/controller/result field
     def computeStatistics(self, grouping_fields):
         grouped_results = self.groupResults(grouping_fields=grouping_fields)
+        computeStatistics(grouped_results,"")
 
 
     def __init__(self):

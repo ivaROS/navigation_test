@@ -102,6 +102,7 @@
   <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/rectangular_room.yaml" required="true"/>
 
   <node name="map_to_odom" pkg="tf" type="static_transform_publisher"
-      args="2 3 0 3.14 0 0 map odom 10" required="true" />
+      args="2 3 0 3.14 0 0 map odom 10" required="true" /> 
+  <!--<node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>-->
 
 </launch>

@@ -57,7 +57,7 @@ class MultiMasterCoordinator:
 
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
-        self.fieldnames.extend(["pid","result"])
+        self.fieldnames.extend(["pid","result","time"])
 
 
     def start(self):
@@ -127,7 +127,7 @@ class MultiMasterCoordinator:
                     #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                     queue.task_done()
                 except Queue.Empty, e:
-                    print "No results!"
+                    #print "No results!"
                     time.sleep(1)
 
     def signal_shutdown(self,signum,frame):
@@ -160,30 +160,8 @@ class MultiMasterCoordinator:
 
 
     #This list should be elsewhere, possibly in the configs package
-    def addAllTasks(self):
-        controllers = ["eband", "dwa"]
-        barrel_arrangements = [3,5,7]
-
-        for controller in controllers:
-            for num_barrels in barrel_arrangements:
-                for a in range(10):
-                    for repetition in range(3):
-                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
-                        self.task_queue.put(task)
-
     def addTasks1(self):
-        controllers = ["eband"]
-        barrel_arrangements = [3]
-
-        for controller in controllers:
-            for num_barrels in barrel_arrangements:
-                for a in range(10):
-                    for repetition in range(1):
-                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a, 'repetition': repetition}
-                        self.task_queue.put(task)
-
-    def addTasks(self):
-        controllers = ["baseLocalPlanner", "dwa","custom_dwa", "eband", "teb"]
+        controllers = ["dwa","custom_dwa", "pips_dwa", "eband", "teb"]
         barrel_arrangements = [3,5,7]
 
         for a in range(500):
@@ -192,6 +170,28 @@ class MultiMasterCoordinator:
                     for repetition in range(1):
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
+
+    def addTasks3(self):
+        controllers = ["pips_dwa", "octo_dwa", "teb"]
+        barrel_arrangements = [3,5,7]
+
+        for a in range(100):
+            for num_barrels in barrel_arrangements:
+                for controller in controllers:
+                    for repetition in range(1):
+                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+
+    def addTasks2(self):
+        task = {'scenario': 'trashcans', 'num_barrels': 7, 'controller': 'pips_dwa', 'seed': 29}
+        for _ in range(50):
+            self.task_queue.put(task)
+
+    def addTasks(self):
+        task = {'scenario': 'trashcans', 'num_barrels': 7, 'controller': 'pips_dwa', 'seed': 29}
+        for _ in range(50):
+            self.task_queue.put(task)
+
 
 class GazeboMaster(mp.Process):
     def __init__(self, task_queue, result_queue, kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
@@ -291,7 +291,10 @@ class GazeboMaster(mp.Process):
                 else:
                     result = "bad_task"
 
-                task["result"] = result
+                if isinstance(result, dict):
+                    task.update(result)
+                else:
+                    task["result"] = result
                 task["pid"] = os.getpid()
                 self.return_result(task)
 

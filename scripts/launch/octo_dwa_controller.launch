@@ -1,0 +1,31 @@
+<launch>
+  <arg name="gazebo" default="true"/>
+
+  <arg name="gazebo_point_cloud" default="/camera/depth/points"/>
+  
+  <arg name="point_cloud_topic" value="$(arg gazebo_point_cloud)" if="$(arg gazebo)"/>
+  <arg name="point_clouds" default="$(arg point_cloud_topic)"/>
+
+
+  <arg name="debug" default="false"/>
+  <arg name="display_type" value="xterm -e gdb --args" if="$(arg debug)"/>
+  <arg name="display_type" value="" unless="$(arg debug)"/>
+
+      
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg display_type)">
+      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/> 
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
+
+      <param name="base_local_planner" value="octo_dwa_implementation/PipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+
+      <param name="controller_frequency" value="10"/>
+
+      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
+      <remap from="/sparse_points2" to="$(arg point_clouds)" />
+  </node>
+</launch>
