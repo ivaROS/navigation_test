@@ -46,7 +46,7 @@ class MultiMasterCoordinator:
         self.children_shutdown = mp.Value(c_bool, False)
         self.should_shutdown = False
 
-        self.num_masters = 8
+        self.num_masters = 1
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
@@ -178,18 +178,18 @@ class MultiMasterCoordinator:
         for a in range(100):
             for num_barrels in barrel_arrangements:
                 for controller in controllers:
-                    for repetition in range(1):
+                    for repetition in range(4):
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
 
-    def addTasks2(self):
-        task = {'scenario': 'trashcans', 'num_barrels': 7, 'controller': 'pips_dwa', 'seed': 29}
-        for _ in range(50):
+    def addTasks3(self):
+        task = {'scenario': 'trashcans', 'num_barrels': 3, 'controller': 'octo_dwa', 'seed': 54}
+        for _ in range(5):
             self.task_queue.put(task)
 
     def addTasks(self):
-        task = {'scenario': 'trashcans', 'num_barrels': 7, 'controller': 'pips_dwa', 'seed': 29}
-        for _ in range(50):
+        task = {'scenario': 'trashcans', 'num_barrels': 3, 'controller': 'octo_dwa', 'seed': 25}
+        for _ in range(5):
             self.task_queue.put(task)
 
 

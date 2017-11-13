@@ -26,6 +26,6 @@
       <param name="controller_frequency" value="10"/>
 
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
-      <remap from="/sparse_points2" to="$(arg point_clouds)" />
+      <remap from="/points" to="$(arg point_clouds)" />
   </node>
 </launch>

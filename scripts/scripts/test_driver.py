@@ -109,7 +109,7 @@ def run_test(goal_pose):
         elif bumper_checker.collided:
             keep_waiting = False
             return "BUMPER_COLLISION"
-        elif (rospy.Time.now() - start_time > rospy.Duration(45)):
+        elif (rospy.Time.now() - start_time > rospy.Duration(90)):
             keep_waiting = False
             return "TIMED_OUT"
         else:
