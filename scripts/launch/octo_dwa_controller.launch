@@ -1,10 +1,17 @@
 <launch>
   <arg name="gazebo" default="true"/>
+  <arg name="decimate" default="false"/>
 
   <arg name="gazebo_point_cloud" default="/camera/depth/points"/>
+  <arg name="gazebo_point_cloud_decimated" default="/camera/depth_decimated/points"/>
   
-  <arg name="point_cloud_topic" value="$(arg gazebo_point_cloud)" if="$(arg gazebo)"/>
+  <arg name="point_cloud_topic" value="$(arg gazebo_point_cloud)"  unless="$(arg decimate)"/>
+  <arg name="point_cloud_topic" value="$(arg gazebo_point_cloud_decimated)" if="$(arg decimate)"/>
   <arg name="point_clouds" default="$(arg point_cloud_topic)"/>
+
+  <include file="$(find octo_dwa_implementation)/launch/point_cloud_decimator.launch" if="$(arg decimate)">
+    <arg name="decimated_points" value="$(arg point_cloud_topic)"/>
+  </include>
 
 
   <arg name="debug" default="false"/>
