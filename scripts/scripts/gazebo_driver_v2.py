@@ -50,21 +50,37 @@ def load_model_xml(filename):
 
 class GazeboDriver():
   # Copied from pips_test: gazebo_driver.py
-  def barrel_points(self,xmin, ymin, xmax, ymax, grid_size, num_barrels):
-    # Get a dense grid of points
-    points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
-    points = points.swapaxes(0, 2)
-    points = points.reshape(points.size / 2, 2)
+  def barrel_points(self,xmins, ymins, xmaxs, ymaxs, grid_size, num_barrels):
+
+    allpoints = None
+    for region_ind in xrange(len(xmins)):
+      xmin,ymin,xmax,ymax = xmins[region_ind], ymins[region_ind], xmaxs[region_ind], ymaxs[region_ind]
+
+
+      # Get a dense grid of points
+      points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
+
+      #print points
+      if allpoints is None:
+        allpoints = points
+      else:
+        allpoints = np.concatenate((allpoints, points), axis=1)
+
+    allpoints = allpoints.swapaxes(0, 2)
+    allpoints = allpoints.reshape(allpoints.size / 2, 2)
+    print allpoints
+
+
 
     # Choose random indexes
-    idx = self.random.sample(range(points.shape[0]), num_barrels)
+    idx = self.random.sample(range(allpoints.shape[0]), min(num_barrels,allpoints.size / 2))
     print idx
 
     # Generate offsets
     off = self.nprandom.rand(num_barrels, 2) * grid_size / 2.0
 
     # Compute barrel points
-    barrels = points[idx] + off
+    barrels = allpoints[idx] + off
 
     for barrel in barrels:
       yield barrel
@@ -241,10 +257,10 @@ class GazeboDriver():
 
     self.queue_size = 50
     self.num_barrels = 3
-    self.minx = -3.5
-    self.maxx = 0.5
-    self.miny = 1.0
-    self.maxy = 5.0
+    self.minx = [-3.5, -7.0]
+    self.maxx = [0.5,-4.5]
+    self.miny = [1.0, 1.0]
+    self.maxy = [5.0, 5.0]
     self.grid_spacing = 1.0
     
     self.service_timeout = 2.0
