@@ -56,18 +56,19 @@ class GazeboDriver():
     for region_ind in xrange(len(xmins)):
       xmin,ymin,xmax,ymax = xmins[region_ind], ymins[region_ind], xmaxs[region_ind], ymaxs[region_ind]
 
+      print str(xmin) + ", " + str(ymin) + ", " + str(xmax) + ", " + str(ymax)
 
       # Get a dense grid of points
       points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
+      points = points.swapaxes(0,2)
+      points = points.reshape(points.size/2,2)
 
       #print points
       if allpoints is None:
         allpoints = points
       else:
-        allpoints = np.concatenate((allpoints, points), axis=1)
+        allpoints = np.concatenate((allpoints, points), axis=0)
 
-    allpoints = allpoints.swapaxes(0, 2)
-    allpoints = allpoints.reshape(allpoints.size / 2, 2)
     print allpoints
 
 
@@ -187,12 +188,20 @@ class GazeboDriver():
       if not self.setPose(name, pose):
 	    self.spawn_barrel(name, pose)
 	
-  def moveBarrels(self,n):
+  def moveBarrels(self,n,minx=None,miny=None,maxx=None,maxy=None,grid_spacing=None):
     self.poses = []
+
+    minx=self.minx if minx is None else minx
+    maxx=self.maxx if maxx is None else maxx
+    miny=self.miny if miny is None else miny
+    maxy=self.maxy if maxy is None else maxy
+    grid_spacing=self.grid_spacing if grid_spacing is None else grid_spacing
+
+
 
     barrel_names = [name for name in self.models.name if  "barrel" in name]
 
-    for i, xy in enumerate(self.barrel_points(self.minx,self.miny,self.maxx,self.maxy,self.grid_spacing, n)):
+    for i, xy in enumerate(self.barrel_points(xmins=minx,ymins=miny,xmaxs=maxx,ymaxs=maxy,grid_size=grid_spacing, num_barrels=n)):
       #print i, xy
       name = "barrel{}".format(i)
       #print name
@@ -257,10 +266,10 @@ class GazeboDriver():
 
     self.queue_size = 50
     self.num_barrels = 3
-    self.minx = [-3.5, -7.0]
-    self.maxx = [0.5,-4.5]
-    self.miny = [1.0, 1.0]
-    self.maxy = [5.0, 5.0]
+    self.minx = [-3.5]
+    self.maxx = [0.5]
+    self.miny = [1.0]
+    self.maxy = [5.0]
     self.grid_spacing = 1.0
     
     self.service_timeout = 2.0

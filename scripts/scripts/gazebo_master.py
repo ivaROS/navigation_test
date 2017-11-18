@@ -188,8 +188,9 @@ class MultiMasterCoordinator:
             self.task_queue.put(task)
 
     def addTasks(self):
-        task = {'scenario': 'trashcans', 'num_barrels': 3, 'controller': 'octo_dwa', 'seed': 25}
-        for _ in range(5):
+        for i in range(5):
+            task = {'scenario': 'campus', 'num_barrels': 20, 'controller': 'pips_dwa', 'seed': 25+ i}
+
             self.task_queue.put(task)
 
 

@@ -1,6 +1,7 @@
 import rospkg
 from gazebo_driver_v2 import GazeboDriver
 from geometry_msgs.msg import Pose, PoseStamped
+import numpy as np
 
 class TestingScenarios:
     def __init__(self):
@@ -13,6 +14,8 @@ class TestingScenarios:
                 return TrashCanScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "fourth_floor":
                 return FourthFloorScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "campus":
+                return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -44,7 +47,7 @@ class TestingScenario:
     def getGazeboLaunchFile(self):
         rospack = rospkg.RosPack()
         path = rospack.get_path("nav_configs")
-        return path + "/launch/gazebo_" + self.world + "_world_shallow.launch"
+        return path + "/launch/gazebo_" + self.world + "_world.launch"
 
     def getStartingPose(self):
         return self.init_pose
@@ -103,6 +106,71 @@ class TrashCanScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels)
+        self.gazebo_driver.unpause()
+
+
+
+class CampusScenario(TestingScenario):
+    def __init__(self, task, gazebo_driver):
+        self.gazebo_driver = gazebo_driver
+
+        self.world = "campus"
+
+        self.seed = task["seed"] if "seed" in task else 0
+        self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
+
+
+        self.init_pose = Pose()
+        self.init_pose.position.x = -12
+        self.init_pose.position.y = 4
+        self.init_pose.orientation.x = 0
+        self.init_pose.orientation.y = 0
+        self.init_pose.orientation.z = 0
+        self.init_pose.orientation.w = 1
+
+        self.target_pose = PoseStamped()
+        self.target_pose.pose.position.x = 4
+        self.target_pose.pose.position.y = 16
+        self.target_pose.pose.orientation.x = 0.0
+        self.target_pose.pose.orientation.y = 0.0
+        self.target_pose.pose.orientation.z = 0.0
+        self.target_pose.pose.orientation.w = 1.0
+        self.target_pose.header.frame_id = 'map'
+
+        Zone1= [[-14.21, 9.98],[-5, 6]]
+        Zone2= [[-6.1, 15.5],[0.05, 12.96]]
+        Zone3= [[-4.61, 7.75],[-0.97, 5.08]]
+        Zone4= [[-3.64, 3.53],[-0.96, 1.707]]
+        Zone5= [[-3.96, 0.68],[-1, -1]]
+        Zone6= [[-5, -2],[0, -5]]
+        Zone7= [[-9.77, -5.18],[-5.46, -7.01]]
+        Zone8= [[-10.95, -0.85],[-8.59, -1.54]]
+        Zone9= [[9.49, 4],[13.45, -6.83]]
+        Zone10= [[0.64, -5.94],[6, -11.27]]
+        Zone11= [[3.61, 2.76],[7, 0]]
+        Zone12= [[0.61, -0.25],[3.94, -2.07]]
+        Zone13= [[0.34, 12.13],[11.65, 10.65]]
+
+        zones = [Zone1,Zone2,Zone3,Zone4,Zone5,Zone6,Zone7,Zone8,Zone9,Zone10,Zone11,Zone12,Zone13]
+
+        zones = np.swapaxes(zones,0,2)
+        self.minx = zones[0][0]
+        self.maxx = zones[0][1]
+        self.maxy = zones[1][0]
+        self.miny = zones[1][1]
+        pass
+
+    @staticmethod
+    def getUniqueFieldNames():
+        return ["num_barrels", "seed"]
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.init_pose)
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy)
         self.gazebo_driver.unpause()
 
 
