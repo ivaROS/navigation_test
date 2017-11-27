@@ -1,7 +1,9 @@
 import rospkg
 from gazebo_driver_v2 import GazeboDriver
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import numpy as np
+import random
+import tf
 
 class TestingScenarios:
     def __init__(self):
@@ -26,7 +28,7 @@ class TestingScenarios:
 
     @staticmethod
     def getScenarioTypes():
-        scenarios = [TrashCanScenario]
+        scenarios = [TrashCanScenario, CampusScenario]
         return scenarios
 
 
@@ -119,6 +121,13 @@ class CampusScenario(TestingScenario):
         self.seed = task["seed"] if "seed" in task else 0
         self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
 
+        self.init_id = task["init_id"] if "init_id" in task else 0
+
+        self.target_id = task["target_id"] if "target_id" in task else 0
+
+
+        self.random = random.Random()
+        self.random.seed(self.seed)
 
         self.init_pose = Pose()
         self.init_pose.position.x = -12
@@ -127,6 +136,9 @@ class CampusScenario(TestingScenario):
         self.init_pose.orientation.y = 0
         self.init_pose.orientation.z = 0
         self.init_pose.orientation.w = 1
+
+        self.target_poses = [[-12,4,1.57], [13,-10,1.57], [13,9.4,1.57], [-5.15,-9.25,1.57], [-13.5,15.25,0], [5.5,6.5,-1.57], [1.5,2,-1.57]]
+        self.init_poses = [[-13,.5,1.57]]
 
         self.target_pose = PoseStamped()
         self.target_pose.pose.position.x = 4
@@ -138,7 +150,7 @@ class CampusScenario(TestingScenario):
         self.target_pose.header.frame_id = 'map'
 
         Zone1= [[-14.21, 9.98],[-5, 6]]
-        Zone2= [[-6.1, 15.5],[0.05, 12.96]]
+        Zone2= [[-6.1, 15.5],[-0.2, 12.96]]
         Zone3= [[-4.61, 7.75],[-0.97, 5.08]]
         Zone4= [[-3.64, 3.53],[-0.96, 1.707]]
         Zone5= [[-3.96, 0.68],[-1, -1]]
@@ -162,7 +174,33 @@ class CampusScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed"]
+        return ["num_barrels", "seed", "target_id", "init_id"]
+
+    def getPoseMsg(self, pose):
+        pose_msg = Pose()
+        pose_msg.position.x = pose[0]
+        pose_msg.position.y = pose[1]
+
+        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+        # msg = Quaternion(*q)
+
+        pose_msg.orientation = Quaternion(*q)
+
+        return pose_msg
+
+    def getStartingPose(self):
+        pose = self.init_poses[self.init_id]
+        init_pose = self.getPoseMsg(pose=pose)
+
+        return init_pose
+
+    def getGoal(self):
+        pose = self.target_poses[self.target_id]
+        init_pose = self.getPoseMsg(pose=pose)
+        pose_stamped = PoseStamped()
+        pose_stamped.pose = init_pose
+        pose_stamped.header.frame_id="map"
+        return pose_stamped
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)

@@ -3,8 +3,13 @@
 
 
 <!-- rosservice call /rtabmap/reset_odom "{}" -->
-
+<!--
 <arg name="bag_files" value=" /media/justin/data/justin/bag_files/jin_hall_mapping/empty_corridor_to_old_lab_space.bag /media/justin/data/justin/bag_files/jin_hall_mapping/empty_corridor_to_old_lab_space_2.bag /media/justin/data/justin/bag_files/jin_hall_mapping/corridor_more_conservative.bag /media/justin/data/justin/bag_files/jin_hall_mapping/corridor_less_conservative.bag /media/justin/data/justin/bag_files/jin_hall_mapping/old_to_new_less_objects.bag /media/justin/data/justin/bag_files/jin_hall_mapping/old_to_new_1.bag /media/justin/data/justin/bag_files/jin_hall_mapping/old_to_new_2.bag " />
+-->
+
+<arg name="bag_files" value="/media/justin/data/real_testing/test_1/test_1.bag /media/justin/data/real_testing/test_1/test_2.bag /media/justin/data/real_testing/test_1/test_3.bag /media/justin/data/real_testing/test_1/test_4.bag /media/justin/data/real_testing/test_1/test_5.bag /media/justin/data/real_testing/test_1/test_6.bag /media/justin/data/real_testing/test_1/test_7.bag /media/justin/data/real_testing/test_1/test_8.bag /media/justin/data/real_testing/test_1/test_9.bag /media/justin/data/real_testing/test_1/test_10.bag  "/>
+
+<!-- /media/justin/data/real_testing/test_2/test_1.bag /media/justin/data/real_testing/test_2/test_2.bag /media/justin/data/real_testing/test_2/test_3.bag /media/justin/data/real_testing/test_2/test_4.bag /media/justin/data/real_testing/test_2/test_5.bag /media/justin/data/real_testing/test_2/test_6.bag /media/justin/data/real_testing/test_2/test_7.bag /media/justin/data/real_testing/test_2/test_8.bag /media/justin/data/real_testing/test_2/test_9.bag /media/justin/data/real_testing/test_2/test_10.bag -->
 
 
 <!-- rosrun image_view image_view image:=/camera/rgb/image_color -->

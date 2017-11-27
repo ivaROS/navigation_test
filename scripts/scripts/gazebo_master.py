@@ -46,7 +46,7 @@ class MultiMasterCoordinator:
         self.children_shutdown = mp.Value(c_bool, False)
         self.should_shutdown = False
 
-        self.num_masters = 1
+        self.num_masters = 8
         self.task_queue_capacity = 20 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 20 #*self.num_masters
@@ -188,10 +188,15 @@ class MultiMasterCoordinator:
             self.task_queue.put(task)
 
     def addTasks(self):
-        for i in range(5):
-            task = {'scenario': 'campus', 'num_barrels': 20, 'controller': 'pips_dwa', 'seed': 25+ i}
+        controllers = ["pips_dwa", "octo_dwa", "teb"]
 
-            self.task_queue.put(task)
+        for i in range(1):
+            for j in range(7):
+                for controller in controllers:
+
+                    task = {'scenario': 'campus', 'num_barrels': 20, 'controller': controller, 'seed': 25+ i, 'target_id': j}
+
+                    self.task_queue.put(task)
 
 
 class GazeboMaster(mp.Process):

@@ -16,7 +16,7 @@
 
 
       
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" >
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" >
       <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
     <!--  <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/> -->
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/> 

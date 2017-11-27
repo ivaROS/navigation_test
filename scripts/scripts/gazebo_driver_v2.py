@@ -56,7 +56,7 @@ class GazeboDriver():
     for region_ind in xrange(len(xmins)):
       xmin,ymin,xmax,ymax = xmins[region_ind], ymins[region_ind], xmaxs[region_ind], ymaxs[region_ind]
 
-      print str(xmin) + ", " + str(ymin) + ", " + str(xmax) + ", " + str(ymax)
+      #print str(xmin) + ", " + str(ymin) + ", " + str(xmax) + ", " + str(ymax)
 
       # Get a dense grid of points
       points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
@@ -69,7 +69,7 @@ class GazeboDriver():
       else:
         allpoints = np.concatenate((allpoints, points), axis=0)
 
-    print allpoints
+    #print allpoints
 
 
 
