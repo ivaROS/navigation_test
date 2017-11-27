@@ -1,0 +1,27 @@
+<launch>
+
+
+
+<!-- rosservice call /rtabmap/reset_odom "{}" -->
+
+<arg name="bag_files" value=" /media/justin/data/justin/bag_files/jin_hall_mapping/empty_corridor_to_old_lab_space.bag /media/justin/data/justin/bag_files/jin_hall_mapping/empty_corridor_to_old_lab_space_2.bag /media/justin/data/justin/bag_files/jin_hall_mapping/corridor_more_conservative.bag /media/justin/data/justin/bag_files/jin_hall_mapping/corridor_less_conservative.bag /media/justin/data/justin/bag_files/jin_hall_mapping/old_to_new_less_objects.bag /media/justin/data/justin/bag_files/jin_hall_mapping/old_to_new_1.bag /media/justin/data/justin/bag_files/jin_hall_mapping/old_to_new_2.bag " />
+
+
+<!-- rosrun image_view image_view image:=/camera/rgb/image_color -->
+
+
+<include file="$(find freenect_launch)/launch/freenect.launch" >
+  <arg name="load_driver" value="false"/>
+  <arg name="publish_tf" value="false"/>
+ <!-- <remap from="/camera/depth/image_raw" to="/camera/depth/image"/> -->
+</include>
+
+<node name="rtabmap_odom_resetter" pkg="nav_scripts" type="rtabmap_odom_resetter.py" />
+
+
+<node name="bag_player" pkg="rosbag" type="play" args="$(arg bag_files) --clock --pause --skip-empty=1 -r .5  ">
+  <remap from="/camera/depth/image" to="/camera/depth/image_raw"/>
+  <remap from="/camera/rgb/image_color" to="/camera/rgb/image_raw"/>
+</node>
+
+</launch>

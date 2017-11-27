@@ -1,0 +1,16 @@
+<launch>
+  <param name="use_sim_time" type="bool" value="True"/>
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+    <arg name="rgb_topic" value="/camera/rgb/image_rect_color"/>
+    <arg name="depth_topic" value="/camera/depth_registered/sw_registered/image_rect"/>
+    <arg name="camera_info_topic" value="/camera/rgb/camera_info"/>
+    <arg name="frame_id" value="base_footprint"/>
+    <arg name="args" value="delete_db_on_start" />
+    <arg name="database_path" value="~/.ros/rtabmap_rosbag4.db" />
+    <arg name="cfg" value="$(find nav_scripts)/data/offline2.ini"/>
+  </include>  
+
+
+  
+
+</launch>
