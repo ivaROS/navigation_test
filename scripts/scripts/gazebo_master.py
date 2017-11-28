@@ -121,6 +121,7 @@ class MultiMasterCoordinator:
                     if "error" not in task:
                         self.result_list.append(result_string)
                         datawriter.writerow(task)
+                        csvfile.flush()
                     else:
                         del task["error"]
                         self.task_queue.put(task)
