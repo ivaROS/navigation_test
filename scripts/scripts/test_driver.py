@@ -8,7 +8,8 @@ import tf
 from actionlib_msgs.msg import GoalStatus
 from nav_msgs.msg import Odometry
 from kobuki_msgs.msg import BumperEvent
-
+import tf2_ros
+import math
 
 
 class BumperChecker:
@@ -19,6 +20,46 @@ class BumperChecker:
     def bumperCB(self,data):
         if data.state == BumperEvent.PRESSED:
             self.collided = True
+
+class OdomChecker:
+    def __init__(self):
+        self.tfBuffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tfBuffer)
+        self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
+        self.not_moving = False
+        self.collided = False
+
+    def checkOdom(self, event=None):
+        try:
+            now = rospy.Time.now()
+            past = now - rospy.Duration(5.0)
+            trans = self.tfBuffer.lookup_transform_full(
+                target_frame='odom',
+                target_time=rospy.Time.now(),
+                source_frame='base_footprint',
+                source_time=past,
+                fixed_frame='odom',
+                timeout=rospy.Duration(1.0)
+            )
+            if(math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y) < .05):
+                self.not_moving = True
+
+            past = now - rospy.Duration(1.0)
+            trans = self.tfBuffer.lookup_transform_full(
+                target_frame='map',
+                target_time=now,
+                source_frame='odom',
+                source_time=past,
+                fixed_frame='map',
+                timeout=rospy.Duration(1.0)
+            )
+            if(math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y) >.1):
+                self.collided = True
+
+
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            raise
+
 
 
 
@@ -82,6 +123,8 @@ def run_test(goal_pose):
 
     # Action client for sending position commands
     bumper_checker = BumperChecker()
+    odom_checker = OdomChecker()
+
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print "waiting for server"
     client.wait_for_server()
@@ -109,7 +152,13 @@ def run_test(goal_pose):
         elif bumper_checker.collided:
             keep_waiting = False
             return "BUMPER_COLLISION"
-        elif (rospy.Time.now() - start_time > rospy.Duration(90)):
+        elif odom_checker.collided:
+            keep_waiting = False
+            return "OTHER_COLLISION"
+        elif odom_checker.not_moving:
+            keep_waiting = False
+            return "STUCK"
+        elif (rospy.Time.now() - start_time > rospy.Duration(300)):
             keep_waiting = False
             return "TIMED_OUT"
         else:

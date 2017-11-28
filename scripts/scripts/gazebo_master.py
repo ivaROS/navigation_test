@@ -44,12 +44,14 @@ class MultiMasterCoordinator:
         signal.signal(signal.SIGINT, self.signal_shutdown)
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.children_shutdown = mp.Value(c_bool, False)
+        self.soft_shutdown = mp.Value(c_bool, False)
+
         self.should_shutdown = False
 
-        self.num_masters = 8
-        self.task_queue_capacity = 20 #2*self.num_masters
+        self.num_masters = 6
+        self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
-        self.result_queue_capacity = 20 #*self.num_masters
+        self.result_queue_capacity = 2000 #*self.num_masters
         self.result_queue = mp.JoinableQueue(maxsize=self.result_queue_capacity)
         self.gazebo_masters = []
         self.result_list = []
@@ -84,7 +86,7 @@ class MultiMasterCoordinator:
         while port_in_use(self.gazebo_port):
             self.gazebo_port += 1
 
-        gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.children_shutdown, self.ros_port,
+        gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.children_shutdown, self.soft_shutdown, self.ros_port,
                                      self.gazebo_port, gazebo_launch_mutex=self.gazebo_launch_mutex)
         gazebo_master.start()
         self.gazebo_masters.append(gazebo_master)
@@ -104,7 +106,7 @@ class MultiMasterCoordinator:
             datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames, restval='', extrasaction='ignore')
             datawriter.writeheader()
 
-            while not self.should_shutdown:
+            while not self.should_shutdown: #This means that results stop getting saved to file as soon as I try to kill it
                 try:
                     task = queue.get(block=False)
 
@@ -151,6 +153,10 @@ class MultiMasterCoordinator:
         print "Waiting until everything done!"
         self.task_queue.join()
         print "All tasks processed!"
+        with self.soft_shutdown.get_lock():
+            self.soft_shutdown.value = True
+
+        #The problem is that this won't happen if I end prematurely...
         self.result_queue.join()
         print "All results processed!"
 
@@ -190,8 +196,8 @@ class MultiMasterCoordinator:
     def addTasks(self):
         controllers = ["pips_dwa", "octo_dwa", "teb"]
 
-        for i in range(1):
-            for j in range(7):
+        for i in range(2,100):
+            for j in range(7): #[1,2,5,6]:
                 for controller in controllers:
 
                     task = {'scenario': 'campus', 'num_barrels': 20, 'controller': controller, 'seed': 25+ i, 'target_id': j}
@@ -200,7 +206,7 @@ class MultiMasterCoordinator:
 
 
 class GazeboMaster(mp.Process):
-    def __init__(self, task_queue, result_queue, kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
+    def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
         super(GazeboMaster, self).__init__()
         self.daemon = False
 
@@ -215,6 +221,7 @@ class GazeboMaster(mp.Process):
         self.gazebo_driver = None
         self.current_world = None
         self.kill_flag = kill_flag
+        self.soft_kill_flag = soft_kill_flag
         self.is_shutdown = False
         self.had_error = False
 
@@ -243,6 +250,7 @@ class GazeboMaster(mp.Process):
             time.sleep(5)
             if not self.is_shutdown:
                 print >> sys.stderr, "(Not) Relaunching on " + str(os.getpid()) + ", ROS_MASTER_URI=" + self.ros_master_uri
+        print "Run totally done"
 
     def process_tasks(self):
         self.roslaunch_core()
@@ -309,12 +317,18 @@ class GazeboMaster(mp.Process):
 
 
             except Queue.Empty, e:
+                with self.soft_kill_flag.get_lock():
+                    if self.soft_kill_flag.value:
+                        self.shutdown()
+                        print "Soft shutdown requested"
                 time.sleep(1)
+
 
             with self.kill_flag.get_lock():
                 if self.kill_flag.value:
                     self.shutdown()
 
+        print "Done with processing, killing launch files..."
         # It seems like killing the core should kill all of the nodes,
         # but it doesn't
         if self.gazebo_launch is not None:
@@ -327,6 +341,7 @@ class GazeboMaster(mp.Process):
         self.core.shutdown()
         #self.core.kill()
         #os.killpg(os.getpgid(self.core.pid), signal.SIGTERM)
+        print "All cleaned up"
 
 
     def start_core(self):

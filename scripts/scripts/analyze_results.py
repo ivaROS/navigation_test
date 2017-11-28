@@ -120,6 +120,7 @@ class ResultAnalyzer:
                     res.add(result_group[controller][0]["result"])  #Note: this is only valid if identical runs have same result
                     if scene is None:
                         scene = result_group[controller][0]['scenario'] + ":" + result_group[controller][0]['num_barrels'] + ":" + result_group[controller][0]['seed']
+                        scene = result_group[controller][0]
                 else:
                     if 'SUCCEEDED' not in result_group[controller][0]["result"]:
                         res.add('SUCCEEDED')
@@ -137,7 +138,7 @@ class ResultAnalyzer:
 
 if __name__ == "__main__":
 
-    filename = '/home/justin/Documents/gazebo_results_2017-11-27 16:03:22.005701'
+    filename = '/home/justin/Documents/gazebo_results_2017-11-27 16:57:34.029643'
     grouping_fields = ["scenario", "num_barrels", "seed", "target_id","controller", "result",]
 
     start_time = time.time()
