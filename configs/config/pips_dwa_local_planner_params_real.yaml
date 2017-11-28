@@ -9,7 +9,7 @@ PipsDWAPlannerROS:
     acc_limit_trans: 0.3
     max_scaling_factor: 0.2
     max_trans_vel: 0.8
-    max_vel_x: 0.5
+    max_vel_x: 0.3
     max_vel_y: 0
 
     max_rot_vel: 0.45
@@ -23,10 +23,10 @@ PipsDWAPlannerROS:
     use_dwa: true
     angular_sim_granularity: 0.1
     sim_granularity: 0.1 # 0.025
-    sim_time: 6    # 1.7
-    trajectory_following_time: 2
-    vth_samples: 5  # 20
-    vx_samples: 3
+    sim_time: 10    # 1.7
+    trajectory_following_time: 1
+    vth_samples: 10  # 20
+    vx_samples: 5
     vy_samples: 1  # 10
 
     # Stop params
@@ -51,3 +51,5 @@ PipsDWAPlannerROS:
     isDataRecord: 0
     visualize: true
     realDemo: true
+    distance_treshold: 2.0
+    robot_radius: 0.22
