@@ -3,16 +3,16 @@ PipsDWAPlannerROS:
     publish_traj_pc: true
 
     # Limits
-    acc_lim_theta: 3.2 # 3.2
+    acc_lim_theta: 1.6 # 3.2
     acc_lim_x: 2.5
     acc_lim_y: 2.5
     acc_limit_trans: 0.3
     max_scaling_factor: 0.2
     max_trans_vel: 0.8
-    max_vel_x: 0.3
+    max_vel_x: 0.5
     max_vel_y: 0
 
-    max_rot_vel: 0.45
+    max_rot_vel: 0.3
     min_rot_vel: 0.1
 
     min_trans_vel: 0.1
@@ -23,10 +23,10 @@ PipsDWAPlannerROS:
     use_dwa: true
     angular_sim_granularity: 0.1
     sim_granularity: 0.1 # 0.025
-    sim_time: 10    # 1.7
-    trajectory_following_time: 1
+    sim_time: 8    # 1.7
+    trajectory_following_time: 4
     vth_samples: 10  # 20
-    vx_samples: 5
+    vx_samples: 20
     vy_samples: 1  # 10
 
     # Stop params
@@ -35,7 +35,7 @@ PipsDWAPlannerROS:
     rot_stopped_vel: 0.1
     stop_time_buffer: 0.2
     trans_stopped_vel: 0.1
-    xy_goal_tolerance: .8
+    xy_goal_tolerance: 1.5
     yaw_goal_tolerance: 1.57
 
 
@@ -51,5 +51,3 @@ PipsDWAPlannerROS:
     isDataRecord: 0
     visualize: true
     realDemo: true
-    distance_treshold: 2.0
-    robot_radius: 0.22
