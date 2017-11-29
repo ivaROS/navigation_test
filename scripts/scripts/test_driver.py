@@ -25,12 +25,13 @@ class OdomChecker:
     def __init__(self):
         self.tfBuffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tfBuffer)
-        self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
+        #self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
         self.not_moving = False
         self.collided = False
 
     def checkOdom(self, event=None):
         try:
+            print "timer callback"
             now = rospy.Time.now()
             past = now - rospy.Duration(5.0)
             trans = self.tfBuffer.lookup_transform_full(
@@ -41,7 +42,10 @@ class OdomChecker:
                 fixed_frame='odom',
                 timeout=rospy.Duration(1.0)
             )
-            if(math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y) < .05):
+            print str(trans)
+            displacement = math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y)
+            print "Odom displacement: " + str(displacement)
+            if(displacement < .05):
                 self.not_moving = True
 
             past = now - rospy.Duration(1.0)
@@ -50,15 +54,19 @@ class OdomChecker:
                 target_time=now,
                 source_frame='odom',
                 source_time=past,
-                fixed_frame='map',
+                fixed_frame='odom',
                 timeout=rospy.Duration(1.0)
             )
-            if(math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y) >.1):
+            print str(trans)
+            displacement = math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y)
+            print "map displacement: " + str(displacement)
+            if(displacement >.1):
                 self.collided = True
 
 
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            raise
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException),e:
+            print e
+            pass
 
 
 
@@ -147,6 +155,7 @@ def run_test(goal_pose):
     keep_waiting = True
     while keep_waiting:
         state = client.get_state()
+        #print "State: " + str(state)
         if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
             keep_waiting = False
         elif bumper_checker.collided:
@@ -178,15 +187,16 @@ def run_test(goal_pose):
     print "done!"
     print "returning state number"
     #return client.get_state() == 3
-    if client.get_state() == GoalStatus.SUCCEEDED:
+    state = client.get_state()
+    if state == GoalStatus.SUCCEEDED:
         return {'result':"SUCCEEDED", 'time': str(rospy.Time.now() - start_time) }
-    elif client.get_state() == GoalStatus.ABORTED:
+    elif state == GoalStatus.ABORTED:
         return "ABORTED"
-    elif client.get_state() == GoalStatus.LOST:
+    elif state == GoalStatus.LOST:
         return "LOST"
-    elif client.get_state() == GoalStatus.REJECTED:
+    elif state == GoalStatus.REJECTED:
         return "REJECTED"
-    elif client.get_state() == GoalStatus.ACTIVE:
+    elif state == GoalStatus.ACTIVE:
         return "TIMED_OUT"
 
     else:

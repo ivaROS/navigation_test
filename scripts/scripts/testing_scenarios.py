@@ -93,8 +93,8 @@ class TrashCanScenario(TestingScenario):
         self.target_pose.pose.position.y = 3.0
         self.target_pose.pose.orientation.x = 0.0
         self.target_pose.pose.orientation.y = 0.0
-        self.target_pose.pose.orientation.z = 1.0
-        self.target_pose.pose.orientation.w = 0.0
+        self.target_pose.pose.orientation.z = 0
+        self.target_pose.pose.orientation.w = 1
         self.target_pose.header.frame_id = 'map'
 
     @staticmethod
@@ -138,7 +138,7 @@ class CampusScenario(TestingScenario):
         self.init_pose.orientation.w = 1
 
         self.target_poses = [[-12,4,1.57], [13,-10,1.57], [13,9.4,1.57], [-5.15,-9.25,1.57], [-13.5,15.25,0], [5.5,6.5,-1.57], [1.5,2,-1.57]]
-        self.init_poses = [[-13,.5,1.57]]
+        self.init_poses = [[-13,.5,0]]
 
         self.target_pose = PoseStamped()
         self.target_pose.pose.position.x = 4
@@ -161,7 +161,7 @@ class CampusScenario(TestingScenario):
         Zone10= [[0.64, -5.94],[6, -11.27]]
         Zone11= [[3.61, 2.76],[7, 0]]
         Zone12= [[0.61, -0.25],[3.94, -2.07]]
-        Zone13= [[0.34, 12.13],[11.65, 10.65]]
+        Zone13= [[0.34, 11.7],[11.65, 10.65]]
 
         zones = [Zone1,Zone2,Zone3,Zone4,Zone5,Zone6,Zone7,Zone8,Zone9,Zone10,Zone11,Zone12,Zone13]
 
@@ -205,7 +205,7 @@ class CampusScenario(TestingScenario):
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
         self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.init_pose)
+        self.gazebo_driver.moveRobot(self.getStartingPose())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy)

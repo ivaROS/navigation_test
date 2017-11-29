@@ -36,7 +36,7 @@ PipsDWAPlannerROS:
     stop_time_buffer: 0.2
     trans_stopped_vel: 0.1
     xy_goal_tolerance: .8
-    yaw_goal_tolerance: 1.57
+    yaw_goal_tolerance: 3.15
 
 
     # Cost function params

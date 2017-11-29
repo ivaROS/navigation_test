@@ -138,7 +138,7 @@ class ResultAnalyzer:
 
 if __name__ == "__main__":
 
-    filename = '/home/justin/Documents/gazebo_results_2017-11-27 16:57:34.029643'
+    filename = '/home/justin/Documents/gazebo_results_2017-11-28 19:25:30.108537'
     grouping_fields = ["scenario", "num_barrels", "seed", "target_id","controller", "result",]
 
     start_time = time.time()
@@ -149,11 +149,13 @@ if __name__ == "__main__":
     grouping_fields = ["scenario", "num_barrels", "controller", "result"]
     analyzer.computeStatistics(grouping_fields=grouping_fields)
 
-    grouping_fields = ["scenario", "num_barrels", "seed", "target_id", "controller"]
+    grouping_fields = ["scenario", "num_barrels", "controller", "result"]
     #analyzer.getDifferentiatingScenarios(grouping_fields=grouping_fields)
 
-    analyzer.getFailScenarios(grouping_fields=grouping_fields, controllers=["pips_dwa", "octo_dwa"])
+    #analyzer.getFailScenarios(grouping_fields=grouping_fields, controllers=["pips_dwa", "octo_dwa"])
 
-    analyzer.getFailScenarios(grouping_fields=grouping_fields)
+    #analyzer.getFailScenarios(grouping_fields=grouping_fields)
 
-    analyzer.getFailScenarios(grouping_fields=grouping_fields, controllers=["octo_dwa"])
+    #analyzer.getFailScenarios(grouping_fields=grouping_fields, controllers=["octo_dwa"])
+
+    analyzer.getFailScenarios(grouping_fields=grouping_fields, controllers=["pips_dwa"])

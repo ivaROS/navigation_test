@@ -215,6 +215,8 @@ class GazeboDriver():
       pose.orientation.w = 1
       
       self.poses.append(pose)
+
+      #print str(pose)
       
       if not self.setPose(name,pose):
         self.spawn_barrel(name, pose)
