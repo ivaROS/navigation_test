@@ -6,8 +6,9 @@
     <arg name="camera_info_topic" value="/camera/rgb/camera_info"/>
     <arg name="frame_id" value="base_footprint"/>
     <arg name="args" value="--delete_db_on_start" />
-    <arg name="database_path" value="~/.ros/rtabmap_test_1_0.db" />
-    <arg name="cfg" value="$(find nav_scripts)/data/offline3.ini"/>
+    <arg name="database_path" value="~/.ros/rtabmap_test_1_4_4.db" />
+    <arg name="cfg" value="$(find nav_scripts)/data/offline4.ini"/>
+    <arg name="visual_odometry" value="false"/>
   </include>  
 
 

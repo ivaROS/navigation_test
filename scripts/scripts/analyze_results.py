@@ -138,7 +138,7 @@ class ResultAnalyzer:
 
 if __name__ == "__main__":
 
-    filename = '/home/justin/Documents/gazebo_results_2017-11-28 19:25:30.108537'
+    filename = '/home/justin/Documents/gazebo_results_2017-11-29 19:41:30.871462'
     grouping_fields = ["scenario", "num_barrels", "seed", "target_id","controller", "result",]
 
     start_time = time.time()

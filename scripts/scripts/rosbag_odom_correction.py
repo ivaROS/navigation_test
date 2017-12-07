@@ -96,23 +96,25 @@ def transformFromRtab(pose):
 
     trans_mat = transformToMat(pose)
 
-    t1 = np.zeros(shape=(3,4))
+    t1 = np.zeros(shape=(4,4))
     t1[0,2] = 1
     t1[2, 0] = 1
     t1[1,1] = -1
+    t1[3,3] = 1
 
-    t2 = np.zeros(shape=(3,4))
+    t2 = np.zeros(shape=(4,4))
     t2[0,2] = 1
     t2[2, 1] = -1
     t2[1,0] = -1
+    t2[3,3] = 1
 
-    p1 = np.linalg.inv(t1).dot(trans_mat)
+    p1 = t1.dot(t2).dot(trans_mat).dot(np.linalg.inv(t2))
 
-    p2 = np.linalg.inv(t2).dot(p1).dot(t2)
-
-    trans = matToTransform(p2)
+    trans = matToTransform(p1)
     trans.header = pose.header
     trans.child_frame_id = pose.child_frame_id
+
+    print trans
 
     return trans
 
@@ -199,7 +201,7 @@ class OdometryCorrection:
         Tr_m.transform.translation.z = pose.pose.position.z
         Tr_m.transform.rotation = pose.pose.orientation
         Tr_m.header.stamp = pose.header.stamp
-        Tr_m.header.frame_id = self.rtab_robot_frame_id
+        Tr_m.header.frame_id = self.robot_frame_id
         Tr_m.child_frame_id = pose.header.frame_id
         return Tr_m
 
