@@ -33,7 +33,7 @@
       <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg depth_info)" />
       <remap from="$(arg pips_namespace)/camera/rgb/image_raw" to="$(arg rgb_image_raw)" />
 
-
+      <remap from="$(arg pips_namespace)/PipsDWAController/PipsCollisionChecker/collisions" to="/collisions"/>
       <param name="controller_frequency" value="10"/>
 
   </node>
