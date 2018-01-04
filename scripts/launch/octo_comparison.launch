@@ -1,0 +1,82 @@
+<launch>
+  <arg name="use_octo" default="false"/>
+  <arg name="gazebo" default="true"/>
+  <arg name="debug" default="false"/>
+  <arg name="decimate" default="true"/>
+
+  <arg name="gazebo_point_cloud" default="/camera/depth/points"/>
+  <arg name="gazebo_point_cloud_decimated" default="/camera/depth_decimated/points"/>
+  
+  <arg name="point_cloud_topic" value="$(arg gazebo_point_cloud)"  unless="$(arg decimate)"/>
+  <arg name="point_cloud_topic" value="$(arg gazebo_point_cloud_decimated)" if="$(arg decimate)"/>
+  <arg name="point_clouds" default="$(arg point_cloud_topic)"/>
+
+  <include file="$(find octo_dwa_implementation)/launch/point_cloud_decimator.launch" if="$(arg decimate)">
+    <arg name="decimated_points" value="$(arg point_cloud_topic)"/>
+  </include>
+
+
+
+  <arg name="display_type" value="xterm -e gdb --args" if="$(arg debug)"/>
+  <arg name="display_type" value="" unless="$(arg debug)"/>
+
+  <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
+  <arg name="depth_image_raw" default="/camera/depth/image_raw"/>
+  <arg name="depth_info_raw" default="/camera/depth/camera_info"/>
+  <arg name="rgb_image_raw" default="/camera/rgb/image_raw"/>
+  <arg name="map_name" default="$(find pips_dwa_implementation)/maps/empty_world.yaml"/>
+
+  <arg name="depth_image_topic" value="$(arg depth_image_raw)" if="$(arg gazebo)"/>
+  <arg name="depth_info_topic" value="$(arg depth_info_raw)" if="$(arg gazebo)"/>
+
+  <arg name="depth_image" default="$(arg depth_image_topic)"/>
+  <arg name="depth_info" default="$(arg depth_info_topic)"/>
+
+
+
+
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" >
+      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
+    <!--  <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/> -->
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
+
+      <param name="base_local_planner" value="pips_dwa_implementation/PipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+
+      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi" unless="$(arg use_octo)"/>
+      <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg depth_image)" />
+      <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg depth_info)" />
+      <remap from="$(arg pips_namespace)/camera/rgb/image_raw" to="$(arg rgb_image_raw)" />
+
+      <remap from="$(arg pips_namespace)/PipsDWAController/PipsCollisionChecker/collisions" to="/collisions"/>
+      <param name="controller_frequency" value="10"/>
+
+  </node>
+      
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base_octo" output="log" clear_params="true" launch-prefix="$(arg display_type)">
+      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/> 
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
+
+      <param name="base_local_planner" value="octo_dwa_implementation/PipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+
+      <param name="controller_frequency" value="10"/>
+
+      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi" if="$(arg use_octo)"/>
+      <remap from="/points" to="$(arg point_clouds)" />
+
+      <remap from="/collisions" to="/octo_collisions"/>
+  </node>
+
+
+
+</launch>
