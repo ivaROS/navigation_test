@@ -50,38 +50,51 @@ def load_model_xml(filename):
 
 class GazeboDriver():
   # Copied from pips_test: gazebo_driver.py
-  def barrel_points(self,xmins, ymins, xmaxs, ymaxs, grid_size, num_barrels):
-
-    allpoints = None
-    for region_ind in xrange(len(xmins)):
-      xmin,ymin,xmax,ymax = xmins[region_ind], ymins[region_ind], xmaxs[region_ind], ymaxs[region_ind]
-
-      #print str(xmin) + ", " + str(ymin) + ", " + str(xmax) + ", " + str(ymax)
-
-      # Get a dense grid of points
-      points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
-      points = points.swapaxes(0,2)
-      points = points.reshape(points.size/2,2)
-
-      #print points
-      if allpoints is None:
-        allpoints = points
-      else:
-        allpoints = np.concatenate((allpoints, points), axis=0)
-
-    #print allpoints
-
-
-
+  def barrel_points(self,xmin, ymin, xmax, ymax, min_dist, num_barrels, max_tries = 100):
+    '''
+    # Get a dense grid of points
+    points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
+    points = points.swapaxes(0, 2)
+    points = points.reshape(points.size / 2, 2)
     # Choose random indexes
-    idx = self.random.sample(range(allpoints.shape[0]), min(num_barrels,allpoints.size / 2))
+    idx = self.random.sample(range(points.shape[0]), num_barrels)
     print idx
 
     # Generate offsets
     off = self.nprandom.rand(num_barrels, 2) * grid_size / 2.0
 
     # Compute barrel points
-    barrels = allpoints[idx] + off
+    barrels = points[idx] + off
+    '''
+
+    depth = xmax - xmin
+    width = ymax - ymin
+
+    length = max(depth, width)
+
+    n = 0
+    i = 0
+    barrels = []
+    while n < num_barrels and i < max_tries:
+      a = self.random.random()
+      b = self.random.random()
+
+      if a * length < depth and b * length < width:
+        x = xmin + a * length
+        y = ymin + b * length
+        point = np.array((x,y))
+
+        barrel_valid = True
+        for barrel in barrels:
+          if np.linalg.norm(point-barrel) < min_dist:
+            barrel_valid = False
+            break
+
+        if barrel_valid:
+          barrels.append(point)
+          n+=1
+      i+=1
+
 
     for barrel in barrels:
       yield barrel
@@ -201,7 +214,7 @@ class GazeboDriver():
 
     barrel_names = [name for name in self.models.name if  "barrel" in name]
 
-    for i, xy in enumerate(self.barrel_points(xmins=minx,ymins=miny,xmaxs=maxx,ymaxs=maxy,grid_size=grid_spacing, num_barrels=n)):
+    for i, xy in enumerate(self.barrel_points(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy,min_dist=grid_spacing, num_barrels=n)):
       #print i, xy
       name = "barrel{}".format(i)
       #print name
@@ -268,10 +281,10 @@ class GazeboDriver():
 
     self.queue_size = 50
     self.num_barrels = 3
-    self.minx = [-3.5]
-    self.maxx = [0.5]
-    self.miny = [1.0]
-    self.maxy = [5.0]
+    self.minx = -3.5
+    self.maxx = 0.5
+    self.miny = 1.0
+    self.maxy = 5.0
     self.grid_spacing = 1.0
     
     self.service_timeout = 2.0

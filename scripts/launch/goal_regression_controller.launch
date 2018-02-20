@@ -1,0 +1,6 @@
+<launch>
+
+  <include file="$(find informed_pips_dwa)/launch/regression_goal.launch">
+  </include>
+
+</launch>

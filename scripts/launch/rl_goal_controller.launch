@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find informed_pips_dwa)/launch/rl_goal.launch">
+    <arg name="num_paths" value="5"/>
+  </include>
+
+</launch>

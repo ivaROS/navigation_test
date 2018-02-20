@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 6
+        self.num_masters = 4
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -99,11 +99,14 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        outputfile_name = "~/Documents/gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = "~/Documents/dl_gazebo_results_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
-            datawriter = csv.DictWriter(csvfile, fieldnames=self.fieldnames, restval='', extrasaction='ignore')
+            seen = set()
+            fieldnames = [x for x in self.fieldnames if not (x in seen or seen.add(x))] #http://www.martinbroadhurst.com/removing-duplicates-from-a-list-while-preserving-order-in-python.html
+
+            datawriter = csv.DictWriter(csvfile, fieldnames=fieldnames, restval='', extrasaction='ignore')
             datawriter.writeheader()
 
             while not self.should_shutdown: #This means that results stop getting saved to file as soon as I try to kill it
@@ -167,11 +170,11 @@ class MultiMasterCoordinator:
 
 
     #This list should be elsewhere, possibly in the configs package
-    def addTasks1(self):
-        controllers = ["dwa","custom_dwa", "pips_dwa", "eband", "teb"]
+    def addTasks(self):
+        controllers = ["baseline_rl_goal", "rl_goal"] #["multiclass", "goal_regression","rl_goal"] #,"dwa", "teb"["brute_force"] #
         barrel_arrangements = [3,5,7]
 
-        for a in range(500):
+        for a in range(0,100):
             for num_barrels in barrel_arrangements:
                 for controller in controllers:
                     for repetition in range(1):
@@ -194,7 +197,7 @@ class MultiMasterCoordinator:
         for _ in range(5):
             self.task_queue.put(task)
 
-    def addTasks(self):
+    def addTasks1(self):
         controllers = ["pips_dwa", "octo_dwa", "teb"]
 
         for i in range(100):

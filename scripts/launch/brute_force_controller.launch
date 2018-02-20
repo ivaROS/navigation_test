@@ -1,0 +1,6 @@
+<launch>
+
+  <include file="$(find informed_pips_dwa)/launch/brute_force.launch">
+  </include>
+
+</launch>
