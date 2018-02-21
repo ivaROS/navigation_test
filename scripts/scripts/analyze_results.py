@@ -33,7 +33,7 @@ class ResultAnalyzer:
             condition = {key: entry[key] for key in independent + dependent}
             conditionset = frozenset(condition.items())
             
-            print conditionset
+            #print conditionset
             
             if not conditionset in statistics:
                 statistics[conditionset] = 1
@@ -49,11 +49,16 @@ class ResultAnalyzer:
            for controller in key_values[independent[1]]:
                 total = 0
                 for result in key_values[dependent[0]]:
-                    total+= statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
+                    key = frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
+                    if key in statistics:
+                        total+= statistics[key]
                 print controller + " controller:"
                 for result in key_values[dependent[0]]:
-                    num = statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
-                    print result + ": " + str(num) + "\t" + str(float(num)/total)
+                    key = frozenset(
+                        {independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
+                    if key in statistics:
+                        num = statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
+                        print result + ": " + str(num) + "\t" + str(float(num)/total)
                 print ""
 
     def exists(self, scenario):
@@ -68,8 +73,11 @@ class ResultAnalyzer:
 
 if __name__ == "__main__":
 
-    filenames = ['/home/justin/Documents/dl_gazebo_results_2018-02-20 14:17:20.349670' ,
-    '/home/justin/Documents/dl_gazebo_results_2018-02-19 20:17:06.041463' ]
+    filenames = ['/home/justin/Documents/dl_gazebo_results_2018-02-20 14:17:20.349670',
+                 '/home/justin/Documents/dl_gazebo_results_2018-02-19 20:17:06.041463',
+                 '/home/justin/Documents/dl_gazebo_results_2018-02-20 15:18:36.378260',
+                 '/home/justin/Documents/dl_gazebo_results_2018-02-20 17:39:02.442583',
+                 '/home/justin/Documents/dl_gazebo_results_2018-02-20 19:55:37.855977']
 
     start_time = time.time()
     analyzer = ResultAnalyzer()

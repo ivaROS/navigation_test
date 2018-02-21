@@ -14,7 +14,7 @@ EBandPlannerROS:
  sim_time: 10
 # goal tolerance
  xy_goal_tolerance: 0.8
- yaw_goal_tolerance: 1.57
+ yaw_goal_tolerance: 3.15
 
 # angular velocity PID
  k_prop_: 0.75

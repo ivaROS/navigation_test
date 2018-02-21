@@ -1,7 +1,7 @@
 TebLocalPlannerROS:
 
     odom_topic: odom
-    map_frame: /odom
+    map_frame: /map
 
     # Trajectory
 
@@ -14,11 +14,11 @@ TebLocalPlannerROS:
 
     # Robot
 
-    max_vel_x: 0.4
+    max_vel_x: 0.5 # Changed!
     max_vel_x_backwards: 0.2
-    max_vel_theta: 0.3
-    acc_lim_x: 2.5
-    acc_lim_theta: 1.6
+    max_vel_theta: .3 # Logically, this should be 5.0. However, that makes it turn slower for some reason
+    acc_lim_x: 1.0
+    acc_lim_theta: 2.0
     min_turning_radius: 0.0
     footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
         type: "point"
@@ -79,3 +79,5 @@ TebLocalPlannerROS:
     obstacle_keypoint_offset: 0.1
     obstacle_heading_threshold: 0.45
     visualize_hc_graph: False
+    
+    selection_cost_hystersis: .9  # new_cost must be < old_cost * this

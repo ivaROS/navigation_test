@@ -171,10 +171,10 @@ class MultiMasterCoordinator:
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks(self):
-        controllers = ["baseline_rl_goal", "rl_goal"] #["multiclass", "goal_regression","rl_goal"] #,"dwa", "teb"["brute_force"] #
+        controllers = ["dwa", "teb", "multiclass", "goal_regression","rl_goal", "baseline_rl_goal"] #,"dwa", "teb"["brute_force"] #
         barrel_arrangements = [3,5,7]
 
-        for a in range(0,100):
+        for a in range(100,500):
             for num_barrels in barrel_arrangements:
                 for controller in controllers:
                     for repetition in range(1):
