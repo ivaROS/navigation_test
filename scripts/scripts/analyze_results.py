@@ -1,6 +1,6 @@
 import csv
 import time
-
+from gazebo_master import MultiMasterCoordinator
 
 
 class ResultAnalyzer:
@@ -24,6 +24,39 @@ class ResultAnalyzer:
         results = []
         for entry in self.results:
             {k: entry[k] for k in keys}
+
+    def getCases(self, has=None, hasnot=None):
+        results = []
+        for entry in self.results:
+            stillgood = True
+            if has is not None:
+                for key,value in has.items():
+                    if key not in entry or value!=entry[key]:
+                        stillgood = False
+                        break
+            if hasnot is not None:
+                for key,value in hasnot.items():
+                    if key in entry and value==entry[key]:
+                        stillgood = False
+                        break
+
+            if stillgood:
+                results.append(entry)
+        return results
+
+    def getFailCases(self, controller):
+        has = {'controller': controller}
+        hasnot = {'result': 'SUCCEEDED'}
+        results = self.getCases(has=has, hasnot=hasnot)
+
+
+
+        #gm = MultiMasterCoordinator()
+        #gm.start()
+
+        for result in results:
+            print result
+            #gm.task_queue.put(result)
 
 
     def computeStatistics(self, independent, dependent):
@@ -79,9 +112,13 @@ if __name__ == "__main__":
                  '/home/justin/Documents/dl_gazebo_results_2018-02-20 17:39:02.442583',
                  '/home/justin/Documents/dl_gazebo_results_2018-02-20 19:55:37.855977']
 
+    #filenames = ['/home/justin/Documents/dl2_gazebo_results_2018-02-21 13:40:16.659915']
+
     start_time = time.time()
     analyzer = ResultAnalyzer()
     analyzer.readFiles(filenames=filenames)
 
     analyzer.computeStatistics(independent=['num_barrels','controller'], dependent=['result'])
+
+    analyzer.getFailCases(controller='rl_goal')
 

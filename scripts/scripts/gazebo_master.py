@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 4
+        self.num_masters = 3
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -65,7 +65,6 @@ class MultiMasterCoordinator:
     def start(self):
         self.startResultsProcessing()
         self.startProcesses()
-        self.addTasks()
 
     def startResultsProcessing(self):
         self.result_thread = threading.Thread(target=self.processResults,args=[self.result_queue])
@@ -99,7 +98,7 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        outputfile_name = "~/Documents/dl_gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = "~/Documents/dl2_gazebo_results_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -171,10 +170,10 @@ class MultiMasterCoordinator:
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks(self):
-        controllers = ["dwa", "teb", "multiclass", "goal_regression","rl_goal", "baseline_rl_goal"] #,"dwa", "teb"["brute_force"] #
+        controllers = ["brute_force"] #,"dwa", "teb"["brute_force"] #
         barrel_arrangements = [3,5,7]
 
-        for a in range(100,500):
+        for a in range(500): #range(100,500):
             for num_barrels in barrel_arrangements:
                 for controller in controllers:
                     for repetition in range(1):
@@ -457,6 +456,7 @@ if __name__ == "__main__":
     start_time = time.time()
     master = MultiMasterCoordinator()
     master.start()
+    master.addTasks()
     master.waitToFinish()
     master.shutdown()
     end_time = time.time()

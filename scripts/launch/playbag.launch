@@ -1,6 +1,6 @@
 <launch>
 
-
+<arg name="rate" default="1"/>
 
 <!-- rosservice call /rtabmap/reset_odom "{}" -->]
 <!-- Actually, can just set a ros parameter to auto reset odom when visual odom lost, though it isn't accessible from the stock rtabmap launch file -->
@@ -26,7 +26,7 @@
 <node name="rtabmap_odom_resetter" pkg="nav_scripts" type="rtabmap_odom_resetter.py" />
 
 
-<node name="bag_player" pkg="rosbag" type="play" args="$(arg bag_files) --clock --pause --skip-empty=1 -r 1  ">
+<node name="bag_player" pkg="rosbag" type="play" args="$(arg bag_files) --clock --pause --skip-empty=1 -r $(arg rate)  ">
   <remap from="/camera/depth/image" to="/camera/depth/image_raw"/>
   <remap from="/camera/rgb/image_color" to="/camera/rgb/image_raw"/>
 </node>
