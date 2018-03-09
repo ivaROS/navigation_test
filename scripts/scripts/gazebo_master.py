@@ -49,6 +49,7 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
         self.num_masters = 3
+        self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -122,8 +123,9 @@ class MultiMasterCoordinator:
 
                     if "error" not in task:
                         self.result_list.append(result_string)
-                        datawriter.writerow(task)
-                        csvfile.flush()
+                        if self.save_results:
+                            datawriter.writerow(task)
+                            csvfile.flush()
                     else:
                         del task["error"]
                         self.task_queue.put(task)
@@ -173,7 +175,7 @@ class MultiMasterCoordinator:
         controllers = ["brute_force"] #,"dwa", "teb"["brute_force"] #
         barrel_arrangements = [3,5,7]
 
-        for a in range(500): #range(100,500):
+        for a in range(0,500):
             for num_barrels in barrel_arrangements:
                 for controller in controllers:
                     for repetition in range(1):

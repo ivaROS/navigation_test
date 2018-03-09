@@ -110,9 +110,12 @@ if __name__ == "__main__":
                  '/home/justin/Documents/dl_gazebo_results_2018-02-19 20:17:06.041463',
                  '/home/justin/Documents/dl_gazebo_results_2018-02-20 15:18:36.378260',
                  '/home/justin/Documents/dl_gazebo_results_2018-02-20 17:39:02.442583',
-                 '/home/justin/Documents/dl_gazebo_results_2018-02-20 19:55:37.855977']
+                 '/home/justin/Documents/dl_gazebo_results_2018-02-20 19:55:37.855977'] #Initial set of runs with different controllers
 
-    #filenames = ['/home/justin/Documents/dl2_gazebo_results_2018-02-21 13:40:16.659915']
+    #filenames = ['/home/justin/Documents/dl2_gazebo_results_2018-02-21 13:40:16.659915']   #repeated baselines, trying to ensure that recovery behaviors disabled
+
+    #filenames= ['/home/justin/Documents/dl2_gazebo_results_2018-02-26 22:00:58.731302', '/home/justin/Documents/dl2_gazebo_results_2018-02-27 21:44:43.554072' ] #Reran brute_force, turned out bug in decimation propagation
+    filenames = ['/home/justin/Documents/dl2_gazebo_results_2018-03-02 20:12:04.419906' ] #reran brute_force after fixing some bugs, still doesn't look good
 
     start_time = time.time()
     analyzer = ResultAnalyzer()
@@ -120,5 +123,5 @@ if __name__ == "__main__":
 
     analyzer.computeStatistics(independent=['num_barrels','controller'], dependent=['result'])
 
-    analyzer.getFailCases(controller='rl_goal')
+    analyzer.getFailCases(controller='brute_force')
 

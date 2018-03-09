@@ -26,7 +26,7 @@
       <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
 
       <param name="base_local_planner" value="pips_dwa_implementation/PipsDWAPlannerROS"/>
-      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params_testing.yaml" command="load"/>
 
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg depth_image)" />
