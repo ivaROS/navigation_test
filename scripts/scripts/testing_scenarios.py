@@ -18,6 +18,8 @@ class TestingScenarios:
                 return FourthFloorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "campus":
                 return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "sector":
+                return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -28,7 +30,7 @@ class TestingScenarios:
 
     @staticmethod
     def getScenarioTypes():
-        scenarios = [TrashCanScenario, CampusScenario]
+        scenarios = [TrashCanScenario, SectorScenario, CampusScenario]
         return scenarios
 
 
@@ -209,6 +211,71 @@ class CampusScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy)
+        self.gazebo_driver.unpause()
+
+
+
+
+class SectorScenario(TestingScenario):
+    def __init__(self, task, gazebo_driver):
+        self.gazebo_driver = gazebo_driver
+
+        self.world = "sector"
+
+        self.seed = task["seed"] if "seed" in task else 0
+
+        self.poses = [[-9,9,-.78], [-9,0,0], [-9,-9,.78], [9,-9,2.36], [9,0,3.14], [9,9,-2.36]   ] # [0,-9,1.57]
+
+
+        self.init_id = task["init_id"] if "init_id" in task else 0
+
+        self.target_id = task["target_id"] if "target_id" in task else (self.init_id + len(self.poses)/2) % len(self.poses)
+
+
+        self.random = random.Random()
+        self.random.seed(self.seed)
+
+
+
+    @staticmethod
+    def getUniqueFieldNames():
+        return ["num_barrels", "seed", "target_id", "init_id"]
+
+    def getPoseMsg(self, pose):
+        pose_msg = Pose()
+        pose_msg.position.x = pose[0]
+        pose_msg.position.y = pose[1]
+
+        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+        # msg = Quaternion(*q)
+
+        pose_msg.orientation = Quaternion(*q)
+
+        return pose_msg
+
+    def getStartingPose(self):
+        y = self.random.random()*(18) - 9
+        pose = [-9, y, 0]
+        init_pose = self.getPoseMsg(pose=pose)
+
+        return init_pose
+
+    def getGoal(self):
+        y = self.random.random()*(18) - 9
+
+        pose = [9,y,3.14]
+        init_pose = self.getPoseMsg(pose=pose)
+        pose_stamped = PoseStamped()
+        pose_stamped.pose = init_pose
+        pose_stamped.header.frame_id="map"
+        return pose_stamped
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.unpause()
 
 

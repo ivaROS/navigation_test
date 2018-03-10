@@ -1,4 +1,8 @@
 <launch>
+
+  <arg name="decimate" default="true"/>
+  <arg name="propagate" default="false"/>
+
   <arg name="gazebo" default="true"/>
   <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
   <arg name="depth_image_raw" default="/camera/depth/image_raw"/>
@@ -15,6 +19,44 @@
   <arg name="display_type" default="xterm -e gdb --args"/>
 
 
+  <arg name="decimation"        default="4"/>
+  <arg name="decimated_image"   default="/camera/depth_decimated/image_raw"/>
+  <arg name="decimated_info"    default="/camera/depth_decimated/camera_info"/>
+  
+  <arg name="propagated_image"   default="/camera/depth_p/image_raw"/>
+  <arg name="propagated_info"    default="/camera/depth_p/camera_info"/>
+
+  <arg name="image_to_propagate" default="$(arg decimated_image)" if="$(arg decimate)"/>
+  <arg name="info_to_propagate" default="$(arg decimated_info)" if="$(arg decimate)"/>
+  <arg name="image_to_propagate" default="$(arg depth_image)" unless="$(arg decimate)"/>
+  <arg name="info_to_propagate" default="$(arg depth_info)" unless="$(arg decimate)"/>
+  
+  <arg name="image_to_use" default="$(arg propagated_image)" if="$(arg propagate)"/>
+  <arg name="info_to_use" default="$(arg propagated_info)" if="$(arg propagate)"/>
+  <arg name="image_to_use" default="$(arg image_to_propagate)" unless="$(arg propagate)"/>
+  <arg name="info_to_use" default="$(arg info_to_propagate)" unless="$(arg propagate)"/>
+  
+  
+  <include file="$(find depth_learning)/launch/decimation.launch" if="$(arg decimate)">
+    <arg name="image_in"        value="$(arg depth_image)"/>
+    <arg name="info_in"         value="$(arg depth_info)"/>
+    <arg name="image_out"       value="$(arg decimated_image)"/>
+    <arg name="info_out"        value="$(arg decimated_info)"/>
+    <arg name="decimation"      value="$(arg decimation)"/>
+    <arg name="interpolate_cam_info" value="false"/>
+  </include>
+
+
+  <include file="$(find image_propagator)/launch/depth_image_propagator.launch"  if="$(arg propagate)">
+    <arg name="image_in"      value="$(arg image_to_propagate)"/>
+    <arg name="info_in"       value="$(arg info_to_propagate)"/>
+    <arg name="image_out"     value="$(arg propagated_image)"/>
+    <arg name="info_out"      value="$(arg propagated_info)"/>
+    <arg name="points"        value="/camera/depth_p/points"/>
+  </include>
+  
+  
+  
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" >
       <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
@@ -26,11 +68,11 @@
       <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
 
       <param name="base_local_planner" value="pips_dwa_implementation/PipsDWAPlannerROS"/>
-      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params_testing.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
 
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
-      <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg depth_image)" />
-      <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg depth_info)" />
+      <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg image_to_use)" />
+      <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg info_to_use)" />
       <remap from="$(arg pips_namespace)/camera/rgb/image_raw" to="$(arg rgb_image_raw)" />
 
       <remap from="$(arg pips_namespace)/PipsDWAController/PipsCollisionChecker/collisions" to="/collisions"/>

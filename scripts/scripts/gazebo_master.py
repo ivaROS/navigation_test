@@ -99,7 +99,7 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        outputfile_name = "~/Documents/dl2_gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -168,11 +168,32 @@ class MultiMasterCoordinator:
         for result in self.result_list:
             print result
 
+    # This list should be elsewhere, possibly in the configs package
+    def addTasks(self):
+        controllers = ["dwa", "teb", "pips_dwa", "pips_ni" ]  # "rl_single", "rl_goal",
+
+        for a in range(0, 50):
+            for controller in controllers: #controllers:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
+
+        for a in range(0, 50):
+            for controller in ["pips_dwa_propagated", "rl_single"]:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
+
+        for a in range(50, 100):
+            for controller in controllers:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
 
 
     #This list should be elsewhere, possibly in the configs package
-    def addTasks(self):
-        controllers = ["brute_force"] #,"dwa", "teb"["brute_force"] #
+    def addTasks10(self):
+        controllers = ["pips_dwa", "pips_dwa_propagated"] #,"dwa", "teb"["brute_force"] #
         barrel_arrangements = [3,5,7]
 
         for a in range(0,500):

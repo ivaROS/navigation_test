@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find nav_scripts)/launch/pips_dwa_controller.launch">
+    <arg name="propagate" value="true"/>
+    </include>
+    
+    </launch>
