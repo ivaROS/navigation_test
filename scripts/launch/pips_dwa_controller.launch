@@ -77,6 +77,8 @@
 
       <remap from="$(arg pips_namespace)/PipsDWAController/PipsCollisionChecker/collisions" to="/collisions"/>
       <param name="controller_frequency" value="10"/>
+      
+      <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/>
 
   </node>
 

@@ -1,5 +1,5 @@
 <launch>
-  <arg name="num_paths" default="5"/>
+
   <arg name="gazebo" default="true"/>
   <arg name="debug" default="false"/>
   <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
@@ -48,7 +48,7 @@
   
   <node name="predictive_service_provider" pkg="depth_learning" type="predictive_service.py" output="screen">
     <param name="~datastats_filepath" value="/media/justin/data/justin/bag_files/depth_learning/training.bag"/>
-    <param name="~model_filepath" value="$(find dl_models)/downloads/goal_rl.pb"/>
+    <param name="~model_filepath" value="$(find dl_models)/downloads/multiclass_buffer.pb"/>
     <remap from="image" to="$(arg decimated_image)"/>
   </node>
   
@@ -57,9 +57,9 @@
       <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
       
-      <rosparam file="$(find informed_pips_dwa)/param/pips_dwa_local_planner_params.yaml" command="load"/>
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg propagated_image)" />
       <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg propagated_info)" />
@@ -68,11 +68,12 @@
       <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
       <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
       <param name="controller_frequency" value="10"/>
-      <param name="approach_method" value="3"/>
-      <param name="num_paths" value = "$(arg num_paths)"/>
+      <param name="approach_method" value="2"/>
+      <param name="num_paths" value = "5"/>
+      
+      <remap from="$(arg pips_namespace)/PipsCollisionChecker/collisions" to="/collisions"/>
 
       <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/lpi/PipsCollisionChecker"/> 
-      <remap from="$(arg pips_namespace)/PipsCollisionChecker/collisions" to="/collisions"/>
-      
+
   </node> 
 </launch>

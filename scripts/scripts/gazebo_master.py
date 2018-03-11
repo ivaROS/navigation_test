@@ -49,7 +49,7 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
         self.num_masters = 3
-        self.save_results = True
+        self.save_results = False
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -171,25 +171,40 @@ class MultiMasterCoordinator:
     # This list should be elsewhere, possibly in the configs package
     def addTasks(self):
         controllers = ["dwa", "teb", "pips_dwa", "pips_ni" ]  # "rl_single", "rl_goal",
-
+        '''
         for a in range(0, 50):
             for controller in controllers: #controllers:
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
-
+        
         for a in range(0, 50):
             for controller in ["pips_dwa_propagated", "rl_single"]:
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
+        
 
-        for a in range(50, 100):
-            for controller in controllers:
+
+        for a in range(0, 50):
+            for controller in ['regression_goal', 'regression_goal_propagated','pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single','multiclass', "pips_dwa_propagated", "pips_dwa", 'pips_ni_propagated']: #'rl_goal'
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
+        '''
+
+
+        for a in range(0, 50):
+            for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal', 'regression_goal_propagated']: #'rl_goal'
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
 
+        for a in range(0, 50):
+            for controller in ['multiclass', "pips_dwa_propagated", "pips_dwa"]:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):

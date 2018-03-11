@@ -1,5 +1,5 @@
 <launch>
-  <arg name="num_paths" default="5"/>
+
   <arg name="gazebo" default="true"/>
   <arg name="debug" default="false"/>
   <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
@@ -22,8 +22,8 @@
 
   <arg name="propagated_image"   default="/camera/depth_p/image_raw"/>
   <arg name="propagated_info"    default="/camera/depth_p/camera_info"/>
+  
 
-  <arg name="samples_topic"     default="gazebo_data"/>
 
   <!-- Note: Assumes that Gazebo is already running and that a turtlebot has already been spawned
        (Use gazebo.launch) -->
@@ -35,12 +35,12 @@
     <arg name="info_out"        value="$(arg decimated_info)"/>
     <arg name="decimation"      value="$(arg decimation)"/>
   </include>
-  
+      
   <include file="$(find image_propagator)/launch/depth_image_propagator.launch">
-      <arg name="image_in"      value="$(arg decimated_image)"/>
-      <arg name="info_in"       value="$(arg decimated_info)"/>
-      <arg name="image_out"     value="$(arg propagated_image)"/>
-      <arg name="info_out"      value="$(arg propagated_info)"/>
+    <arg name="image_in"      value="$(arg decimated_image)"/>
+    <arg name="info_in"       value="$(arg decimated_info)"/>
+    <arg name="image_out"     value="$(arg propagated_image)"/>
+    <arg name="info_out"      value="$(arg propagated_info)"/>
   </include>
       
   <include file="$(find informed_pips_dwa)/launch/trajectory_controller.launch">
@@ -48,7 +48,7 @@
   
   <node name="predictive_service_provider" pkg="depth_learning" type="predictive_service.py" output="screen">
     <param name="~datastats_filepath" value="/media/justin/data/justin/bag_files/depth_learning/training.bag"/>
-    <param name="~model_filepath" value="$(find dl_models)/downloads/goal_rl.pb"/>
+    <param name="~model_filepath" value="$(find dl_models)/downloads/goal_weighted_regression.pb"/>
     <remap from="image" to="$(arg decimated_image)"/>
   </node>
   
@@ -59,6 +59,8 @@
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
       
+      <param name="recovery_behavior_enabled" value="false"/>
+      
       <rosparam file="$(find informed_pips_dwa)/param/pips_dwa_local_planner_params.yaml" command="load"/>
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg propagated_image)" />
@@ -68,11 +70,11 @@
       <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
       <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
       <param name="controller_frequency" value="10"/>
-      <param name="approach_method" value="3"/>
-      <param name="num_paths" value = "$(arg num_paths)"/>
+      <param name="approach_method" value="6"/>
+      <param name="num_paths" value = "5"/>
 
       <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/lpi/PipsCollisionChecker"/> 
-      <remap from="$(arg pips_namespace)/PipsCollisionChecker/collisions" to="/collisions"/>
-      
+      <!--<remap from="$(arg pips_namespace)/PipsCollisionChecker/collisions" to="/collisions"/> -->
+
   </node> 
 </launch>

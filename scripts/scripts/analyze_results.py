@@ -58,6 +58,16 @@ class ResultAnalyzer:
             print result
             #gm.task_queue.put(result)
 
+    def getMaxTime(self):
+        max_time = 0
+
+        for entry in self.results:
+            if 'time' in entry:
+                time = entry['time']
+                if time > max_time:
+                    max_time = time
+        print "Max time: " + str(max_time)
+
 
     def computeStatistics(self, independent, dependent):
         statistics = {}
@@ -117,6 +127,15 @@ if __name__ == "__main__":
     #filenames= ['/home/justin/Documents/dl2_gazebo_results_2018-02-26 22:00:58.731302', '/home/justin/Documents/dl2_gazebo_results_2018-02-27 21:44:43.554072' ] #Reran brute_force, turned out bug in decimation propagation
     filenames = ['/home/justin/Documents/dl2_gazebo_results_2018-03-02 20:12:04.419906' ] #reran brute_force after fixing some bugs, still doesn't look good
 
+
+    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-03-10 14:01:47.717608', #dwa, teb, pips_dwa, pips_ni.
+                 '/home/justin/Documents/dl3_gazebo_results_2018-03-10 16:41:40.875418', #rl_single and propagated pips_dwa
+                 '/home/justin/Documents/dl3_gazebo_results_2018-03-10 18:35:11.674445', #rl_goal (first half)
+                 '/home/justin/Documents/dl3_gazebo_results_2018-03-10 18:54:08.393278'  #rl_goal (2nd half)
+                 ]
+
+
+
     start_time = time.time()
     analyzer = ResultAnalyzer()
     analyzer.readFiles(filenames=filenames)
@@ -124,4 +143,5 @@ if __name__ == "__main__":
     analyzer.computeStatistics(independent=['num_barrels','controller'], dependent=['result'])
 
     analyzer.getFailCases(controller='brute_force')
+    analyzer.getMaxTime()
 

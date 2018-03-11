@@ -42,6 +42,8 @@
       <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      
       <rosparam file="$(find informed_pips_dwa)/param/pips_dwa_local_planner_params.yaml" command="load"/>
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg decimated_image)" />
@@ -55,6 +57,7 @@
       <param name="num_paths" value = "5"/>
       
       <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/lpi/PipsCollisionChecker"/>
-
+      <remap from="$(arg pips_namespace)/PipsCollisionChecker/collisions" to="/collisions"/>
+      
   </node> 
 </launch>
