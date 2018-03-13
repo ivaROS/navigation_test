@@ -149,10 +149,47 @@ class ResultAnalyzer:
 
         return False
 
+    def getMatchingResult(self, task):
+        stripped_task = {str(key): str(task[key]) for key,value in task.items()}
+        stripped_task = frozenset(stripped_task.items())
+
+        for entry in self.results:
+            condition = {key: entry[key] for key,value in task.items()}
+            conditionset = frozenset(condition.items())
+            if conditionset == stripped_task:
+                return entry
+
+        return None
 
     def __init__(self):
         self.fieldnames = []
         self.results = []
+
+    def compareControllers(self, controller1, controller2):
+        statistics = {}
+
+        for seed in range(52,97):
+            task1 = {'scenario': 'sector', 'controller': controller1, 'seed': seed}
+            task2 = {'scenario': 'sector', 'controller': controller2, 'seed': seed}
+
+            task1 = self.getMatchingResult(task1)
+            if task1 is not None:
+                task2 = self.getMatchingResult(task2)
+                if task2 is not None:
+                    condition = {task1['result']:task2['result']}
+                    conditionset = frozenset(condition.items())
+
+                    # print conditionset
+
+                    if not conditionset in statistics:
+                        statistics[conditionset] = 1
+                    else:
+                        statistics[conditionset] = statistics[conditionset] + 1
+
+
+        print controller1 + " : " + controller2
+        for key,value in statistics.items():
+            print str(next(iter(key))) + " : " + str(value)
 
 
 
@@ -191,6 +228,8 @@ if __name__ == "__main__":
     analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds})
 
     analyzer.computeStatistics(independent=['num_barrels', 'controller'], dependent=['result'])
+
+    analyzer.compareControllers('regression_goal','regression_goal_propagated')
 
     '''
     master = MultiMasterCoordinator()
