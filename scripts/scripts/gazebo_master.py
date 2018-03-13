@@ -49,7 +49,7 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
         self.num_masters = 3
-        self.save_results = False
+        self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -193,7 +193,7 @@ class MultiMasterCoordinator:
                     self.task_queue.put(task)
         '''
 
-
+        '''
         for a in range(0, 50):
             for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal', 'regression_goal_propagated']: #'rl_goal'
                 for repetition in range(1):
@@ -202,6 +202,12 @@ class MultiMasterCoordinator:
 
         for a in range(0, 50):
             for controller in ['multiclass', "pips_dwa_propagated", "pips_dwa"]:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
+        '''
+        for a in range(50, 150):
+            for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal', 'regression_goal_propagated', 'multiclass', "pips_dwa_propagated", "pips_dwa", 'teb', 'dwa']:  # 'rl_goal'
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)

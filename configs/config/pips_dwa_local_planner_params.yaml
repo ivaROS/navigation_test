@@ -35,7 +35,7 @@ PipsDWAPlannerROS:
     rot_stopped_vel: 0.1
     stop_time_buffer: 0.2
     trans_stopped_vel: 0.1
-    xy_goal_tolerance: .8
+    xy_goal_tolerance: 2.0
     yaw_goal_tolerance: 3.15
 
 

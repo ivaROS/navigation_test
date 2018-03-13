@@ -3,10 +3,29 @@ import time
 from gazebo_master import MultiMasterCoordinator
 
 
+def filter(results, whitelist=None, blacklist=None):
+    filtered_results = []
+    for entry in results:
+        stillgood = True
+        if whitelist is not None:
+            for key, value in whitelist.items():
+                if key not in entry or entry[key] not in value:
+                    stillgood = False
+                    break
+        if blacklist is not None:
+            for key, value in blacklist.items():
+                if key in entry and entry[key] in value:
+                    stillgood = False
+                    break
+
+        if stillgood:
+            filtered_results.append(entry)
+    return filtered_results
+
 class ResultAnalyzer:
 
 
-    def readFile(self, filename):
+    def readFile(self, filename, whitelist = None):
         with open(filename, 'rb') as csvfile:
             datareader = csv.DictReader(csvfile, restval='')
 
@@ -14,11 +33,12 @@ class ResultAnalyzer:
             fieldnames = datareader.fieldnames
             for entry in datareader:
                 result_list.append(entry)
-        self.results += result_list
+        filtered_list = filter(result_list, whitelist)
+        self.results += filtered_list
 
-    def readFiles(self, filenames):
+    def readFiles(self, filenames, whitelist=None):
         for filename in filenames:
-            self.readFile(filename)
+            self.readFile(filename, whitelist)
 
     def getPrunedList(self, keys):
         results = []
@@ -89,7 +109,7 @@ class ResultAnalyzer:
                 key_values[key].add(value)
         for num_barrels in key_values[independent[0]]:
            print str(num_barrels) + " barrels:"
-           for controller in key_values[independent[1]]:
+           for controller in sorted(key_values[independent[1]]):
                 total = 0
                 for result in key_values[dependent[0]]:
                     key = frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
@@ -99,13 +119,35 @@ class ResultAnalyzer:
                 for result in key_values[dependent[0]]:
                     key = frozenset(
                         {independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
-                    if key in statistics:
+                    if key in sorted(statistics):
                         num = statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
                         print result + ": " + str(num) + "\t" + str(float(num)/total)
                 print ""
 
     def exists(self, scenario):
         pass
+
+    def freezeSet(self, independent):
+        self.frozen_set = []
+        key_values = {}
+        for entry in self.results:
+            condition = {key: entry[key] for key in independent}
+            conditionset = frozenset(condition.items())
+            self.frozen_set.append(conditionset)
+
+
+    def contains(self, task):
+        stripped_task = {str(key): str(task[key]) for key,value in task.items()}
+        stripped_task = frozenset(stripped_task.items())
+
+        for entry in self.results:
+            condition = {key: entry[key] for key,value in task.items()}
+            conditionset = frozenset(condition.items())
+            if conditionset == stripped_task:
+                if 'result' in entry and (entry['result'] == 'SUCCEEDED' or entry['result'] == 'BUMPER_COLLISION'):
+                    return True
+
+        return False
 
 
     def __init__(self):
@@ -115,6 +157,8 @@ class ResultAnalyzer:
 
 
 if __name__ == "__main__":
+    start_time = time.time()
+    analyzer = ResultAnalyzer()
 
     filenames = ['/home/justin/Documents/dl_gazebo_results_2018-02-20 14:17:20.349670',
                  '/home/justin/Documents/dl_gazebo_results_2018-02-19 20:17:06.041463',
@@ -134,14 +178,48 @@ if __name__ == "__main__":
                  '/home/justin/Documents/dl3_gazebo_results_2018-03-10 18:54:08.393278'  #rl_goal (2nd half)
                  ]
 
+    #analyzer.readFiles(filenames=filenames, whitelist={'controller':['dwa','teb']})
+
+    #filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-03-11 01:02:06.128521', '/home/justin/Documents/dl3_gazebo_results_2018-03-12 23:31:55.077168' ]
+
+    #analyzer.readFiles(filenames=filenames)
+
+    filenames= ['/home/justin/Documents/dl3_gazebo_results_2018-03-13 00:14:11.273737'  #missing ones from above files; all of 52:97
+        ]
+
+    seeds = [str(i) for i in range(52,97)]
+    analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds})
+
+    analyzer.computeStatistics(independent=['num_barrels', 'controller'], dependent=['result'])
+
+    '''
+    master = MultiMasterCoordinator()
+    master.start()
+
+    for a in range(0, 150):
+        for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal',
+                           'regression_goal_propagated', 'multiclass', "pips_dwa_propagated", "pips_dwa", 'teb',
+                           'dwa']:  # 'rl_goal'
+            for repetition in range(1):
+                task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+
+                if not analyzer.contains(task):
+                    master.task_queue.put(task)
+                    print task
 
 
-    start_time = time.time()
-    analyzer = ResultAnalyzer()
-    analyzer.readFiles(filenames=filenames)
 
-    analyzer.computeStatistics(independent=['num_barrels','controller'], dependent=['result'])
 
-    analyzer.getFailCases(controller='brute_force')
-    analyzer.getMaxTime()
 
+
+
+    master.waitToFinish()
+    master.shutdown()
+
+
+    #analyzer.computeStatistics(independent=['num_barrels','controller'], dependent=['result'])
+
+    #analyzer.getFailCases(controller='brute_force')
+    #analyzer.getMaxTime()
+
+    '''

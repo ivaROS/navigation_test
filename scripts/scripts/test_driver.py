@@ -95,7 +95,7 @@ def run_testImpl(pose):
     print "sending goal"
     client.send_goal(goal)
     print "waiting for result"
-    client.wait_for_result(rospy.Duration(120))
+    client.wait_for_result(rospy.Duration(300))
     print "done!"
 
     # 3 means success, according to the documentation
