@@ -20,7 +20,7 @@ EgocylindricalPipsDWAPlannerROS:
     min_vel_y: 0
 
     # Forward simulation parameters
-    use_dwa: true
+    use_dwa: false
     angular_sim_granularity: 0.1
     sim_granularity: 0.1 # 0.025
     sim_time: 3    # 1.7
@@ -36,7 +36,7 @@ EgocylindricalPipsDWAPlannerROS:
     stop_time_buffer: 0.2
     trans_stopped_vel: 0.1
     xy_goal_tolerance: .2
-    yaw_goal_tolerance: .15
+    yaw_goal_tolerance: 3.15
 
 
     # Cost function params
