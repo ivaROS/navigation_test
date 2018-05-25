@@ -1,6 +1,8 @@
 EgocylindricalPipsDWAPlannerROS:
     # Debug output
-    publish_traj_pc: true
+    # Debug output
+    publish_traj_pc : true
+    publish_cost_grid_pc: true
 
     # Limits
     acc_lim_theta: 3.2 # 3.2
@@ -42,7 +44,7 @@ EgocylindricalPipsDWAPlannerROS:
     # Cost function params
     forward_point_distance: 0.325
     goal_distance_bias: 24.0
-    occdist_scale: 8000.0
+    occdist_scale: .5
     oscillation_reset_angle: 0.2
     oscillation_reset_dist: 0.05
     path_distance_bias: 32.0
