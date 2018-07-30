@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 3
+        self.num_masters = 1
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)

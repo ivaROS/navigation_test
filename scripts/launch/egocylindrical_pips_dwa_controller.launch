@@ -20,7 +20,10 @@
   <arg name="image_to_use" default="egocylinder/image"/>
   <arg name="info_to_use" default="egocylinder/data"/>
 
+  <param name="/egocylinder/depth_to_egocylindrical_nodelet/width" value="512"/>
+  <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/>
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+
 
   <!--rosrun topic_tools throttle messages /egocylinder/filtered_points 1 /collisions -->
   <!--<node name="filtered_points_throttle" pkg="topic_tools" type="throttle" args="messages /egocylinder/filtered_points 1 /collisions"/> -->
@@ -47,8 +50,10 @@
       <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/>
       <param name="controller_frequency" value="10"/>
       
+      <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />
+      
       <!-- todo: change this to the correct namespace, and move those parameters to this package -->
-      <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/>
+      <!--<rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/> -->
 
   </node>
 
