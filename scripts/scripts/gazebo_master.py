@@ -206,8 +206,16 @@ class MultiMasterCoordinator:
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
         '''
+        '''
         for a in range(50, 150):
             for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal', 'regression_goal_propagated', 'multiclass', "pips_dwa_propagated", "pips_dwa", 'teb', 'dwa']:  # 'rl_goal'
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
+        '''
+
+        for a in range(52, 97):
+            for controller in ['egocylindrical_pips_dwa']:
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
