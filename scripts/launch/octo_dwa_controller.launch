@@ -27,12 +27,12 @@
       <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
 
-      <param name="base_local_planner" value="octo_dwa_implementation/PipsDWAPlannerROS"/>
-      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+      <param name="base_local_planner" value="octo_dwa/OctoDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/octo_dwa_local_planner_params.yaml" command="load"/>
 
       <param name="controller_frequency" value="10"/>
 
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
-      <remap from="/points" to="$(arg point_clouds)" />
+      <param name="OctoDWAPlannerROS/octomap_cc_wrapper/pointcloud_topic" value="$(arg point_clouds)" />
   </node>
 </launch>

@@ -18,9 +18,12 @@
 
 
   <arg name="image_to_use" default="egocylinder/image"/>
-  <arg name="info_to_use" default="egocylinder/egocylindrical_points"/>
+  <arg name="info_to_use" default="egocylinder/data"/>
 
-  
+  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+
+  <!--rosrun topic_tools throttle messages /egocylinder/filtered_points 1 /collisions -->
+  <!--<node name="filtered_points_throttle" pkg="topic_tools" type="throttle" args="messages /egocylinder/filtered_points 1 /collisions"/> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="false" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
