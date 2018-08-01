@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 1
+        self.num_masters = 3
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
@@ -214,11 +214,42 @@ class MultiMasterCoordinator:
                     self.task_queue.put(task)
         '''
 
-        for a in range(52, 97):
+        '''
+        for a in [a for a in range(52,97) if a not in [57,58,59,62,66,63,65,67,79,80,87,88,90]]:
             for controller in ['egocylindrical_pips_dwa']:
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                     self.task_queue.put(task)
+        '''
+        '''
+        for a in range(52,97):
+            for controller in ['depth_pips_dwa']:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                    self.task_queue.put(task)
+        '''
+
+        '''
+        for a in range(1, 100):
+            for controller in ['dwa']: #, 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                self.task_queue.put(task)
+        '''
+
+        '''
+        for a in range(52, 97):
+            for controller in ['pips_ec_rh']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                self.task_queue.put(task)
+        '''
+
+        for a in range(0,50):
+            for controller in ['pips_ec_rh']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                for repetition in range(1):
+                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+                self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):

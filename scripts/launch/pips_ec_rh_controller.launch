@@ -1,0 +1,10 @@
+<launch>
+
+  
+  <include file="$(find informed_pips_dwa)/launch/brute_force.launch">
+
+  </include>
+  
+  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+
+</launch>

@@ -11,17 +11,23 @@
 
 
   <arg name="debug" default="false"/>
+  <arg name="valgrind" default="false"/>
+  
+  <arg name="valgrind_prefix" default="valgrind --leak-check=yes --track-origins=yes"/>
+  
+  <arg name="debug_prefix_value" default="$(arg valgrind_prefix)" if="$(arg valgrind)"/>
+  <arg name="debug_prefix_value" default="xterm -e gdb --args" unless="$(arg valgrind)"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/>
-  <arg name="debug_prefix" value="xterm -e gdb --args" if="$(arg debug)"/>
+  <arg name="debug_prefix" value="$(arg debug_prefix_value)" if="$(arg debug)"/>
 
 
 
   <arg name="image_to_use" default="egocylinder/image"/>
   <arg name="info_to_use" default="egocylinder/data"/>
 
-  <param name="/egocylinder/depth_to_egocylindrical_nodelet/width" value="512"/>
-  <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/>
+  <!--<param name="/egocylinder/depth_to_egocylindrical_nodelet/width" value="512"/>
+  <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>
 
 

@@ -78,11 +78,13 @@
       <param name="odom_topic"                                value="/odom" />
       <param name="DepthPipsDWAPlannerROS/depth_image_topic" value="$(arg image_to_use)" />
       <param name="DepthPipsDWAPlannerROS/depth_info_topic" value="$(arg info_to_use)" />
+      
+      <param name="DepthPipsDWAPlannerROS/depth_image_cc_wrapper/depth_image_collision_checker/model_type" value="6" />
 
-      <remap from="$(arg pips_namespace)/PipsDWAController/PipsCollisionChecker/collisions" to="/collisions"/>
+      <remap from="/move_base/DepthPipsDWAPlannerROS/depth_image_cc_wrapper/depth_image_collision_checker/collisions" to="/collisions"/>
       <param name="controller_frequency" value="10"/>
       
-      <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/>
+      <!-- <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/> -->
 
   </node>
 

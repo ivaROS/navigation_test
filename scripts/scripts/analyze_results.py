@@ -221,15 +221,26 @@ if __name__ == "__main__":
 
     #analyzer.readFiles(filenames=filenames)
 
-    filenames= ['/home/justin/Documents/dl3_gazebo_results_2018-03-13 00:14:11.273737'  #missing ones from above files; all of 52:97
-        ]
+    filenames= ['/home/justin/Documents/dl3_gazebo_results_2018-03-13 00:14:11.273737',  #missing ones from above files; all of 52:97
+                '/home/justin/Documents/dl3_gazebo_results_2018-07-30 16:28:24.900163'    #egocylindrical 52:97
+                ]
 
-    seeds = [str(i) for i in range(52,97)]
+    filenames= ['/home/justin/Documents/dl3_gazebo_results_2018-07-30 18:35:12.794631', #previous bumper collision cases, now successes
+                '/home/justin/Documents/dl3_gazebo_results_2018-07-30 18:50:09.987252'   #the rest of the 52:97 cases for egocylindrical
+                ]
+
+    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-07-30 20:08:55.373085'
+                 ]
+    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-07-30 21:15:57.399391'] #depth & ec dwa, standard dwa, teb 0:100
+
+    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-07-31 18:54:52.888438']   #egocylindrical receding horizon 52:97
+
+    seeds = [str(i) for i in range(1,100)] #(52,97)
     analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds})
 
     analyzer.computeStatistics(independent=['num_barrels', 'controller'], dependent=['result'])
 
-    analyzer.compareControllers('regression_goal','regression_goal_propagated')
+    analyzer.compareControllers('egocylindrical_pips_dwa','pips_dwa')
 
     '''
     master = MultiMasterCoordinator()
