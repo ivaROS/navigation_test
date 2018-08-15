@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find nav_scripts)/launch/egocylindrical_pips_dwa_controller.launch">
+    <arg name="use_recovery_behaviors" value="false"/>
+  </include>
+
+</launch>

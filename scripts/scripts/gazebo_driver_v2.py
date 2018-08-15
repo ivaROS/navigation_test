@@ -50,7 +50,7 @@ def load_model_xml(filename):
 
 class GazeboDriver():
   # Copied from pips_test: gazebo_driver.py
-  def barrel_points(self,xmin, ymin, xmax, ymax, min_dist, num_barrels, max_tries = 100):
+  def barrel_points(self,xmins, ymins, xmaxs, ymaxs, min_dist, num_barrels, max_tries =500):
     '''
     # Get a dense grid of points
     points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
@@ -67,10 +67,14 @@ class GazeboDriver():
     barrels = points[idx] + off
     '''
 
-    depth = xmax - xmin
-    width = ymax - ymin
+    region_weights = (xmaxs - xmins)*(ymaxs - ymins)
+    region_weights = region_weights / (np.sum(region_weights))
+    region_inds = range(len(xmins))
 
-    length = max(depth, width)
+    sampled_regions = self.nprandom.choice(region_inds,replace=True,p=region_weights,size=max_tries)
+
+
+
 
     n = 0
     i = 0
@@ -78,6 +82,18 @@ class GazeboDriver():
     while n < num_barrels and i < max_tries:
       a = self.random.random()
       b = self.random.random()
+
+      region_ind = sampled_regions[i]
+
+      xmax = xmaxs[region_ind]
+      xmin = xmins[region_ind]
+      ymax = ymaxs[region_ind]
+      ymin = ymins[region_ind]
+
+      depth = xmax - xmin
+      width = ymax - ymin
+
+      length = max(depth, width)
 
       if a * length < depth and b * length < width:
         x = xmin + a * length
@@ -214,7 +230,7 @@ class GazeboDriver():
 
     barrel_names = [name for name in self.models.name if  "barrel" in name]
 
-    for i, xy in enumerate(self.barrel_points(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy,min_dist=grid_spacing, num_barrels=n)):
+    for i, xy in enumerate(self.barrel_points(xmins=minx,ymins=miny,xmaxs=maxx,ymaxs=maxy,min_dist=grid_spacing, num_barrels=n)):
       #print i, xy
       name = "barrel{}".format(i)
       #print name

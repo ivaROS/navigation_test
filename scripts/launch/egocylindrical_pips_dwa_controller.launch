@@ -1,5 +1,7 @@
 <launch>
 
+  <arg name="use_recovery_behaviors" default="true"/>
+
   <arg name="decimate" default="true"/>
   <arg name="propagate" default="false"/>
 
@@ -30,30 +32,41 @@
   <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>
 
+  <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
   <!--rosrun topic_tools throttle messages /egocylinder/filtered_points 1 /collisions -->
   <!--<node name="filtered_points_throttle" pkg="topic_tools" type="throttle" args="messages /egocylinder/filtered_points 1 /collisions"/> -->
 
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="false" launch-prefix="$(arg debug_prefix)">
-      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
-    <!--  <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/> -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+    <!--  <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/> -->
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      
       <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
-      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/>
+
+      
+      <!--<rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/> -->
       <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
 
       <param name="base_local_planner" value="egocylindrical_dwa/EgocylindricalPipsDWAPlannerROS"/>
-      <rosparam file="$(find nav_configs)/config/ec_pips_dwa_local_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="EgocylindricalPipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="EgocylindricalPipsDWAPlannerROS"/>
+      
+      
+      <rosparam file="$(find nav_configs)/config/custom_recovery_params.yaml" command="load" if="$(arg use_recovery_behaviors)"/>
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+      
 
-      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
+      <!-- <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/> -->
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
       
       <param name="odom_topic"                                value="/odom" />
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg image_to_use)" />
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg info_to_use)" />
 
-      <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/>
+      <!-- <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
       <param name="controller_frequency" value="10"/>
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />

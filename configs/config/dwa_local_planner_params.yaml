@@ -20,12 +20,10 @@ DWAPlannerROS:
   acc_lim_theta: 2.0
   acc_lim_y: 0.0      # diff drive robot
 
-# Goal Tolerance Parameters
-  yaw_goal_tolerance: 3.15  # 0.05  #Changed
-  xy_goal_tolerance: 2.0  # 0.10  #Changed
-  # latch_xy_goal_tolerance: false
 
 # Forward Simulation Parameters
+  angular_sim_granularity: 0.1
+  sim_granularity: 0.1 # 0.025
   sim_time: 1.0       # 1.7
   vx_samples: 6       # 3
   vy_samples: 1       # diff drive robot, there is only one sample
@@ -46,8 +44,7 @@ DWAPlannerROS:
 # Debugging
   publish_traj_pc : true
   publish_cost_grid_pc: true
-  global_frame_id: odom
 
-
-# Differential-drive robot configuration - necessary?
   holonomic_robot: false
+  
+  global_frame_id: odom

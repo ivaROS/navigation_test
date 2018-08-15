@@ -25,7 +25,7 @@ def filter(results, whitelist=None, blacklist=None):
 class ResultAnalyzer:
 
 
-    def readFile(self, filename, whitelist = None):
+    def readFile(self, filename, whitelist = None, blacklist = None):
         with open(filename, 'rb') as csvfile:
             datareader = csv.DictReader(csvfile, restval='')
 
@@ -33,12 +33,15 @@ class ResultAnalyzer:
             fieldnames = datareader.fieldnames
             for entry in datareader:
                 result_list.append(entry)
-        filtered_list = filter(result_list, whitelist)
+        filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist)
         self.results += filtered_list
 
-    def readFiles(self, filenames, whitelist=None):
+    def readFiles(self, filenames, whitelist=None, blacklist = None):
         for filename in filenames:
-            self.readFile(filename, whitelist)
+            self.readFile(filename, whitelist=whitelist, blacklist=blacklist)
+
+    def clear(self):
+        self.__init__()
 
     def getPrunedList(self, keys):
         results = []
@@ -235,12 +238,31 @@ if __name__ == "__main__":
 
     filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-07-31 18:54:52.888438']   #egocylindrical receding horizon 52:97
 
-    seeds = [str(i) for i in range(1,100)] #(52,97)
-    analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds})
+    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-08-01 18:57:16.943644']    #pips_ec_rh','depth_pips_dwa','egocylindrical_pips_dwa','dwa','teb' 0:100, sector_laser (though called sector; need to change that)
 
+    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-08-09 19:50:47.599175',    #egocylindrical_pips_dwa','dwa', plus no-recovery versions, campus 0:100, sector 0:26
+                 '/home/justin/Documents/dl3_gazebo_results_2018-08-10 14:24:53.367459',    #sector 26:64
+                 '/home/justin/Documents/dl3_gazebo_results_2018-08-10 19:33:55.865587',    #sector 64:100
+                 '/home/justin/Documents/dl3_gazebo_results_2018-08-13 20:52:35.074099']    #campus 0 barrels (0:100), 10 barrels (0:36); also included teb
+
+    filenames.extend(['/home/justin/Documents/dl3_gazebo_results_2018-08-14 20:44:02.928378' #continuation of above set: campus 10 barrels 36:100 for all; plus teb for campus 20 barrels 0:100 and sector 0:100
+     ,'/home/justin/Documents/dl3_gazebo_results_2018-08-15 12:49:36.399513' #missing case from above file; teb timing out (oscillating)
+    # ,'/home/justin/Documents/dl3_gazebo_results_2018-08-15 12:56:04.487060' #repeat of above case; success this time...
+     ])
+
+    '/home/justin/Documents/dl3_gazebo_results_2018-08-15 13:32:10.591359' #52:97 depth_pips_dwa in sector; way worse than older results, so something's definitely wrong with recent updates to the controller
+
+    seeds = [str(i) for i in range(0,100)] #(52,97)
+    analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'sector'}, blacklist={'controller':'teb'})
+
+    analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
+
+    analyzer.clear()
+    analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'campus'})
     analyzer.computeStatistics(independent=['num_barrels', 'controller'], dependent=['result'])
 
-    analyzer.compareControllers('egocylindrical_pips_dwa','pips_dwa')
+
+    #analyzer.compareControllers('egocylindrical_pips_dwa','pips_dwa')
 
     '''
     master = MultiMasterCoordinator()

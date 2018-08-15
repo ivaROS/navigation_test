@@ -62,7 +62,8 @@
   
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" launch-prefix="$(arg debug_prefix)">
-      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <!-- <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/> -->
     <!--  <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/> -->
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
@@ -71,7 +72,8 @@
       <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
 
       <param name="base_local_planner" value="pips_dwa_implementation/DepthPipsDWAPlannerROS"/>
-      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
 
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       

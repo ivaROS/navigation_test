@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 3
+        self.num_masters = 1
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
@@ -245,11 +245,97 @@ class MultiMasterCoordinator:
                 self.task_queue.put(task)
         '''
 
-        for a in range(0,50):
-            for controller in ['pips_ec_rh']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+        '''
+        for a in range(0,100):
+            for controller in ['pips_ec_rh','depth_pips_dwa','egocylindrical_pips_dwa','dwa','teb']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
                 for repetition in range(1):
                     task = {'scenario': 'sector', 'controller': controller, 'seed': a}
                 self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['campus', 'sector']:
+            for a in range(0, 20):
+                for controller in ['egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa', 'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_barrels':20} #, 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                        self.task_queue.put(task)
+
+        for scenario in ['campus', 'sector']:
+            for a in range(20, 100):
+                for controller in ['egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa',
+                                   'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                'num_barrels': 20}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                        self.task_queue.put(task)
+        '''
+
+        # for scenario in ['sector']:
+        #     for a in range(64,100):
+        #         for controller in ['egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa', 'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+        #             for repetition in range(1):
+        #                 task = {'scenario': scenario, 'controller': controller, 'seed': a}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+        #                 self.task_queue.put(task)
+
+        '''
+        for scenario in ['campus']:
+            for num_barrels in [0,10]:
+                for a in range(0,100):
+                    for controller in ['teb','egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa',
+                                       'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
+        '''
+
+        '''
+        for scenario in ['campus']:
+            for num_barrels in [10]:
+                for a in range(36,100):
+                    for controller in ['teb','egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa',
+                                       'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
+
+        for scenario in ['campus','sector']:
+            for num_barrels in [20]:
+                for a in range(0, 100):
+                    for controller in ['teb']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
+                            
+        '''
+
+        '''
+        #I stopped the above just before it finished the last one
+        task = {'scenario': 'sector', 'controller': 'teb', 'seed': 2,
+                'num_barrels': 20}
+        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sector']:
+            for num_barrels in [20]:
+                for a in range(52,97):
+                    for controller in ['depth_pips_dwa']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
+        '''
+
+        for scenario in ['sector']:
+            for num_barrels in [20]:
+                for a in range(52, 97):
+                    for controller in ['egocylindrical_pips_dwa']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):
@@ -363,8 +449,8 @@ class GazeboMaster(mp.Process):
 
                     if not self.gazebo_launch._shutting_down:
 
-
-                        self.roslaunch_controller(task["controller"])
+                        controller_args = task["controller_args"] if "controller_args" in task else None
+                        self.roslaunch_controller(task["controller"], controller_args)
 
                         try:
 
@@ -457,7 +543,7 @@ class GazeboMaster(mp.Process):
         )
         self.core.start()
 
-    def roslaunch_controller(self, controller_name):
+    def roslaunch_controller(self, controller_name, controller_args=None):
 
         #controller_path =
 
@@ -474,7 +560,7 @@ class GazeboMaster(mp.Process):
 
         self.controller_launch = roslaunch.parent.ROSLaunchParent(
             run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name + "_controller.launch"],
-            is_core=False, port=self.ros_port
+            is_core=False, port=self.ros_port #, roslaunch_strs=controller_args
         )
         self.controller_launch.start()
 

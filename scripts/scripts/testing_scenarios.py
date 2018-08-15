@@ -220,7 +220,7 @@ class SectorScenario(TestingScenario):
     def __init__(self, task, gazebo_driver):
         self.gazebo_driver = gazebo_driver
 
-        self.world = "sector"
+        self.world = "sector_laser"
 
         self.seed = task["seed"] if "seed" in task else 0
 
