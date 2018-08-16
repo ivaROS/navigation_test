@@ -328,6 +328,7 @@ class MultiMasterCoordinator:
                             self.task_queue.put(task)
         '''
 
+        '''
         for scenario in ['sector']:
             for num_barrels in [20]:
                 for a in range(52, 97):
@@ -335,6 +336,27 @@ class MultiMasterCoordinator:
                         for repetition in range(1):
                             task = {'scenario': scenario, 'controller': controller, 'seed': a,
                                     'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
+        '''
+
+        '''
+        #rerunning cases that failed in both prior sets
+        for scenario in ['sector']:
+            for num_barrels in [20]:
+                for a in [53,57,67,74,79]:
+                    for controller in ['egocylindrical_pips_dwa']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
+                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
+                            self.task_queue.put(task)
+        '''
+
+        for scenario in ['campus']:
+            for num_barrels in [0,10,20]:
+                for a in range(0,100):
+                    for controller in ['egocylindrical_pips_dwa']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller, 'num_barrels': num_barrels, 'seed': a}
                             self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
