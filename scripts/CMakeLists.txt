@@ -11,8 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
 )
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES nav_scripts
+  #INCLUDE_DIRS include
+  #LIBRARIES nav_scripts
   CATKIN_DEPENDS
 )
 
