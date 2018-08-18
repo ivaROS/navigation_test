@@ -23,7 +23,7 @@ from pprint import pprint
 import tf
 from actionlib_msgs.msg import GoalStatus
 from nav_msgs.msg import Odometry
-from kobuki_msgs.msg import BumperEvent
+from kobuki_msgs.msg import BumperEvent, WheelDropEvent
 import math
 
 class DemoResetter():
@@ -42,9 +42,12 @@ class DemoResetter():
         print "waiting for server"
         self.client.wait_for_server()
         print "Done!"
+        
+        self.stop = False
 
         rospy.Subscriber("/mobile_base/events/button",ButtonEvent,self.ButtonEventCallback)
-
+        rospy.Subscriber("/mobile_base/events/wheel_drop",WheelDropEvent,self.WheelDropEventCallback)
+        
         self.navigate()
 
         rospy.spin()
@@ -66,14 +69,17 @@ class DemoResetter():
 
     def navigate(self):
         while not rospy.is_shutdown():
-            try:
-                goal = next(self.goal_generator)
-                self.navigateToGoal(goal_pose=goal)
-                self.resetCostmaps()
-            except Exception, e:
-                print e
-                pass
-                rospy.sleep(.1)
+            if not self.stop:
+                try:
+                    goal = next(self.goal_generator)
+                    self.navigateToGoal(goal_pose=goal)
+                    self.resetCostmaps()
+                except Exception, e:
+                    print e
+                    pass
+                    rospy.sleep(.1)
+            else:
+                rospy.sleep(.2)
 
 
     def getNextGoal(self):
@@ -139,6 +145,13 @@ class DemoResetter():
             self.resetCostmaps()
             self.resetOdom()
             self.resetGoals()
+            self.stop = False
+
+    def WheelDropEventCallback(self,data):
+        if ( data.state == WheelDropEvent.DROPPED) :
+            rospy.loginfo("Stop request received")
+            self.stop = True
+            self.client.cancel_all_goals()
 
     def publishMap(self):
 
