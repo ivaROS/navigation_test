@@ -1,11 +1,12 @@
 <launch>
   <arg name="use_recovery_behaviors" default="true"/>
+  <arg name="num_paths" default="51"/>
+  <arg name="debug" default="false"/>
   
-  <include file="$(find informed_pips_dwa)/launch/brute_force.launch">
-    <arg name="use_recovery_behaviors" value="$(arg use_recovery_behaviors)"/>
-    <arg name="debug" value="false"/>
-  </include>
+  <arg name="model_name" value=""/>
+  <arg name="use_model" value="false"/>
+  <arg name="method" value="5"/>
   
-  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+  <include file="$(find nav_scripts)/launch/ec_rh_base.launch" pass_all_args="true"/>
 
 </launch>
