@@ -351,6 +351,8 @@ class MultiMasterCoordinator:
                             self.task_queue.put(task)
         '''
 
+        '''
+        #These didn't finish
         for scenario in ['campus']:
             for num_barrels in [0,10,20]:
                 for a in range(0,100):
@@ -358,6 +360,117 @@ class MultiMasterCoordinator:
                         for repetition in range(1):
                             task = {'scenario': scenario, 'controller': controller, 'num_barrels': num_barrels, 'seed': a}
                             self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sector']:
+            for a in range(0,100):
+                for controller in ['egocylindrical_pips_dwa','pips_ec_rh','egocylindrical_pips_dwa_no_recovery','pips_ec_rh_no_recovery']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+
+        #Except for the first 3, these didn't run
+        for scenario in ['campus']:
+            for num_barrels in [0, 10, 20]:
+                for a in range(0, 100):
+                    for controller in ['egocylindrical_pips_dwa','pips_ec_rh','egocylindrical_pips_dwa_no_recovery','pips_ec_rh_no_recovery']:
+                        for repetition in range(1):
+                            task = {'scenario': scenario, 'controller': controller,
+                                    'num_barrels': num_barrels, 'seed': a}
+                            self.task_queue.put(task)
+        '''
+
+        '''
+        for scenario in ['sector']:
+            for a in range(0,40):
+                for controller in ['egocylindrical_pips_dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sector']:
+            for a in range(40, 100):
+                for controller in ['egocylindrical_pips_dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sector']:
+            for a in range(40, 100):
+                for controller in ['pips_ec_rh']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sector']:
+            for a in range(33, 40):
+                for controller in ['egocylindrical_pips_dwa', 'pips_ec_rh', 'egocylindrical_pips_dwa_no_recovery',
+                                   'pips_ec_rh_no_recovery', 'teb', 'dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+
+            for a in range(40, 61):
+                for controller in [
+                                   'egocylindrical_pips_dwa_no_recovery',
+                                   'pips_ec_rh_no_recovery', 'teb', 'dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sector']:
+            for a in range(61, 100):
+                for controller in [
+                    'egocylindrical_pips_dwa_no_recovery',
+                    'pips_ec_rh_no_recovery', 'teb', 'dwa']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+            for a in range(94, 100):
+                for controller in ['pips_ec_rh']:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+                        
+        '''
+        '''
+        for scenario in ['sector']:
+            for a in range(0, 100):
+                for controller in ['pips_ec_rh'
+                    'baseline_rl_goal',
+                    'goal_regression', 'multiclass'
+                                   ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+
+        '''
+        #Switched to circles for this one
+        for scenario in ['sector']:
+            for a in range(0, 100):
+                for controller in ['pips_ec_rh'
+                    #'baseline_rl_goal',
+                    #'goal_regression', 'multiclass'
+                                   ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        #new circle model here
+        for scenario in ['sector']:
+            for a in range(0, 100):
+                for controller in ['rl_goal'
+                                   # 'baseline_rl_goal',
+                                   # 'goal_regression', 'multiclass'
+                                   ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):
@@ -472,11 +585,11 @@ class GazeboMaster(mp.Process):
                     if not self.gazebo_launch._shutting_down:
 
                         controller_args = task["controller_args"] if "controller_args" in task else None
-                        self.roslaunch_controller(task["controller"], controller_args)
 
                         try:
 
                             scenario.setupScenario()
+                            self.roslaunch_controller(task["controller"], controller_args)
 
                             print "Running test..."
 

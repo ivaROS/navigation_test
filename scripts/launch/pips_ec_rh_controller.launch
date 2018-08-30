@@ -1,8 +1,9 @@
 <launch>
-
+  <arg name="use_recovery_behaviors" default="true"/>
   
   <include file="$(find informed_pips_dwa)/launch/brute_force.launch">
-
+    <arg name="use_recovery_behaviors" value="$(arg use_recovery_behaviors)"/>
+    <arg name="debug" value="false"/>
   </include>
   
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>

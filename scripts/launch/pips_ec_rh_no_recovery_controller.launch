@@ -1,0 +1,7 @@
+<launch>
+  
+  <include file="$(find nav_scripts)/launch/pips_ec_rh_controller.launch">
+    <arg name="use_recovery_behaviors" value="false"/>
+  </include>
+
+</launch>

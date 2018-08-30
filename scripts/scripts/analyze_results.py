@@ -238,7 +238,7 @@ if __name__ == "__main__":
 
     filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-07-31 18:54:52.888438']   #egocylindrical receding horizon 52:97
 
-    filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-08-01 18:57:16.943644']    #pips_ec_rh','depth_pips_dwa','egocylindrical_pips_dwa','dwa','teb' 0:100, 'sector' is really sector_laser (though called sector; need to change that)
+    filenames3 = ['/home/justin/Documents/dl3_gazebo_results_2018-08-01 18:57:16.943644']    #pips_ec_rh','depth_pips_dwa','egocylindrical_pips_dwa','dwa','teb' 0:100, 'sector' is really sector_laser (though called sector; need to change that)
 
     filenames = ['/home/justin/Documents/dl3_gazebo_results_2018-08-09 19:50:47.599175',    #egocylindrical_pips_dwa','dwa', plus no-recovery versions, campus 0:100, sector 0:26
                  '/home/justin/Documents/dl3_gazebo_results_2018-08-10 14:24:53.367459',    #sector 26:64
@@ -252,16 +252,42 @@ if __name__ == "__main__":
 
     '/home/justin/Documents/dl3_gazebo_results_2018-08-15 13:32:10.591359' #52:97 depth_pips_dwa in sector; way worse than older results, so something's definitely wrong with recent updates to the controller
 
-    '/home/justin/Documents/dl3_gazebo_results_2018-08-15 14:07:12.527471' #sector egocylindrical_pips_dwa (52:97); only 1 at a time; not too bad
+    '/home/justin/Documents/dl3_gazebo_results_2018-08-15 14:07:12.527471' #sector egocylindrical_pips_dwa (52:97); only 1 at a time; not as bad
 
-    seeds = [str(i) for i in range(0,100)] #(52,97)
-    analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
+    ['/home/justin/Documents/dl3_gazebo_results_2018-08-16 20:44:07.080949']    #pips_ec_rh & egocylindrical_pips_dwa (plus no recovery versions) sector (0:100) LOCAL-COSTMAP ENABLED (and going forward unless otherwise stated)
+
+    ['/home/justin/Documents/dl3_gazebo_results_2018-08-17 12:44:37.019381']   #egocylindrical_pips_dwa localcostmap 0:40, 1 at a time, observed most of them with gazebo + rviz. Far better results than previous
+
+    #Only 1 at a time until stated otherwise:
+    filenames2 = ([
+    '/home/justin/Documents/dl3_gazebo_results_2018-08-17 14:01:40.070974' #egocylindrical_pips_dwa sector (40:100)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-08-17 17:01:08.244777' #pips_ec_rh sector (40:94)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-08-17 20:50:04.918590' #egocylindrical_pips_dwa and pips_ec_rh (w/ and w/out recovery), teb, dwa. sector (0:33)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-08-18 16:23:36.669100' #sector; egocylindrical_pips_dwa & pips_ec_rh w/ recovery (33:40); egocylindrical_pips_dwa & pips_ec_rh w/out recovery, teb, dwa. sector (33:61)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-08-20 19:43:12.088761'
+    ])
+
+    seeds = [str(i) for i in range(0,50)] #(52,97)
+    #analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'sector', 'controller':['dwa','teb']}) #, blacklist={'controller':'teb'}
+
+    filenames2.extend([
+        '/home/justin/Documents/dl3_gazebo_results_2018-08-21 19:38:03.047302'  #multiclass, goal_regression, baseline_rl_goal sector (0,50)
+    ])
+
+    filenames4 = [
+    '/home/justin/Documents/dl3_gazebo_results_2018-08-27 21:44:33.801033', #pips_ec_rh, sector 0:100, circle trajectories!
+    '/home/justin/Documents/dl3_gazebo_results_2018-08-29 22:06:17.605848' #rl_goal, sector,0:100, circles
+    ]
+
+    analyzer.readFiles(filenames=filenames4, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
+
 
     analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
 
-    analyzer.clear()
-    analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'campus'})
-    analyzer.computeStatistics(independent=['num_barrels', 'controller'], dependent=['result'])
+
+    # analyzer.clear()
+    # analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'campus'})
+    # analyzer.computeStatistics(independent=['num_barrels', 'controller'], dependent=['result'])
 
 
     #analyzer.compareControllers('egocylindrical_pips_dwa','pips_dwa')
