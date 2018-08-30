@@ -1,0 +1,130 @@
+<launch>
+<!--
+  <arg name="decimate" default="true"/>
+  <arg name="propagate" default="true"/>
+  
+
+  <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
+  <arg name="depth_image_raw" default="/camera/depth/image_raw"/>
+  <arg name="depth_info_raw" default="/camera/depth/camera_info"/>
+
+  <arg name="map_name" default="$(find pips_dwa_implementation)/maps/empty_world.yaml"/>
+
+  <arg name="depth_image_topic" value="$(arg depth_image_raw)" if="$(arg gazebo)"/>
+  <arg name="depth_info_topic" value="$(arg depth_info_raw)" if="$(arg gazebo)"/>
+
+  <arg name="depth_image" default="$(arg depth_image_topic)"/>
+  <arg name="depth_info" default="$(arg depth_info_topic)"/>
+
+  <arg name="display_type" default="xterm -e gdb - -args"/>
+
+
+  <arg name="decimation"        default="4"/>
+  <arg name="decimated_image"   default="/camera/depth_decimated/image_raw"/>
+  <arg name="decimated_info"    default="/camera/depth_decimated/camera_info"/>
+  
+  <arg name="image_to_use" default="$(arg decimated_image)"/>
+  <arg name="info_to_use" default="$(arg decimated_info)"/>
+
+  
+  <arg name="nodelets" default="false"/>
+  <arg name="nodelet_manager" default="pips_nodelet_manager" if="$(arg nodelets)"/>
+  <arg name="nodelet_manager" default="" unless="$(arg nodelets)"/>
+  
+  <arg name="use_provided_manager" default="false"/>
+  
+  <arg name="standalone_manager" default="load" if="$(arg nodelets)"/>
+  <arg name="standalone_manager" default="standalone" unless="$(arg nodelets)"/>
+
+  <node name="$(arg nodelet_manager)" pkg="nodelet" type="nodelet" args="manager" unless="$(arg use_provided_manager)" />
+  
+
+  <include file="$(find depth_learning)/launch/decimation.launch" if="$(arg decimate)">
+    <arg name="image_in"        value="$(arg depth_image)"/>
+    <arg name="info_in"         value="$(arg depth_info)"/>
+    <arg name="image_out"       value="$(arg decimated_image)"/>
+    <arg name="info_out"        value="$(arg decimated_info)"/>
+    <arg name="decimation"      value="$(arg decimation)"/>
+    <arg name="interpolate_cam_info" value="false"/>
+  </include>
+  -->
+
+<node name="demo_listener" pkg="nav_scripts" type="turtlebot_demo.py" output="screen"/>
+
+  <arg name="use_recovery_behaviors" default="true"/>
+
+  <arg name="debug" default="false"/>
+  <arg name="valgrind" default="false"/>
+  
+  <arg name="valgrind_prefix" default="valgrind --leak-check=yes --track-origins=yes"/>
+  
+  <arg name="debug_prefix_value" default="$(arg valgrind_prefix)" if="$(arg valgrind)"/>
+  <arg name="debug_prefix_value" default="xterm -e gdb -ex run --args" unless="$(arg valgrind)"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/>
+  <arg name="debug_prefix" value="$(arg debug_prefix_value)" if="$(arg debug)"/>
+
+
+  <arg name="image_to_use" default="egocylinder/image"/>
+  <arg name="info_to_use" default="egocylinder/data"/>
+
+  <!--<param name="/egocylinder/depth_to_egocylindrical_nodelet/width" value="512"/>
+  <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
+  <!--<include file="$(find egocylindrical)/launch/nodelets.launch"/>-->
+
+  <node pkg="nodelet" type="nodelet" name="navigation_velocity_smoother" args="standalone yocs_velocity_smoother/VelocitySmootherNodelet">
+    <rosparam file="$(find turtlebot_bringup)/param/defaults/smoother.yaml" command="load"/>
+    <remap from="navigation_velocity_smoother/smooth_cmd_vel" to="cmd_vel_mux/input/navi"/>
+
+    <!-- Robot velocity feedbacks; use the default base configuration -->
+    <remap from="navigation_velocity_smoother/odometry" to="odom"/>
+    <remap from="navigation_velocity_smoother/robot_cmd_vel" to="mobile_base/commands/velocity"/>
+  </node>
+
+  <!--rosrun topic_tools throttle messages /egocylinder/filtered_points 1 /collisions -->
+  <!--<node name="filtered_points_throttle" pkg="topic_tools" type="throttle" args="messages /egocylinder/filtered_points 1 /collisions"/> -->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+
+      
+      <!--<rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load"/> -->
+      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
+
+      
+      <rosparam file="$(find nav_configs)/config/custom_recovery_params.yaml" command="load" if="$(arg use_recovery_behaviors)"/>
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+      
+
+      <!-- <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>  -->
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/> 
+      
+      <param name="odom_topic"                                value="/odom" />
+      
+      <param name="base_local_planner" value="pips_dwa_implementation/DepthPipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
+      
+      <param name="odom_topic"                                value="/odom" />
+      <param name="DepthPipsDWAPlannerROS/depth_image_topic" value="$(arg image_to_use)" />
+      <param name="DepthPipsDWAPlannerROS/depth_info_topic" value="$(arg info_to_use)" />
+      
+      <param name="DepthPipsDWAPlannerROS/depth_image_cc_wrapper/depth_image_collision_checker/model_type" value="6" />
+      
+      
+      <!--<rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/> -->
+
+
+
+    <param name="global_costmap/global_frame" value="/odom"/>
+    <param name="DepthPipsDWAPlannerROS/xy_goal_tolerance" value=".2"/>
+
+  </node>
+  
+
+</launch>
