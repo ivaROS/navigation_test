@@ -138,6 +138,16 @@ class ResultAnalyzer:
             conditionset = frozenset(condition.items())
             self.frozen_set.append(conditionset)
 
+    def getAverageTime(self, tasks):
+        total_time = 0
+        num_tasks = 0
+        for task in tasks:
+            t = int(task['time'])
+            total_time += t
+            num_tasks += 1
+            
+        avg_time = total_time/num_tasks if num_tasks > 0 else 0
+        print tasks[0]['controller'] + ': ' + str(avg_time/1e9)
 
     def contains(self, task):
         stripped_task = {str(key): str(task[key]) for key,value in task.items()}
@@ -279,11 +289,20 @@ if __name__ == "__main__":
     '/home/justin/Documents/dl3_gazebo_results_2018-08-29 22:06:17.605848' #rl_goal, sector,0:100, circles
     ]
 
-    analyzer.readFiles(filenames=filenames4, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
+    filenames2.extend([
+        '/home/justin/Documents/dl3_gazebo_results_2018-08-30 21:25:55.858736'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-08-30 22:37:07.640068'
+    ])
+
+    analyzer.readFiles(filenames=filenames2, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
 
 
     analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
 
+    for controller in ['pips_ec_rh', 'baseline_rl_goal', 'multiclass', 'rl_single', 'egocylindrical_pips_dwa', 'goal_regression','teb', 'dwa']:
+        res = analyzer.getCases(has={'controller':controller, 'result':'SUCCEEDED'})
+        analyzer.getAverageTime(res)
+        
 
     # analyzer.clear()
     # analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'campus'})
