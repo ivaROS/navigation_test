@@ -1,7 +1,10 @@
 <launch>
+
+  <arg name="num_paths" default="51"/>
+  <arg name="debug" default="false"/>
   
-  <include file="$(find nav_scripts)/launch/pips_ec_rh_controller.launch">
-    <arg name="use_recovery_behaviors" value="false"/>
-  </include>
+  <arg name="use_recovery_behaviors" value="false"/>
+    
+  <include file="$(find nav_scripts)/launch/pips_ec_rh_controller.launch"  pass_all_args="true"/>
 
 </launch>

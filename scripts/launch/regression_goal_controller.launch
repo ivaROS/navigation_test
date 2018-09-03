@@ -1,68 +1,12 @@
 <launch>
-
-  <arg name="gazebo" default="true"/>
+  <arg name="use_recovery_behaviors" default="false"/>
   <arg name="debug" default="false"/>
-  <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
-  <arg name="depth_image_raw" default="/camera/depth/image_raw"/>
-  <arg name="depth_info_raw" default="/camera/depth/camera_info"/>
-  <arg name="rgb_image_raw" default="/camera/rgb/image_raw"/>
   
-  <arg name="depth_image_topic" value="$(arg depth_image_raw)" if="$(arg gazebo)"/>
-  <arg name="depth_info_topic" value="$(arg depth_info_raw)" if="$(arg gazebo)"/>
+  <arg name="num_paths" value="1"/>
+  <arg name="model_name" value="goal_weighted_regression"/>
+  <arg name="use_model" value="true"/>
+  <arg name="method" value="4"/>
   
-  <arg name="depth_image" default="$(arg depth_image_topic)"/>
-  <arg name="depth_info" default="$(arg depth_info_topic)"/>
-  
-  <arg name="launch_prefix" default="xterm -e gdb --args" if="$(arg debug)"/>
-  <arg name="launch_prefix" default="" unless="$(arg debug)"/>
+  <include file="$(find nav_scripts)/launch/ec_rh_base.launch" pass_all_args="true"/>
 
-  <arg name="decimation"        default="4"/>
-  <arg name="decimated_image"   default="/camera/depth_decimated/image_raw"/>
-  <arg name="decimated_info"    default="/camera/depth_decimated/camera_info"/>
-
-
-  <!-- Note: Assumes that Gazebo is already running and that a turtlebot has already been spawned
-       (Use gazebo.launch) -->
-
-  <include file="$(find depth_learning)/launch/decimation.launch">
-    <arg name="image_in"        value="$(arg depth_image)"/>
-    <arg name="info_in"         value="$(arg depth_info)"/>
-    <arg name="image_out"       value="$(arg decimated_image)"/>
-    <arg name="info_out"        value="$(arg decimated_info)"/>
-    <arg name="decimation"      value="$(arg decimation)"/>
-  </include>
-      
-      
-  <include file="$(find informed_pips_dwa)/launch/trajectory_controller.launch">
-  </include>
-  
-  <node name="predictive_service_provider" pkg="depth_learning" type="predictive_service.py" output="screen">
-    <param name="~datastats_filepath" value="/media/justin/data/justin/bag_files/depth_learning/training.bag"/>
-    <param name="~model_filepath" value="$(find dl_models)/downloads/goal_weighted_regression.pb"/>
-    <remap from="image" to="$(arg decimated_image)"/>
-  </node>
-  
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg launch_prefix)">
-      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/>
-      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
-      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
-      
-      <rosparam file="$(find informed_pips_dwa)/param/pips_dwa_local_planner_params.yaml" command="load"/>
-      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
-      <remap from="$(arg pips_namespace)/camera/depth/image_raw" to="$(arg decimated_image)" />
-      <remap from="$(arg pips_namespace)/camera/depth/camera_info" to="$(arg decimated_info)" />
-      <remap from="$(arg pips_namespace)/camera/rgb/image_raw" to="$(arg rgb_image_raw)" />
-      <remap from="$(arg pips_namespace)/odom" to="/odom"/>
-      <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
-      <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
-      <param name="controller_frequency" value="10"/>
-      <param name="approach_method" value="4"/>
-      <param name="num_paths" value = "5"/>
-
-      <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/lpi/PipsCollisionChecker"/> 
-      <remap from="$(arg pips_namespace)/PipsCollisionChecker/collisions" to="/collisions"/>
-
-  </node> 
 </launch>

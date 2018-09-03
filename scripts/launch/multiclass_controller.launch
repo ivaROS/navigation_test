@@ -1,11 +1,12 @@
 <launch>
-
   <arg name="use_recovery_behaviors" default="true"/>
+  <arg name="num_paths" default="5"/>
+  <arg name="debug" default="false"/>
   
-  <include file="$(find informed_pips_dwa)/launch/multiclass.launch">
-    <arg name="use_recovery_behaviors" value="$(arg use_recovery_behaviors)"/>
-  </include>
+  <arg name="model_name" value="multiclass_buffer"/>
+  <arg name="use_model" value="true"/>
+  <arg name="method" value="2"/>
   
-  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+  <include file="$(find nav_scripts)/launch/ec_rh_base.launch" pass_all_args="true"/>
 
 </launch>
