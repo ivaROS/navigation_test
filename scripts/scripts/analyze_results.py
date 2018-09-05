@@ -147,7 +147,7 @@ class ResultAnalyzer:
             num_tasks += 1
             
         avg_time = total_time/num_tasks if num_tasks > 0 else 0
-        print tasks[0]['controller'] + ': ' + str(avg_time/1e9)
+        print  ': ' + str(avg_time/1e9) #tasks[0]['controller'] +
 
     def contains(self, task):
         stripped_task = {str(key): str(task[key]) for key,value in task.items()}
@@ -177,6 +177,27 @@ class ResultAnalyzer:
     def __init__(self):
         self.fieldnames = []
         self.results = []
+
+    def getCommonSuccessfulSeeds(self, controllers):
+        statistics = {}
+        good_seeds = []
+        
+        for seed in range(0,50):
+            still_good = True
+            
+            for controller in controllers:
+                task = {'scenario': 'sector', 'controller': controller, 'seed': seed, 'result': 'SUCCEEDED'}
+                task = self.getMatchingResult(task)
+                if task is None:
+                    still_good = False
+                    break
+            
+            if still_good:
+                good_seeds.append(seed)
+                print str(seed) + ": good"
+                
+        return good_seeds
+
 
     def compareControllers(self, controller1, controller2):
         statistics = {}
@@ -289,18 +310,33 @@ if __name__ == "__main__":
     '/home/justin/Documents/dl3_gazebo_results_2018-08-29 22:06:17.605848' #rl_goal, sector,0:100, circles
     ]
 
-    filenames2.extend([
-        '/home/justin/Documents/dl3_gazebo_results_2018-08-30 21:25:55.858736'
-        ,'/home/justin/Documents/dl3_gazebo_results_2018-08-30 22:37:07.640068'
-    ])
+    #Added improved trajectory cropping at this point?
 
-    analyzer.readFiles(filenames=filenames2, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
+    filenames5 = [
+        '/home/justin/Documents/dl3_gazebo_results_2018-08-30 21:25:55.858736' #pips_ec_rh sector (0:18)
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-08-30 22:37:07.640068' #pips_ec_rh sector (19:50), rl_single (0:50)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-08-31 10:48:22.570544' #rl_goal, multiclass, regression_goal sector (0:100)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-01 12:31:01.897767' # rl_goal_no_recovery, multiclass_no_recovery, pips_ec_rh_no_recovery, rl_single_no_recovery sector (0:44)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-01 17:50:40.516866' # rl_goal_no_recovery, multiclass_no_recovery, pips_ec_rh_no_recovery, rl_single_no_recovery sector (44:50)
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-01 18:21:55.618628' #pips_ec_rh_no_recovery_(paths: 5,25) (0:50) sector
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-02 00:01:01.691753' #pips_ec_rh_no_recovery_(paths: 9,15,19) (0:50) sector
+    ]
+
+    analyzer.readFiles(filenames=filenames5, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
 
 
     analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
 
-    for controller in ['pips_ec_rh', 'baseline_rl_goal', 'multiclass', 'rl_single', 'egocylindrical_pips_dwa', 'goal_regression','teb', 'dwa']:
-        res = analyzer.getCases(has={'controller':controller, 'result':'SUCCEEDED'})
+    controllers = ['pips_ec_rh','pips_ec_rh_no_recovery', 'pips_ec_rh_no_recovery_5', 'pips_ec_rh_no_recovery_9', 'pips_ec_rh_no_recovery_15', 'pips_ec_rh_no_recovery_19', 'pips_ec_rh_no_recovery_25', 'rl_goal', 'multiclass', 'rl_single', 'egocylindrical_pips_dwa', 'goal_regression','teb', 'dwa', 'multiclass_no_recovery', 'rl_single_no_recovery']
+
+    goodseeds = analyzer.getCommonSuccessfulSeeds(controllers = controllers)
+    
+    #analyzer.clear()
+    #analyzer.readFiles(filenames=filenames2, whitelist={'seed':goodseeds, 'scenario':'sector', 'controller':controllers}) #, blacklist={'controller':'teb'}
+
+    for controller in controllers:
+        print controller
+        res = analyzer.getCases(has={'controller':controller, 'result':'SUCCEEDED'}) #, 'seed':seeds
         analyzer.getAverageTime(res)
         
 

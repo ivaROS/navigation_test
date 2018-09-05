@@ -1,0 +1,69 @@
+<launch>
+  <arg name="model_name" value="goal_rl"/>
+  <arg name="use_model" value="true"/>
+  <arg name="method" value="3"/>
+  <arg name="num_paths" value="5"/>
+  
+  <arg name="gazebo" default="true"/>
+  <arg name="debug" default="false"/>
+  <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
+  
+  <arg name="egocylindrical_image" default="/egocylinder/image"/>
+  <arg name="egocylindrical_info" default="/egocylinder/data"/>
+
+  <arg name="depth_image_raw" default="/camera/depth/image_raw"/>
+  <arg name="depth_info_raw" default="/camera/depth/camera_info"/>
+  <arg name="rgb_image_raw" default="/camera/rgb/image_raw"/>
+  
+  <arg name="depth_image_topic" value="$(arg depth_image_raw)" if="$(arg gazebo)"/>
+  <arg name="depth_info_topic" value="$(arg depth_info_raw)" if="$(arg gazebo)"/>
+  
+  <arg name="depth_image" default="$(arg depth_image_topic)"/>
+  <arg name="depth_info" default="$(arg depth_info_topic)"/>
+  
+  <arg name="launch_prefix" default="xterm -e gdb --args" if="$(arg debug)"/>
+  <arg name="launch_prefix" default="" unless="$(arg debug)"/>
+
+  <arg name="decimation"        default="4"/>
+  <arg name="decimated_image"   default="/camera/depth_decimated/image_raw"/>
+  <arg name="decimated_info"    default="/camera/depth_decimated/camera_info"/>
+
+  <include file="$(find depth_learning)/launch/decimation.launch" if="$(arg use_model)">
+    <arg name="image_in"        value="$(arg depth_image)"/>
+    <arg name="info_in"         value="$(arg depth_info)"/>
+    <arg name="image_out"       value="$(arg decimated_image)"/>
+    <arg name="info_out"        value="$(arg decimated_info)"/>
+    <arg name="decimation"      value="$(arg decimation)"/>
+  </include>
+  
+  
+
+  <node name="predictive_service_provider" pkg="depth_learning" type="predictive_service.py" output="screen" if="$(arg use_model)">
+    <param name="~datastats_filepath" value="/media/justin/data/justin/bag_files/depth_learning/training.bag"/>
+    <param name="~model_filepath" value="$(find dl_models)/temp_downloads/$(arg model_name).pb"/>
+    <remap from="image" to="$(arg decimated_image)"/>
+  </node>
+
+  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+
+  
+  <node pkg="informed_pips_dwa" type="informed_depth_controller" respawn="false" name="informed_depth_controller" output="screen" clear_params="true" launch-prefix="$(arg launch_prefix)">
+      <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg egocylindrical_image)" />
+      <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg egocylindrical_info)" />
+      <remap from="$(arg pips_namespace)/odom" to="/odom"/>
+      <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
+
+
+      <param name="controller_frequency" value="10"/>
+      <param name="approach_method" value="$(arg method)"/>
+      <param name="num_paths" value = "$(arg num_paths)"/>
+      
+      <param name="egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg egocylindrical_image)" />
+      <param name="egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg egocylindrical_info)" />
+      
+      <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6"/>
+      
+      <!-- <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/lpi/PipsCollisionChecker"/> -->
+
+  </node> 
+</launch>
