@@ -1,5 +1,4 @@
 <launch>
-  <rosparam command="delete" param="/move_base"/>
 
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 

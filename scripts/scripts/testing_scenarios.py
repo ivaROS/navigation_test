@@ -22,6 +22,8 @@ class TestingScenarios:
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sparse":
                 return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "dense":
+                return DenseScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -43,7 +45,7 @@ class TestingScenarios:
             fieldnames.extend(scenario.getUniqueFieldNames())
         return fieldnames
 
-class TestingScenario:
+class TestingScenario(object):
     def __init__(self, world, init_pose, target_pose, gazebo_driver):
         self.gazebo_driver = gazebo_driver
         self.world = world
@@ -382,3 +384,11 @@ class SparseScenario(TestingScenario):
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.unpause()
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_obstacle_spacing)
+
+
+
+class DenseScenario(SparseScenario):
+    def __init__(self, task, gazebo_driver):
+        super(DenseScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 1

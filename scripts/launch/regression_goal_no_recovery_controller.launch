@@ -1,0 +1,8 @@
+<launch>
+  <arg name="debug" default="false"/>
+
+  <arg name="use_recovery_behaviors" value="false"/>
+
+  <include file="$(find nav_scripts)/launch/regression_goal_controller.launch" pass_all_args="true"/>
+
+</launch>

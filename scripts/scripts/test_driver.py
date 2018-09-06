@@ -21,10 +21,11 @@ class BumperChecker:
         if data.state == BumperEvent.PRESSED:
             self.collided = True
 
+#Not currently in use
 class OdomChecker:
     def __init__(self):
-        self.tfBuffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tfBuffer)
+        #self.tfBuffer = tf2_ros.Buffer()
+        #self.tf_listener = tf2_ros.TransformListener(self.tfBuffer)
         #self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
         self.not_moving = False
         self.collided = False
@@ -68,7 +69,28 @@ class OdomChecker:
             print e
             pass
 
+class OdomAccumulator:
+    def __init__(self):
+        self.feedback_subscriber = rospy.Subscriber("move_base/feedback", MoveBaseActionFeedback, self.feedbackCB, queue_size=5)
+        self.path_length = 0
+        self.prev_msg = None
 
+    def feedbackCB(self, feedback):
+        if self.prev_msg is not None:
+            prev_pos = self.prev_msg.feedback.base_position.pose.position
+            cur_pos = feedback.feedback.base_position.pose.position
+
+            deltaX = cur_pos.x - prev_pos.x
+            deltaY = cur_pos.y - prev_pos.y
+
+            displacement = math.sqrt(deltaX*deltaX + deltaY*deltaY)
+            self.path_length += displacement
+
+
+        self.prev_msg = feedback
+
+    def getPathLength(self):
+        return self.path_length
 
 
 def run_testImpl(pose):
@@ -132,6 +154,7 @@ def run_test(goal_pose):
     # Action client for sending position commands
     bumper_checker = BumperChecker()
     odom_checker = OdomChecker()
+    odom_accumulator = OdomAccumulator()
 
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print "waiting for server"
@@ -152,6 +175,8 @@ def run_test(goal_pose):
 
     start_time = rospy.Time.now()
 
+    result = None
+
     keep_waiting = True
     while keep_waiting:
         state = client.get_state()
@@ -160,47 +185,51 @@ def run_test(goal_pose):
             keep_waiting = False
         elif bumper_checker.collided:
             keep_waiting = False
-            return "BUMPER_COLLISION"
+            result = "BUMPER_COLLISION"
         elif odom_checker.collided:
             keep_waiting = False
-            return "OTHER_COLLISION"
+            result = "OTHER_COLLISION"
         elif odom_checker.not_moving:
             keep_waiting = False
-            return "STUCK"
+            result = "STUCK"
         elif (rospy.Time.now() - start_time > rospy.Duration(300)):
             keep_waiting = False
-            return "TIMED_OUT"
+            result = "TIMED_OUT"
         else:
             r.sleep()
 
+    task_time = str(rospy.Time.now() - start_time)
 
-    #client.wait_for_result(rospy.Duration(45))
-    print "done!"
+    path_length = str(odom_accumulator.getPathLength())
+
+    if result is None:
+        #client.wait_for_result(rospy.Duration(45))
+        print "done!"
 
 
+        # 3 means success, according to the documentation
+        # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
+        print "getting goal status"
+        print(client.get_goal_status_text())
+        print "done!"
+        print "returning state number"
+        #return client.get_state() == 3
+        state = client.get_state()
+        if state == GoalStatus.SUCCEEDED:
+            result = "SUCCEEDED"
+        elif state == GoalStatus.ABORTED:
+            result = "ABORTED"
+        elif state == GoalStatus.LOST:
+            result = "LOST"
+        elif state == GoalStatus.REJECTED:
+            result = "REJECTED"
+        elif state == GoalStatus.ACTIVE:
+            result = "TIMED_OUT"
 
+        else:
+            result = "UNKNOWN"
 
-    # 3 means success, according to the documentation
-    # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
-    print "getting goal status"
-    print(client.get_goal_status_text())
-    print "done!"
-    print "returning state number"
-    #return client.get_state() == 3
-    state = client.get_state()
-    if state == GoalStatus.SUCCEEDED:
-        return {'result':"SUCCEEDED", 'time': str(rospy.Time.now() - start_time) }
-    elif state == GoalStatus.ABORTED:
-        return "ABORTED"
-    elif state == GoalStatus.LOST:
-        return "LOST"
-    elif state == GoalStatus.REJECTED:
-        return "REJECTED"
-    elif state == GoalStatus.ACTIVE:
-        return "TIMED_OUT"
-
-    else:
-        return "UNKNOWN"
+    return {'result': result, 'time': task_time, 'path_length': path_length}
 
 if __name__ == "__main__":
     try:

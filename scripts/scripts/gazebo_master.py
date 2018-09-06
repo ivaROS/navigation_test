@@ -49,7 +49,7 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
         self.num_masters = 1
-        self.save_results = False
+        self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -60,7 +60,7 @@ class MultiMasterCoordinator:
 
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
-        self.fieldnames.extend(["pid","result","time"])
+        self.fieldnames.extend(["pid","result","time","path_length"])
 
 
     def start(self):
@@ -540,14 +540,21 @@ class MultiMasterCoordinator:
                         self.task_queue.put(task)
         '''
 
-        for scenario in ['sparse']:
+        for scenario in ['dense', 'sparse']:
             for a in range(0, 50):
                 for controller in [
-                    'dwa'
+                    'rl_goal_no_recovery'
+                    ,'multiclass_no_recovery'
+                    ,'dwa_no_recovery'
+                    ,'depth_pips_dwa_no_recovery'
+                    ,'pips_ec_rh_no_recovery'
+                    ,'regression_goal_no_recovery'
+                    ,'rl_single_no_recovery'
                 ]:
                     for repetition in range(1):
                         task = {'scenario': scenario, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
+
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):

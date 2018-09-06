@@ -1,5 +1,6 @@
 <launch>
-
+  <arg name="use_recovery_behaviors" default="true"/>
+  
   <arg name="decimate" default="true"/>
 
   <arg name="gazebo" default="true"/>
@@ -51,6 +52,7 @@
       <param name="base_local_planner" value="pips_dwa_implementation/DepthPipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
 
       <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
       
@@ -61,7 +63,7 @@
       <param name="DepthPipsDWAPlannerROS/depth_image_cc_wrapper/depth_image_collision_checker/model_type" value="6" />
 
       <remap from="/move_base/DepthPipsDWAPlannerROS/depth_image_cc_wrapper/depth_image_collision_checker/collisions" to="/collisions"/>
-      <param name="controller_frequency" value="10"/>
+
       
       <!-- <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/> -->
 
