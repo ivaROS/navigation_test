@@ -48,8 +48,8 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 2
-        self.save_results = True
+        self.num_masters = 1
+        self.save_results = False
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -527,7 +527,7 @@ class MultiMasterCoordinator:
                         task = {'scenario': scenario, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
         '''
-        
+        '''
         for scenario in ['sector']:
             for a in range(0, 50):
                 for controller in [
@@ -538,7 +538,16 @@ class MultiMasterCoordinator:
                     for repetition in range(1):
                         task = {'scenario': scenario, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
+        '''
 
+        for scenario in ['sparse']:
+            for a in range(0, 50):
+                for controller in [
+                    'dwa'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):

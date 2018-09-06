@@ -20,6 +20,8 @@ class TestingScenarios:
                 return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector":
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "sparse":
+                return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -316,3 +318,67 @@ class FourthFloorScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.unpause()
+
+
+
+class SparseScenario(TestingScenario):
+    def __init__(self, task, gazebo_driver):
+        self.gazebo_driver = gazebo_driver
+
+        self.world = "empty_room_20x20"
+
+        self.seed = task["seed"] if "seed" in task else 0
+        self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 3
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
+
+
+        self.random = random.Random()
+        self.random.seed(self.seed)
+
+        self.minx = [-7]
+        self.miny = [-9.5]
+        self.maxx = [6.5]
+        self.maxy = [9.5]
+
+
+    @staticmethod
+    def getUniqueFieldNames():
+        return ["num_obstacles", "seed", "min_obstacle_spacing"]
+
+    def getPoseMsg(self, pose):
+        pose_msg = Pose()
+        pose_msg.position.x = pose[0]
+        pose_msg.position.y = pose[1]
+
+        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+        # msg = Quaternion(*q)
+
+        pose_msg.orientation = Quaternion(*q)
+
+        return pose_msg
+
+    def getStartingPose(self):
+        y = self.random.random()*(18) - 9
+        pose = [-9, y, 0]
+        init_pose = self.getPoseMsg(pose=pose)
+
+        return init_pose
+
+    def getGoal(self):
+        y = self.random.random()*(18) - 9
+
+        pose = [8,y,0]
+        init_pose = self.getPoseMsg(pose=pose)
+        pose_stamped = PoseStamped()
+        pose_stamped.pose = init_pose
+        pose_stamped.header.frame_id="map"
+        return pose_stamped
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.unpause()
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_obstacle_spacing)

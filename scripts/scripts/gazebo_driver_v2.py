@@ -6,6 +6,7 @@ import sys, os, time
 from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Quaternion, Transform, TransformStamped
 from sensor_msgs.msg import Image, CameraInfo
 from copy import deepcopy
+import rospkg
 
 from tf2_ros import TransformListener, Buffer, LookupException, ConnectivityException, ExtrapolationException, StaticTransformBroadcaster
 import tf
@@ -66,6 +67,11 @@ class GazeboDriver():
     # Compute barrel points
     barrels = points[idx] + off
     '''
+
+    xmaxs = np.array(xmaxs)
+    xmins = np.array(xmins)
+    ymaxs = np.array(ymaxs)
+    ymins = np.array(ymins)
 
     region_weights = (xmaxs - xmins)*(ymaxs - ymins)
     region_weights = region_weights / (np.sum(region_weights))
@@ -205,6 +211,27 @@ class GazeboDriver():
     success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
         robot_namespace, initial_pose, reference_frame, gazebo_namespace)
 
+  # Adapted from pips_test: gazebo_driver.py
+  def spawn_obstacle(self, model_name, initial_pose):
+    # Must be unique in the gazebo world - failure otherwise
+    # Spawning on top of something else leads to bizarre behavior
+
+
+    path = self.rospack.get_path("nav_configs")
+    model_path = path + "/models/"
+
+    model_types = ['box_02_02_05.srdf', 'pole_005_06.srdf']
+    model_type = self.random.choice(model_types)
+
+
+    model_xml = load_model_xml(model_path + model_type)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+                                                      robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
   def moveBarrelsTest(self,n, x, y):
     self.poses = []
     for i in range(n):
@@ -255,6 +282,42 @@ class GazeboDriver():
       if not res.success:
         print res.status_message
 
+  def moveObstacles(self, n, minx=None, miny=None, maxx=None, maxy=None, grid_spacing=None):
+    self.poses = []
+
+    minx = self.minx if minx is None else minx
+    maxx = self.maxx if maxx is None else maxx
+    miny = self.miny if miny is None else miny
+    maxy = self.maxy if maxy is None else maxy
+    grid_spacing = self.grid_spacing if grid_spacing is None else grid_spacing
+
+    barrel_names = [name for name in self.models.name if "obstacle" in name]
+
+    for i, xy in enumerate(
+            self.barrel_points(xmins=minx, ymins=miny, xmaxs=maxx, ymaxs=maxy, min_dist=grid_spacing, num_barrels=n)):
+      # print i, xy
+      name = "obstacle{}".format(i)
+      # print name
+
+      if name in barrel_names: barrel_names.remove(name)
+
+      pose = Pose()
+      pose.position.x = xy[0]
+      pose.position.y = xy[1]
+
+      pose.orientation.w = 1
+
+      self.poses.append(pose)
+
+      # print str(pose)
+
+      if not self.setPose(name, pose):
+        self.spawn_obstacle(name, pose)
+
+    for name in barrel_names:
+      res = self.deleteModel(name=name)
+      if not res.success:
+        print res.status_message
       
   def shutdown(self):
     self.unpause()
@@ -316,6 +379,8 @@ class GazeboDriver():
 
     self.odom_pub = rospy.Publisher(
       '/mobile_base/commands/reset_odometry', std_msgs.Empty, queue_size=1)
+
+    self.rospack = rospkg.RosPack()
 
     self.models = None
     
