@@ -1,5 +1,4 @@
 <launch>
-  <rosparam command="delete" param="/move_base"/>
 
   <arg name="use_recovery_behaviors" default="true"/>
 
