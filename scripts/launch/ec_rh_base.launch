@@ -52,9 +52,14 @@
 
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>
 
-  <!-- TODO: add args to trajectory_controller.launch so we can ensure everything is consistent -->
-  <include file="$(find informed_pips_dwa)/launch/trajectory_controller.launch">
-  </include>
+  <!-- <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/> -->
+    
+  <node name="turtlebot_controller_node" pkg="turtlebot_trajectory_controller" type="trajectory_controller_node" output="screen" >
+    <remap from="turtlebot_controller_node/trajectory_controller/desired_trajectory" to="/move_base/PipsDWAPlannerROS/paths"/>
+    <remap from="turtlebot_controller_node/trajectory_controller/disable" to ="/move_base/PipsDWAPlannerROS/disable"/>
+    <remap from="turtlebot_controller_node/trajectory_controller/enable" to="/move_base/PipsDWAPlannerROS/enable"/>
+    <!-- <remap from="cmd_vel_mux/input/navi" to="navigation_velocity_smoother/raw_cmd_vel"/> -->
+  </node>
   
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg launch_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
@@ -86,7 +91,6 @@
       <remap from="$(arg pips_namespace)/odom" to="/odom"/>
       <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
 
-      <param name="controller_frequency" value="10"/>
       <param name="approach_method" value="$(arg method)"/>
       <param name="num_paths" value = "$(arg num_paths)"/>
       

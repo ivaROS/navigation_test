@@ -43,10 +43,10 @@ trans_stopped_vel: 0.1
 # Cost function params
 forward_point_distance: 0.325
 goal_distance_bias: 24.0
-occdist_scale: .01
+occdist_scale: .5
 oscillation_reset_angle: 0.2
 oscillation_reset_dist: 0.05
-path_distance_bias: 32.0
+path_distance_bias: 64.0
 scaling_speed: 0.25
 
 isDataRecord: 0

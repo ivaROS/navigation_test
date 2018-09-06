@@ -57,8 +57,6 @@
       <rosparam file="$(find nav_configs)/config/custom_recovery_params.yaml" command="load" if="$(arg use_recovery_behaviors)"/>
       <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
       
-
-      <!-- <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/> -->
       <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
       
       <param name="odom_topic"                                value="/odom" />
@@ -67,7 +65,6 @@
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg info_to_use)" />
 
       <!-- <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
-      <param name="controller_frequency" value="10"/>
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />
       

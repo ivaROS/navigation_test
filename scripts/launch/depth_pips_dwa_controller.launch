@@ -1,7 +1,6 @@
 <launch>
 
   <arg name="decimate" default="true"/>
-  <arg name="propagate" default="false"/>
 
   <arg name="gazebo" default="true"/>
   <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
@@ -26,20 +25,7 @@
   <arg name="decimated_image"   default="/camera/depth_decimated/image_raw"/>
   <arg name="decimated_info"    default="/camera/depth_decimated/camera_info"/>
   
-  <arg name="propagated_image"   default="/camera/depth_p/image_raw"/>
-  <arg name="propagated_info"    default="/camera/depth_p/camera_info"/>
 
-  <arg name="image_to_propagate" default="$(arg decimated_image)" if="$(arg decimate)"/>
-  <arg name="info_to_propagate" default="$(arg decimated_info)" if="$(arg decimate)"/>
-  <arg name="image_to_propagate" default="$(arg depth_image)" unless="$(arg decimate)"/>
-  <arg name="info_to_propagate" default="$(arg depth_info)" unless="$(arg decimate)"/>
-  
-  <arg name="image_to_use" default="$(arg propagated_image)" if="$(arg propagate)"/>
-  <arg name="info_to_use" default="$(arg propagated_info)" if="$(arg propagate)"/>
-  <arg name="image_to_use" default="$(arg image_to_propagate)" unless="$(arg propagate)"/>
-  <arg name="info_to_use" default="$(arg info_to_propagate)" unless="$(arg propagate)"/>
-  
-  
   <include file="$(find depth_learning)/launch/decimation.launch" if="$(arg decimate)">
     <arg name="image_in"        value="$(arg depth_image)"/>
     <arg name="info_in"         value="$(arg depth_info)"/>
@@ -49,20 +35,11 @@
     <arg name="interpolate_cam_info" value="false"/>
   </include>
 
-
-  <include file="$(find image_propagator)/launch/depth_image_propagator.launch"  if="$(arg propagate)">
-    <arg name="image_in"      value="$(arg image_to_propagate)"/>
-    <arg name="info_in"       value="$(arg info_to_propagate)"/>
-    <arg name="image_out"     value="$(arg propagated_image)"/>
-    <arg name="info_out"      value="$(arg propagated_info)"/>
-    <arg name="points"        value="/camera/depth_p/points"/>
-  </include>
-  
-  
-  
+  <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <!-- <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="global_costmap"/> -->
     <!--  <rosparam file="$(find nav_configs)/config/pips_costmap_params.yaml" command="load" ns="local_costmap"/> -->
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
@@ -75,11 +52,11 @@
       <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DepthPipsDWAPlannerROS"/>
 
-      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
       
       <param name="odom_topic"                                value="/odom" />
-      <param name="DepthPipsDWAPlannerROS/depth_image_topic" value="$(arg image_to_use)" />
-      <param name="DepthPipsDWAPlannerROS/depth_info_topic" value="$(arg info_to_use)" />
+      <param name="DepthPipsDWAPlannerROS/depth_image_topic" value="$(arg decimated_image)" />
+      <param name="DepthPipsDWAPlannerROS/depth_info_topic" value="$(arg decimated_info)" />
       
       <param name="DepthPipsDWAPlannerROS/depth_image_cc_wrapper/depth_image_collision_checker/model_type" value="6" />
 
