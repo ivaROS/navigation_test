@@ -1,0 +1,6 @@
+<launch>
+  <arg name="use_recovery_behaviors" value="false"/>
+  
+  <include file="$(find nav_scripts)/launch/teb_controller.launch" pass_all_args="true"/>
+  
+</launch>

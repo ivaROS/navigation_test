@@ -1,0 +1,12 @@
+<launch>
+  <arg name="use_recovery_behaviors" default="true"/>
+  <arg name="debug" default="false"/>
+  
+  <arg name="num_paths" value="1"/>
+  <arg name="model_name" value=""/>
+  <arg name="use_model" value="false"/>
+  <arg name="method" value="1"/>
+  
+  <include file="$(find nav_scripts)/launch/ec_rh_base.launch" pass_all_args="true"/>
+  
+</launch>
