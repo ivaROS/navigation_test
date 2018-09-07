@@ -24,6 +24,8 @@ class TestingScenarios:
                 return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "dense":
                 return DenseScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "medium":
+                return MediumScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -392,3 +394,9 @@ class DenseScenario(SparseScenario):
         super(DenseScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
 
         self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 1
+
+class MediumScenario(SparseScenario):
+    def __init__(self, task, gazebo_driver):
+        super(MediumScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 2
