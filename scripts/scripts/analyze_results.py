@@ -1,7 +1,8 @@
 import csv
 import time
 from gazebo_master import MultiMasterCoordinator
-
+import math
+import numpy as np
 
 def filter(results, whitelist=None, blacklist=None):
     filtered_results = []
@@ -126,6 +127,70 @@ class ResultAnalyzer:
                         num = statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
                         print result + ": " + str(num) + "\t" + str(float(num)/total)
                 print ""
+
+    def generateTable(self):
+        statistics = {}
+        key_values = {}
+        path_times = {}
+        path_lengths = {}
+        for entry in self.results:
+            condition = {key: entry[key] for key in ["controller", "scenario"] + ["result"]}
+            conditionset = frozenset(condition.items())
+
+            # print conditionset
+
+            if not conditionset in statistics:
+                statistics[conditionset] = 1
+                path_times[conditionset] = [int(entry["time"])]
+                path_lengths[conditionset] = [float(entry["path_length"])]
+            else:
+                statistics[conditionset] = statistics[conditionset] + 1
+                path_times[conditionset].append(int(entry["time"]))
+                path_lengths[conditionset].append(float(entry["path_length"]))
+
+            for key, value in condition.items():
+                if not key in key_values:
+                    key_values[key] = set()
+                key_values[key].add(value)
+        for scenario in key_values["scenario"]:
+            print "Scenario: " + str(scenario)
+
+            print("| controller"),
+            for result in key_values["result"]:
+                print(" | " + str(result)),
+
+
+            print("|")
+
+
+            for i in range(len(key_values["result"])+1):
+                print("| -------"),
+
+            print("|")
+
+            for controller in sorted(key_values["controller"]):
+                total = 0
+                for result in key_values["result"]:
+                    key = frozenset(
+                        {"controller": controller, "scenario": scenario, "result": result}.items())
+                    if key in statistics:
+                        total += statistics[key]
+
+                print("| " + str(controller)),
+                for result in key_values["result"]:
+                    key = frozenset(
+                        {"controller": controller, "scenario": scenario, "result": result}.items())
+                    if key in sorted(statistics):
+                        lookupkey = frozenset({"controller": controller, "scenario": scenario, "result": result}.items())
+                        num = statistics[lookupkey]
+                        path_time = np.mean(np.array(path_times[lookupkey]))/1e9
+                        path_length = np.mean(np.array(path_lengths[lookupkey]))
+
+                        print("| " + str(float(num) / total) + "(" + str(num) + ") " + str(path_time) + " " + str(path_length)),
+                    else:
+                        print("| "),
+                print("|")
+
 
     def exists(self, scenario):
         pass
@@ -322,23 +387,34 @@ if __name__ == "__main__":
     ,'/home/justin/Documents/dl3_gazebo_results_2018-09-02 00:01:01.691753' #pips_ec_rh_no_recovery_(paths: 9,15,19) (0:50) sector
     ]
 
-    analyzer.readFiles(filenames=filenames5, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
+    filenames6 = [
+        '/home/justin/Documents/dl3_gazebo_results_2018-09-05 23:39:14.838354'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 10:26:10.204236'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 14:37:27.059749'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 18:03:06.165308'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 18:22:51.647290'
+    ]
 
+    #analyzer.readFiles(filenames=filenames5, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
+
+    analyzer.readFiles(filenames=filenames6)
 
     analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
+    analyzer.generateTable()
 
-    controllers = ['pips_ec_rh','pips_ec_rh_no_recovery', 'pips_ec_rh_no_recovery_5', 'pips_ec_rh_no_recovery_9', 'pips_ec_rh_no_recovery_15', 'pips_ec_rh_no_recovery_19', 'pips_ec_rh_no_recovery_25', 'rl_goal', 'multiclass', 'rl_single', 'egocylindrical_pips_dwa', 'goal_regression','teb', 'dwa', 'multiclass_no_recovery', 'rl_single_no_recovery']
+    #controllers = ['pips_ec_rh','pips_ec_rh_no_recovery', 'pips_ec_rh_no_recovery_5', 'pips_ec_rh_no_recovery_9', 'pips_ec_rh_no_recovery_15', 'pips_ec_rh_no_recovery_19', 'pips_ec_rh_no_recovery_25', 'rl_goal', 'multiclass', 'rl_single', 'egocylindrical_pips_dwa', 'goal_regression','teb', 'dwa', 'multiclass_no_recovery', 'rl_single_no_recovery']
 
-    goodseeds = analyzer.getCommonSuccessfulSeeds(controllers = controllers)
+    #goodseeds = analyzer.getCommonSuccessfulSeeds(controllers = controllers)
     
     #analyzer.clear()
     #analyzer.readFiles(filenames=filenames2, whitelist={'seed':goodseeds, 'scenario':'sector', 'controller':controllers}) #, blacklist={'controller':'teb'}
 
+    '''
     for controller in controllers:
         print controller
         res = analyzer.getCases(has={'controller':controller, 'result':'SUCCEEDED'}) #, 'seed':seeds
         analyzer.getAverageTime(res)
-        
+    '''
 
     # analyzer.clear()
     # analyzer.readFiles(filenames=filenames, whitelist={'seed':seeds, 'scenario':'campus'})
