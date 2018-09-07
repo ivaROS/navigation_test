@@ -153,7 +153,10 @@ class ResultAnalyzer:
                     key_values[key] = set()
                 key_values[key].add(value)
         for scenario in key_values["scenario"]:
+            print ""
             print "Scenario: " + str(scenario)
+
+            print ""
 
             print("| controller"),
             for result in key_values["result"]:
@@ -393,7 +396,13 @@ if __name__ == "__main__":
         ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 14:37:27.059749'
         ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 18:03:06.165308'
         ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 18:22:51.647290'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 18:50:00.782334'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 20:36:01.641375'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 21:41:21.539894'
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 23:02:54.313759'
     ]
+
+    '/home/justin/Documents/dl3_gazebo_results_2018-09-07 01:58:23.724721' #Almost everything for sparse 0:45, GLOBAL COSTMAP NOT FILLED
 
     #analyzer.readFiles(filenames=filenames5, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
 
