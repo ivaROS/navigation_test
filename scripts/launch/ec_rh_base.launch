@@ -1,7 +1,8 @@
 <launch>
   <arg name="use_recovery_behaviors"/>
   <arg name="method"/>
-  <arg name="num_paths"/>
+  <arg name="num_paths" default="0"/>
+  <arg name="num_inferred_paths" default="0"/>
   <arg name="model_name"/>
   <arg name="use_model"/>
   
@@ -50,7 +51,7 @@
     <remap from="image" to="$(arg decimated_image)"/>
   </node>
 
-  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+  <!--<include file="$(find egocylindrical)/launch/nodelets.launch"/>-->
 
   <!-- <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/> -->
     
@@ -93,6 +94,7 @@
 
       <param name="approach_method" value="$(arg method)"/>
       <param name="num_paths" value = "$(arg num_paths)"/>
+      <param name="num_inferred_paths" value = "$(arg num_inferred_paths)"/>
       
       <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6"/>
       

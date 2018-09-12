@@ -1,11 +1,12 @@
 <launch>
   <arg name="use_recovery_behaviors" default="true"/>
+  <arg name="num_inferred_paths" default="5"/>
+  <arg name="num_paths" default="5"/>
   <arg name="debug" default="false"/>
   
-  <arg name="num_paths" value="0"/>
-  <arg name="model_name" value=""/>
-  <arg name="use_model" value="false"/>
-  <arg name="method" value="1"/>
+  <arg name="model_name" value="goal_rl"/>
+  <arg name="use_model" value="true"/>
+  <arg name="method" value="3"/>
   
   <include file="$(find nav_scripts)/launch/ec_rh_base.launch" pass_all_args="true"/>
   

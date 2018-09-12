@@ -611,8 +611,8 @@ class MultiMasterCoordinator:
                         task = {'scenario': scenario, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
         '''
-        
-        for scenario in ['sparse','medium','dense']:
+        '''
+        for scenario in ['medium','dense']: #'sparse',
             for a in range(0, 50):
                 for controller in [
                     'rl_goal_no_recovery'
@@ -631,6 +631,155 @@ class MultiMasterCoordinator:
                     for repetition in range(1):
                         task = {'scenario': scenario, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['corridor_zigzag','corridor_zigzag_door']:  # 'sparse',
+            for a in range(0, 50):
+                for controller in [
+                    'rl_goal_no_recovery'
+                    , 'multiclass_no_recovery'
+                    , 'dwa_no_recovery'
+                    , 'depth_pips_dwa_no_recovery'
+                    , 'pips_ec_rh_no_recovery'
+                    , 'regression_goal_no_recovery'
+                    , 'rl_single_no_recovery'
+                    , 'rl_goal_sat_no_recovery'
+                    , 'rl_sat_single_no_recovery'
+                    , 'pips_ec_rh_no_recovery_5'
+                    , 'baseline_to_goal_no_recovery'
+                    , 'teb_no_recovery'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles':6, 'min_obstacle_spacing':1.5}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['corridor_zigzag_door']:  # 'sparse',
+            for a in range(39, 50):
+                for controller in [
+                    'rl_goal_no_recovery'
+                    , 'multiclass_no_recovery'
+                    , 'dwa_no_recovery'
+                    , 'depth_pips_dwa_no_recovery'
+                    , 'pips_ec_rh_no_recovery'
+                    , 'regression_goal_no_recovery'
+                    , 'rl_single_no_recovery'
+                    , 'rl_goal_sat_no_recovery'
+                    , 'rl_sat_single_no_recovery'
+                    , 'pips_ec_rh_no_recovery_5'
+                    , 'baseline_to_goal_no_recovery'
+                    , 'teb_no_recovery'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
+                                'min_obstacle_spacing': 1.5}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['dense','medium','sparse']:
+            for a in range(0, 50):
+                for controller in [
+                    'rl_goal_no_recovery'
+                    , 'multiclass_no_recovery'
+                    , 'pips_ec_rh_no_recovery'
+                    , 'regression_goal_no_recovery'
+                    , 'rl_single_no_recovery'
+                    , 'rl_goal_sat_no_recovery'
+                    , 'rl_sat_single_no_recovery'
+                    , 'pips_ec_rh_no_recovery_5'
+                    , 'baseline_to_goal_no_recovery'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        
+        
+        for scenario in ['corridor_zigzag','corridor_zigzag_door']:
+            for a in range(0, 50):
+                for controller in [
+                    'rl_goal_no_recovery'
+                    , 'multiclass_no_recovery'
+                    , 'pips_ec_rh_no_recovery'
+                    , 'regression_goal_no_recovery'
+                    , 'rl_single_no_recovery'
+                    , 'rl_goal_sat_no_recovery'
+                    , 'rl_sat_single_no_recovery'
+                    , 'pips_ec_rh_no_recovery_5'
+                    , 'baseline_to_goal_no_recovery'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
+                                'min_obstacle_spacing': 1.5}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['sparse']:
+            for a in range(44, 50):
+                for controller in [
+                    'rl_goal_no_recovery'
+                    , 'multiclass_no_recovery'
+                    , 'pips_ec_rh_no_recovery'
+                    , 'regression_goal_no_recovery'
+                    , 'rl_single_no_recovery'
+                    , 'rl_goal_sat_no_recovery'
+                    , 'rl_sat_single_no_recovery'
+                    , 'pips_ec_rh_no_recovery_5'
+                    , 'baseline_to_goal_no_recovery'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['corridor_zigzag','corridor_zigzag_door']:
+            for a in range(0, 50):
+                for controller in [
+                        'rl_goal_combo_no_recovery'
+                        ,'rl_goal_combo_no_recovery_3_5'
+                        ,'rl_goal_combo_no_recovery_5_3'
+                        ,'rl_goal_combo_no_recovery_3_3'
+                     ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
+                                'min_obstacle_spacing': 1.5}
+                        self.task_queue.put(task)
+                        
+        for scenario in ['medium','sparse']:
+            for a in range(0, 50):
+                for controller in [
+                        'rl_goal_combo_no_recovery'
+                        ,'rl_goal_combo_no_recovery_3_5'
+                        ,'rl_goal_combo_no_recovery_5_3'
+                        ,'rl_goal_combo_no_recovery_3_3'
+                     ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                        self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['corridor_zigzag', 'corridor_zigzag_door']:
+            for a in range(40, 50):
+                for controller in [
+                    'rl_goal_no_recovery'
+                    , 'multiclass_no_recovery'
+                    , 'dwa_no_recovery'
+                    , 'depth_pips_dwa_no_recovery'
+                    , 'pips_ec_rh_no_recovery'
+                    , 'regression_goal_no_recovery'
+                    , 'rl_single_no_recovery'
+                    , 'rl_goal_sat_no_recovery'
+                    , 'rl_sat_single_no_recovery'
+                    , 'pips_ec_rh_no_recovery_5'
+                    , 'baseline_to_goal_no_recovery'
+                    , 'teb_no_recovery'
+                ]:
+                    for repetition in range(1):
+                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
+                                'min_obstacle_spacing': 1.5}
+                        self.task_queue.put(task)
+        '''
+
+
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):

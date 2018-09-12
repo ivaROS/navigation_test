@@ -10,7 +10,7 @@ def filter(results, whitelist=None, blacklist=None):
         stillgood = True
         if whitelist is not None:
             for key, value in whitelist.items():
-                if key not in entry or entry[key] not in value:
+                if key not in entry or entry[key] not in value or value not in entry[key]:
                     stillgood = False
                     break
         if blacklist is not None:
@@ -189,10 +189,79 @@ class ResultAnalyzer:
                         path_time = np.mean(np.array(path_times[lookupkey]))/1e9
                         path_length = np.mean(np.array(path_lengths[lookupkey]))
 
-                        print("| " + str(float(num) / total) + "(" + str(num) + ") " + str(path_time) + " " + str(path_length)),
+                        print("| " + "{0:.1f}".format(100*float(num) / total) + "% (" + str(num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m"),
                     else:
                         print("| "),
                 print("|")
+
+    def generateSingleTable(self):
+        statistics = {}
+        key_values = {}
+        path_times = {}
+        path_lengths = {}
+        for entry in self.results:
+            condition = {key: entry[key] for key in ["controller", "scenario"] + ["result"]}
+            conditionset = frozenset(condition.items())
+
+            # print conditionset
+
+            if not conditionset in statistics:
+                statistics[conditionset] = 1
+                path_times[conditionset] = [int(entry["time"])]
+                path_lengths[conditionset] = [float(entry["path_length"])]
+            else:
+                statistics[conditionset] = statistics[conditionset] + 1
+                path_times[conditionset].append(int(entry["time"]))
+                path_lengths[conditionset].append(float(entry["path_length"]))
+
+            for key, value in condition.items():
+                if not key in key_values:
+                    key_values[key] = set()
+                key_values[key].add(value)
+
+        print ""
+
+        print("| "),
+        for scenario in sorted(key_values["scenario"]):
+            if scenario == "corridor_zigzag":
+                print("| corridor <br> zigzag"),
+            elif scenario == "corridor_zigzag_door":
+                print("| corridor <br> zigzag <br> door"),
+            else:
+                print("| " + str(scenario)),
+        print "|"
+
+        for i in range(len(key_values["scenario"])+1):
+            print("| -------"),
+        print "|"
+
+        for controller in sorted(key_values["controller"]):
+            print("| " + str(controller)),
+            for scenario in sorted(key_values["scenario"]):
+
+                total = 0
+                for result in key_values["result"]:
+                    key = frozenset(
+                        {"controller": controller, "scenario": scenario, "result": result}.items())
+                    if key in statistics:
+                        total += statistics[key]
+
+                result = "SUCCEEDED"
+
+                key = frozenset(
+                    {"controller": controller, "scenario": scenario, "result": result}.items())
+                if key in sorted(statistics):
+                    lookupkey = frozenset({"controller": controller, "scenario": scenario, "result": result}.items())
+                    num = statistics[lookupkey]
+                    path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
+                    path_length = np.mean(np.array(path_lengths[lookupkey]))
+
+                    print("| " + "{0:.1f}".format(100 * float(num) / total) + "% <br>" + "{0:.2f}".format(path_length) + "m"),
+                else:
+                    print("| 0.0%"),
+            print("|")
+
+
 
 
     def exists(self, scenario):
@@ -222,10 +291,10 @@ class ResultAnalyzer:
         stripped_task = frozenset(stripped_task.items())
 
         for entry in self.results:
-            condition = {key: entry[key] for key,value in task.items()}
+            condition = {key: entry[key] for key,value in task.items() if key in entry}
             conditionset = frozenset(condition.items())
             if conditionset == stripped_task:
-                if 'result' in entry and (entry['result'] == 'SUCCEEDED' or entry['result'] == 'BUMPER_COLLISION'):
+                if 'result' in entry: #and (entry['result'] == 'SUCCEEDED' or entry['result'] == 'BUMPER_COLLISION'):
                     return True
 
         return False
@@ -390,6 +459,7 @@ if __name__ == "__main__":
     ,'/home/justin/Documents/dl3_gazebo_results_2018-09-02 00:01:01.691753' #pips_ec_rh_no_recovery_(paths: 9,15,19) (0:50) sector
     ]
 
+    #sparse, medium, dense worlds for all controllers. Missing a few cases
     filenames6 = [
         '/home/justin/Documents/dl3_gazebo_results_2018-09-05 23:39:14.838354'
         ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 10:26:10.204236'
@@ -402,14 +472,50 @@ if __name__ == "__main__":
         ,'/home/justin/Documents/dl3_gazebo_results_2018-09-06 23:02:54.313759'
     ]
 
+    ##not filling global costmap!
+    filenames7 = [
     '/home/justin/Documents/dl3_gazebo_results_2018-09-07 01:58:23.724721' #Almost everything for sparse 0:45, GLOBAL COSTMAP NOT FILLED
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-07 13:49:15.839678' #most of medium, same as above
+    ]
+    ##global costmap restored
+
+    #corridors
+    filenames8= [
+    '/home/justin/Documents/dl3_gazebo_results_2018-09-07 19:46:46.814258' #corridors
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-08 00:25:29.025488' #corridors
+    ]
+
+    ##near identity parameters changed!
+    filenames9=[
+    '/home/justin/Documents/dl3_gazebo_results_2018-09-08 03:09:25.315849-cleaned' #Almost everything for sparse,dense, and medium, with near-identity parameters of controller changed. removed redundant runs from end that are contained in next file; the only inconsistent one was the one that somehow crashed the simulations
+    ,'/home/justin/Documents/dl3_gazebo_results_2018-09-08 16:00:24.138863'
+    ]
+    ##parameters restored
+
+    filenames10=[
+        '/home/justin/Documents/dl3_gazebo_results_2018-09-10 00:36:50.657110'  #combo controllers
+        ,'/home/justin/Documents/dl3_gazebo_results_2018-09-10 07:01:13.062845' #combo controllers
+    ]
+
 
     #analyzer.readFiles(filenames=filenames5, whitelist={'seed':seeds, 'scenario':'sector'}) #, blacklist={'controller':'teb'}
 
-    analyzer.readFiles(filenames=filenames6)
+    allfiles = filenames6
+    allfiles.extend(filenames8)
+    allfiles.extend(filenames10)
+
+    #analyzer.readFiles(filenames=allfiles)
+
+    #analyzer.readFiles(filenames=['/home/justin/Documents/dl3_gazebo_results_2018-09-10 13:39:05.834859'], whitelist={"scenario":"corridor_zigzag_door"}) #corridors
+
+    analyzer.readFiles(filenames=filenames7)
+
 
     analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
+
     analyzer.generateTable()
+
+    analyzer.generateSingleTable()
 
     #controllers = ['pips_ec_rh','pips_ec_rh_no_recovery', 'pips_ec_rh_no_recovery_5', 'pips_ec_rh_no_recovery_9', 'pips_ec_rh_no_recovery_15', 'pips_ec_rh_no_recovery_19', 'pips_ec_rh_no_recovery_25', 'rl_goal', 'multiclass', 'rl_single', 'egocylindrical_pips_dwa', 'goal_regression','teb', 'dwa', 'multiclass_no_recovery', 'rl_single_no_recovery']
 
@@ -436,30 +542,52 @@ if __name__ == "__main__":
     master = MultiMasterCoordinator()
     master.start()
 
-    for a in range(0, 150):
-        for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal',
-                           'regression_goal_propagated', 'multiclass', "pips_dwa_propagated", "pips_dwa", 'teb',
-                           'dwa']:  # 'rl_goal'
-            for repetition in range(1):
-                task = {'scenario': 'sector', 'controller': controller, 'seed': a}
+    controller_list = [
+                'rl_goal_no_recovery'
+                , 'multiclass_no_recovery'
+                , 'dwa_no_recovery'
+                , 'depth_pips_dwa_no_recovery'
+                , 'pips_ec_rh_no_recovery'
+                , 'regression_goal_no_recovery'
+                , 'rl_single_no_recovery'
+                , 'rl_goal_sat_no_recovery'
+                , 'rl_sat_single_no_recovery'
+                , 'pips_ec_rh_no_recovery_5'
+                , 'baseline_to_goal_no_recovery'
+                , 'teb_no_recovery'
+                , 'rl_goal_combo_no_recovery'
+                , 'rl_goal_combo_no_recovery_3_5'
+                , 'rl_goal_combo_no_recovery_5_3'
+                , 'rl_goal_combo_no_recovery_3_3'
+            ]
 
-                if not analyzer.contains(task):
-                    master.task_queue.put(task)
-                    print task
+    for scenario in ['corridor_zigzag', 'corridor_zigzag_door']:
+        for a in range(0, 50):
+            for controller in controller_list:
+                for repetition in range(1):
+                    task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
+                            'min_obstacle_spacing': 1.5}
+                    if not analyzer.contains(task):
+                        master.task_queue.put(task)
+                        print task
 
-
-
-
-
+    for scenario in ['dense','medium','sparse']:
+        for a in range(0, 50):
+            for controller in controller_list:
+                for repetition in range(1):
+                    task = {'scenario': scenario, 'controller': controller, 'seed': a}
+                    if not analyzer.contains(task):
+                        master.task_queue.put(task)
+                        print task
 
 
     master.waitToFinish()
     master.shutdown()
-
+    '''
 
     #analyzer.computeStatistics(independent=['num_barrels','controller'], dependent=['result'])
 
     #analyzer.getFailCases(controller='brute_force')
     #analyzer.getMaxTime()
 
-    '''
+

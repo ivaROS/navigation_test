@@ -2,7 +2,7 @@
   <arg name="use_recovery_behaviors" default="true"/>
   <arg name="debug" default="false"/>
   
-  <arg name="num_paths" value="1"/>
+  <arg name="num_inferred_paths" value="1"/>
   <arg name="model_name" value="goal_weighted_regression"/>
   <arg name="use_model" value="true"/>
   <arg name="method" value="4"/>

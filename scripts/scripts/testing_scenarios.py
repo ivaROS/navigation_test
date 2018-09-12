@@ -26,6 +26,10 @@ class TestingScenarios:
                 return DenseScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "medium":
                 return MediumScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "corridor_zigzag":
+                return CorridorZigzagScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "corridor_zigzag_door":
+                return CorridorZigzagDoorScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -77,6 +81,19 @@ class TestingScenario(object):
     @staticmethod
     def getUniqueFieldNames():
         return [""]
+
+
+    def getPoseMsg(self, pose):
+        pose_msg = Pose()
+        pose_msg.position.x = pose[0]
+        pose_msg.position.y = pose[1]
+
+        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+        # msg = Quaternion(*q)
+
+        pose_msg.orientation = Quaternion(*q)
+
+        return pose_msg
 
 
 class TrashCanScenario(TestingScenario):
@@ -384,8 +401,8 @@ class SparseScenario(TestingScenario):
         self.gazebo_driver.moveRobot(self.getStartingPose())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.unpause()
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_obstacle_spacing)
+        self.gazebo_driver.unpause()
 
 
 
@@ -400,3 +417,56 @@ class MediumScenario(SparseScenario):
         super(MediumScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
 
         self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 2
+
+class CorridorZigzagScenario(TestingScenario):
+    def __init__(self, task, gazebo_driver):
+        ##TODO: move common elements (gazebo driver, seed, etc) to super.
+        ##TODO: Also make the 'names' of scenarios properties of the scenarios themselves
+        #super(Corridor1Scenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+        self.gazebo_driver = gazebo_driver
+
+        self.world = "corridor_zigzag"
+
+        seed = task["seed"] if "seed" in task else 0
+        self.min_obstacle_spacing = task["min_obstacle_spacing"]
+        self.num_obstacles = task["num_obstacles"]
+        self.seed = seed + 1000 * self.num_obstacles    #ensures that changing number of obstacles produces completely different scenes, not just incrementally different
+
+        self.init_pose = Pose()
+        self.init_pose.position.x = -6
+        self.init_pose.orientation.w = 1
+
+        self.target_pose = PoseStamped()
+        self.target_pose.pose.position.x = 6
+        self.target_pose.pose.position.y = 3
+        self.target_pose.pose.orientation.w = 1.0
+        self.target_pose.header.frame_id = 'map'
+
+        Zone1 = [[-4,-1.1], [0,1.25]]
+        Zone2 = [[1.25,-1.1], [3.25,3.5]]
+
+        zones = [Zone1, Zone2]
+
+        #zones = np.swapaxes(zones, 0, 2)
+        mins = np.min(zones,axis=1)
+        maxs = np.max(zones, axis=1)
+        self.minx = mins[:,0]
+        self.maxx = maxs[:,0]
+        self.maxy = maxs[:,1]
+        self.miny = mins[:,1]
+
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny,
+                                         maxy=self.maxy, grid_spacing=self.min_obstacle_spacing)
+        self.gazebo_driver.unpause()
+
+class CorridorZigzagDoorScenario(CorridorZigzagScenario):
+    def __init__(self, task, gazebo_driver):
+        super(CorridorZigzagDoorScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+        self.world = "corridor_zigzag_door"
