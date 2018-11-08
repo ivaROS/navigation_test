@@ -1,0 +1,10 @@
+<launch>
+
+  <rosparam command="load" file="$(find nav_configs)/config/composite.yaml" ns="depth_controller"/>
+  <node name="depth_controller" pkg="turtlebot_trajectory_testing" type="depth_controller"/>
+  
+  <node name="move_blocks" pkg="nav_scripts" type="turtlebot_arm_scenarios.py"/>
+  
+  <include file="$(find pips_visualization)/launch/filtered_pointcloud.launch"/>
+  
+</launch>

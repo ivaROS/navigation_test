@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!--
+    - Base      : kobuki
+    - Stacks    : hexagons
+    - 3d Sensor : kinect
+-->    
+<robot name="pioneer3at" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="pioneer3at" params="details">
+    <xacro:if value="${details}">
+      <xacro:include filename="$(find p3at_tutorial)/robots/pioneer3at.xacro" />
+      <xacro:include filename="$(find nav_configs)/urdf/pioneer_realsense.xacro" />
+		</xacro:if>
+
+    <xacro:if value="${details=='false'}">
+      <xacro:include filename="$(find nav_configs)/urdf/pioneer3at_simplified.xacro" />
+      <xacro:include filename="$(find nav_configs)/urdf/pioneer_realsense_simplified.xacro" />
+    </xacro:if>
+  </xacro:macro>
+
+
+
+</robot>
+
+

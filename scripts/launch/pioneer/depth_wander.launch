@@ -1,0 +1,10 @@
+<launch>
+  
+  <node name="depth_wander" pkg="turtlebot_trajectory_testing" type="depth_controller">
+    <remap from="/camera/depth/image_raw" to="/realsense/camera/depth/image_raw"/>
+    <remap from="/camera/depth/camera_info" to="/realsense/camera/depth/camera_info"/>
+    <param name="depth_image_cc_wrapper/depth_image_collision_checker/param_name" value="/simplified_robot_description"/>
+    <param name="depth_wander/depth_image_cc_wrapper/depth_image_collision_checker/model_type" value="9"/>
+  </node>
+  
+</launch>
