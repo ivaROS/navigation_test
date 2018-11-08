@@ -12,8 +12,8 @@ from tf2_ros import TransformListener, Buffer, LookupException, ConnectivityExce
 import tf
 #from pips_test import gazebo_driver
 
-from gazebo_msgs.msg import ModelStates, ModelState
-from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.msg import ModelStates, ModelState, LinkState
+from gazebo_msgs.srv import SetModelState, SetLinkState
 from gazebo_msgs.srv import GetModelState
 from gazebo_msgs.srv import DeleteModel
 
@@ -132,6 +132,8 @@ class GazeboDriver():
     self.unpause()
 
   def setPose(self, model_name, pose):
+    retval = False
+
     ## Check if our model exists yet
     if( self.models is not None and model_name in self.models.name):
 
@@ -141,14 +143,39 @@ class GazeboDriver():
         response = self.setModelState(state)
 
         if(response.success):
-          #rospy.loginfo("Successfully set model pose")
-          return True
+          rospy.loginfo("Successfully set pose of " + str(model_name) + " to " + str(pose))
+          retval = True
+        else:
+          rospy.logwarn("Error setting model pose: " + str(response.status_message))
+          retval = False
       except rospy.ServiceException as e:
-        pass
-      return False
+        rospy.logwarn("Error setting pose: " + str(e))
+        retval = False
+
+    #time.sleep(.01)
+    return retval
     
     #rospy.loginfo("failed to set model pose")
     #return False
+
+  def setLink(self, model_name, pose):
+    ## Check if our model exists yet
+    if( self.models is not None and model_name in self.models.name):
+
+      try:
+        linkstate = LinkState(link_name=model_name + "::link", pose=pose)
+
+        response = self.setLinkStateService(linkstate)
+
+        if(response.success):
+          rospy.loginfo("Successfully set link state of " + str(model_name) + " to " + str(pose))
+          return True
+        else:
+          rospy.logwarn("Error setting link state: " + str(response.status_message))
+      except rospy.ServiceException as e:
+        pass
+        rospy.logwarn("Error setting pose: " + str(e))
+      return False
 
   def pause(self):
     rospy.wait_for_service(self.pause_service_name, timeout=self.service_timeout)
@@ -212,7 +239,7 @@ class GazeboDriver():
         robot_namespace, initial_pose, reference_frame, gazebo_namespace)
 
   # Adapted from pips_test: gazebo_driver.py
-  def spawn_obstacle(self, model_name, initial_pose):
+  def spawn_obstacle(self, model_name, model_type, initial_pose):
     # Must be unique in the gazebo world - failure otherwise
     # Spawning on top of something else leads to bizarre behavior
 
@@ -220,17 +247,52 @@ class GazeboDriver():
     path = self.rospack.get_path("nav_configs")
     model_path = path + "/models/"
 
-    model_types = ['box_02_02_05.srdf', 'pole_005_06.srdf']
-    model_type = self.random.choice(model_types)
+    model_filenames = {'box':'box_02_02_05.srdf', 'pole':'pole_005_06.srdf'}
 
-
-    model_xml = load_model_xml(model_path + model_type)
+    model_xml = load_model_xml(model_path + model_filenames[model_type])
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
     reference_frame = ""
 
     success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
                                                       robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+    #time.sleep(.1)
+
+  def spawn_package_model(self, model_name, package_name, model_path, initial_pose):
+    # Must be unique in the gazebo world - failure otherwise
+    # Spawning on top of something else leads to bizarre behavior
+
+
+    package_path = self.rospack.get_path(package_name)
+
+    model_xml = load_model_xml(package_path + model_path)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+                                                      robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+    return success
+
+  def spawn_local_database_model(self, model_name, model_type, initial_pose):
+    # Must be unique in the gazebo world - failure otherwise
+    # Spawning on top of something else leads to bizarre behavior
+
+
+    package_path = os.path.expanduser("~/.gazebo/models/")
+    model_path = model_type + "/model.sdf"
+
+    model_xml = load_model_xml(package_path + model_path)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+                                                      robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+    return success
 
   def moveBarrelsTest(self,n, x, y):
     self.poses = []
@@ -293,17 +355,37 @@ class GazeboDriver():
 
     barrel_names = [name for name in self.models.name if "obstacle" in name]
 
+    model_types = ['box','pole']
+
+    num_types = {}
+    for model_type in model_types:
+      num_types[model_type] = 0
+
+    current_obstacles = [(self.models.name[i], self.models.pose[i]) for i in range(len(self.models.name)) if "obstacle" in self.models.name[i]]
+
+
+    for name, pose in current_obstacles:
+      pose.position.z += 2
+
+      self.setPose(name, pose)
+      #self.setLink(name, pose)
+
     for i, xy in enumerate(
             self.barrel_points(xmins=minx, ymins=miny, xmaxs=maxx, ymaxs=maxy, min_dist=grid_spacing, num_barrels=n)):
       # print i, xy
-      name = "obstacle{}".format(i)
+
+      model_type = self.random.choice(model_types)
+      num_type = num_types[model_type]
+      num_types[model_type] +=1
+
+      name = model_type + "_obstacle{}".format(num_type)
       # print name
 
-      if name in barrel_names: barrel_names.remove(name)
 
       pose = Pose()
       pose.position.x = xy[0]
       pose.position.y = xy[1]
+      pose.position.z = 0
 
       pose.orientation.w = 1
 
@@ -311,10 +393,14 @@ class GazeboDriver():
 
       # print str(pose)
 
-      if not self.setPose(name, pose):
-        self.spawn_obstacle(name, pose)
+      if name in barrel_names:
+        barrel_names.remove(name)
+        self.setPose(name, pose)
+      else:
+        self.spawn_obstacle(name, model_type, pose)
 
     for name in barrel_names:
+      print "Deleting: " + str(name)
       res = self.deleteModel(name=name)
       if not res.success:
         print res.status_message
@@ -340,10 +426,13 @@ class GazeboDriver():
     end = self.random.choice(a)
     output = [start, end]
     return output
-  
 
-  def checkServicesTopics(self, timeout):
+  def updateModels(self, timeout=2):
     self.models = rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=timeout)
+
+  #TODO: make return value depend on results of checks
+  def checkServicesTopics(self, timeout=2):
+    self.updateModels(timeout)
     rospy.wait_for_service(self.get_model_state_service_name, timeout=timeout)
     rospy.wait_for_service(self.pause_service_name, timeout=timeout)
     rospy.wait_for_service(self.reset_world_service_name, timeout=timeout)
@@ -385,6 +474,7 @@ class GazeboDriver():
     self.models = None
     
     self.set_model_state_service_name = 'gazebo/set_model_state'
+    self.set_link_state_service_name = 'gazebo/set_link_state'
     self.pause_service_name = 'gazebo/pause_physics'
     self.unpause_service_name = 'gazebo/unpause_physics'
     self.get_model_state_service_name = 'gazebo/get_model_state'
@@ -397,7 +487,9 @@ class GazeboDriver():
     #rospy.wait_for_service(self.get_model_state_service_name)
     self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
     #rospy.loginfo("Service found...")
-    
+
+    self.setLinkStateService = rospy.ServiceProxy(self.set_link_state_service_name, SetLinkState)
+
     #rospy.wait_for_service(self.pause_service_name)
     self.pauseService = rospy.ServiceProxy(self.pause_service_name, std_srvs.Empty)
     #rospy.loginfo("Service found...")

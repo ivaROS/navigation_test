@@ -64,17 +64,22 @@ class TestingScenario(object):
         return path + "/launch/gazebo_" + self.world + "_world.launch"
 
     def getStartingPose(self):
-        return self.init_pose
+        return self.getPoseMsg(self.init_pose)
 
     def getGoal(self):
-        return self.target_pose
+        goal = PoseStamped()
+        goal.pose = self.getPoseMsg(self.target_pose)
+        goal.header.frame_id = "map"
+        return goal
 
     def setupScenario(self):
         print "Resetting robot..."
         # TODO: Check if reset successful; if not, wait briefly and try again,
         # eventually fail and throw error
+        self.gazebo_driver.checkServicesTopics(10)
+
         self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.init_pose)
+        self.gazebo_driver.moveRobot(self.getStartingPose())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.unpause()
 
@@ -349,7 +354,7 @@ class SparseScenario(TestingScenario):
         self.world = "empty_room_20x20"
 
         self.seed = task["seed"] if "seed" in task else 0
-        self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 3
+        self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 5
         self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
 
 
