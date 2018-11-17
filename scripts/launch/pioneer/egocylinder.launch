@@ -1,0 +1,8 @@
+<launch>
+  <include file="$(find egocylindrical)/launch/nodelets.launch">
+    <arg name="fixed_frame_id" value="odom"/>
+    <arg name="depth_image" value="/realsense/camera/depth/image_raw"/>
+    <arg name="depth_info" value="/realsense/camera/depth/camera_info"/>
+  </include>
+</launch>
+

@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find egocylindrical)/launch/nodelets.launch">
+    <arg name="fixed_frame_id" value="world"/>
+  </include>
+</launch>
+
