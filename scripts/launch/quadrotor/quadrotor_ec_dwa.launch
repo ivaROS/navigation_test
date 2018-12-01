@@ -67,6 +67,7 @@
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />
       
+      <param name="EgocylindricalPipsDWAPlannerROS/sim_time" value="4"/>
       
       <rosparam file="$(find nav_configs)/config/quadrotor/ec_dwa.yaml" command="load" />
       
