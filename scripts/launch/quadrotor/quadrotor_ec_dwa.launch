@@ -67,12 +67,13 @@
 
       <!-- <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
       
-      <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />
+      <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="9" />
       
       <param name="EgocylindricalPipsDWAPlannerROS/sim_time" value="4"/>
       
       <rosparam file="$(find nav_configs)/config/quadrotor/ec_dwa.yaml" command="load" />
       
+      <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/param_name" value="/simplified_robot_description" />
 
   </node>
 
