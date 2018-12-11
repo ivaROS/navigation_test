@@ -34,6 +34,8 @@
 
   <include file="$(find quadrotor_interface)/launch/velocity_smoother.launch.xml"/>
 
+  <node name="egocircle_node" pkg="pips_dwa_implementation" type="ego_circle"/>
+
   <!--rosrun topic_tools throttle messages /egocylinder/filtered_points 1 /collisions -->
   <!--<node name="filtered_points_throttle" pkg="topic_tools" type="throttle" args="messages /egocylinder/filtered_points 1 /collisions"/> -->
 
