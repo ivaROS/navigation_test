@@ -42,11 +42,11 @@ trans_stopped_vel: 0.1
 
 # Cost function params
 forward_point_distance: 0.325
-goal_distance_bias: 24.0
+goal_distance_bias: 64.0
 occdist_scale: .5
 oscillation_reset_angle: 0.2
 oscillation_reset_dist: 0.05
-path_distance_bias: 64.0
+path_distance_bias: 24.0
 scaling_speed: 0.25
 
 isDataRecord: 0
@@ -56,3 +56,8 @@ distance_treshold: 2.0
 robot_radius: 0.22
 
 global_frame_id: odom
+
+inscribed_radius: .22
+inflation_radius: .5
+inflation_scaling_factor: 5
+egocircle_scale: 10

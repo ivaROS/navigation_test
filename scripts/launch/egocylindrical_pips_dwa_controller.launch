@@ -32,6 +32,8 @@
   <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>
 
+  <node name="egocircle_node" pkg="pips_dwa_implementation" type="ego_circle"/>
+
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
   <!--rosrun topic_tools throttle messages /egocylinder/filtered_points 1 /collisions -->
