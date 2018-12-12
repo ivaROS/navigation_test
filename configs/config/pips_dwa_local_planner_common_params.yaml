@@ -61,3 +61,4 @@ inscribed_radius: .22
 inflation_radius: .5
 inflation_scaling_factor: 5
 egocircle_scale: 10
+goal_search_radius: 1.5
