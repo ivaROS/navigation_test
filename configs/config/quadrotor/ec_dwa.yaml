@@ -32,7 +32,7 @@ base_frame_id: base_link
 global_costmap:
   robot_base_frame: base_link
   global_frame:     world
-  robot_radius:     .1
+  robot_radius:     .4
   obstacle_layer:
     max_obstacle_height:  1.2
     min_obstacle_height:  0.8
@@ -67,7 +67,7 @@ global_costmap:
   
 EgocylindricalPipsDWAPlannerROS:
   global_frame_id:  world
-  inscribed_radius: .1
+  inscribed_radius: .4
   inflation_radius: 1.0
   inflation_scaling_factor: 5.0
   path_distance_bias: 24
