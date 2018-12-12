@@ -32,7 +32,7 @@ base_frame_id: base_link
 global_costmap:
   robot_base_frame: base_link
   global_frame:     world
-  robot_radius:     .4
+  robot_radius:     .1
   obstacle_layer:
     max_obstacle_height:  1.2
     min_obstacle_height:  0.8
@@ -55,11 +55,19 @@ global_costmap:
       clearing: true
       max_obstacle_height:  1.2
       min_obstacle_height:  0.8
+      
+    collisions:
+      data_type: PointCloud2
+      topic: /move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions
+      marking: true
+      clearing: false
+      min_obstacle_height: 0.8
+      max_obstacle_height: 1.2
   
   
 EgocylindricalPipsDWAPlannerROS:
   global_frame_id:  world
-  inscribed_radius: .4
+  inscribed_radius: .1
   inflation_radius: 1.0
   inflation_scaling_factor: 5.0
   path_distance_bias: 24
