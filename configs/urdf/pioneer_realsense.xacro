@@ -67,7 +67,7 @@ name="pioneer3at_realsense"
 
     
   <joint name="base_real" type="fixed">
-	<origin xyz="0.26 0 0.21" rpy="0 0 0"/>
+	<origin xyz="0.24 0 0.21" rpy="0 0 0"/>
 	<parent link="base_link"/>
 	<child link="rs200_camera"/>
   </joint>

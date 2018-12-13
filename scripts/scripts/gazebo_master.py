@@ -782,7 +782,7 @@ class MultiMasterCoordinator:
         for scenario in ['sector']:
             for seed in range(0,50):
                 for controller in ['egocylindrical_pips_dwa','dwa']:
-                    task= {'scenario': scenario, 'controller':controller}
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed}
                     self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
