@@ -232,8 +232,9 @@ class GazeboDriver():
     # Spawning on top of something else leads to bizarre behavior
     # model_path = os.path.expanduser("~/.gazebo/models/first_2015_trash_can/model.sdf")
     # Fot book chapter
-    path = self.rospack.get_path("nav_configs")
-    model_path = os.path.expanduser(path + "/models/sign_post.sdf")
+    model_path = os.path.expanduser("~/.gazebo/models/drc_practice_blue_cylinder/model.sdf")
+    # path = self.rospack.get_path("nav_configs")
+    # model_path = os.path.expanduser(path + "/models/sign_post.sdf")
     model_xml = load_model_xml(model_path)
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
@@ -335,7 +336,7 @@ class GazeboDriver():
       pose.position.y = xy[1]
 
       # random orientation
-      angle = 2*math.pi*random.uniform(0, 1)
+      angle = 2*math.pi*self.random.uniform(0, 1)
       quaternion = tf.transformations.quaternion_from_euler(0, 0, angle)
       pose.orientation.x = quaternion[0]
       pose.orientation.y = quaternion[1]
