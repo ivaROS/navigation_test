@@ -5,14 +5,16 @@ from testing_scenarios import TestingScenarios
 import rospy
 
 
-seed = 16
+seed = 20
 
-num_barrels = 6
+num_barrels = 50
 min_obstacle_spacing = 1.5
 
 task = {'seed':seed, 'scenario':'corridor_zigzag_door', 'num_obstacles':num_barrels, 'min_obstacle_spacing':min_obstacle_spacing}
 
 task = {'seed':seed, 'scenario':'dense'}
+
+
 
 
 
@@ -22,7 +24,12 @@ goal = [29,24,0]
 starting_pose = [20,24.25,0]
 goal = [32,24.25,0]
 
+starting_pose = [-1,0,0]
+goal = [15,15,0]
+
+# book chapter testing
 task = {'init_pose':starting_pose, 'goal':goal, 'world':"none"}
+task = {'seed':seed, 'scenario':'campus', 'target_id':1, 'num_barrels':num_barrels}
 
 rospy.init_node('test_driver', anonymous=True)
 

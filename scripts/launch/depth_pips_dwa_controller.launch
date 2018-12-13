@@ -1,7 +1,7 @@
 <launch>
   <arg name="use_recovery_behaviors" default="true"/>
   
-  <arg name="decimate" default="true"/>
+  <arg name="decimate" default="false"/>
 
   <arg name="gazebo" default="true"/>
   <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>

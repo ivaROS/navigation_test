@@ -229,7 +229,9 @@ class GazeboDriver():
   def spawn_barrel(self, model_name, initial_pose):
     # Must be unique in the gazebo world - failure otherwise
     # Spawning on top of something else leads to bizarre behavior
-    model_path = os.path.expanduser("~/.gazebo/models/first_2015_trash_can/model.sdf")
+    # model_path = os.path.expanduser("~/.gazebo/models/first_2015_trash_can/model.sdf")
+    # Fot book chapter
+    model_path = os.path.expanduser("~/model_editor_models/sign_post/sign_post.sdf")
     model_xml = load_model_xml(model_path)
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
