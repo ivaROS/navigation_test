@@ -2,15 +2,14 @@
   <arg name="world_file" default="$(find nav_configs)/world/campus_world.world"/>
   <arg name="gui" default="true"/>
 
+  <arg name="robot_model" default="'$(find nav_configs)/robots/pioneer3at.urdf.xacro'"/>
+  
+  
+    <!-- Different files for different sensors: hokuyo, realsense, stereo -->
+    <arg name="robot"      value="pioneer3at"/> 
+    <arg name="3d_sensor" value="realsense"/>  
 
   <!--BEGIN turtlebot_gazebo turtlebot_world.launch -->
-
-
-    <arg name="base"      value="$(optenv TURTLEBOT_BASE kobuki)"/> <!-- create, roomba -->
-    <arg name="battery"   value="$(optenv TURTLEBOT_BATTERY /proc/acpi/battery/BAT0)"/>  <!-- /proc/acpi/battery/BAT0 --> 
-
-    <arg name="stacks"    value="$(optenv TURTLEBOT_STACKS hexagons)"/>  <!-- circles, hexagons --> 
-    <arg name="3d_sensor" value="$(optenv TURTLEBOT_3D_SENSOR kinect)"/>  <!-- kinect, asus_xtion_pro --> 
 
 
     <!--BEGIN gazebo_ros empty_world.launch-->
@@ -60,56 +59,60 @@
     <!--END gazebo_ros empty_world.launch-->
 
     <!--BEGIN turtlebot_gazebo kobuki.launch.xml-->
-      <arg name="urdf_file" default="$(find xacro)/xacro.py '$(find turtlebot_description)/robots/$(arg base)_$(arg stacks)_$(arg 3d_sensor).urdf.xacro'" />
+      <arg name="urdf_file" default="$(find xacro)/xacro $(arg robot_model) --inorder" />
       <param name="robot_description" command="$(arg urdf_file)" />
       
+      <arg name="urdf_file2" default="$(find xacro)/xacro $(arg robot_model) --inorder details:=false" />
+      <param name="simplified_robot_description" command="$(arg urdf_file2)" />
+      
       <!-- Gazebo model spawner -->
-      <node name="spawn_turtlebot_model" pkg="gazebo_ros" type="spawn_model"
+      <node name="spawn_robot_model" pkg="gazebo_ros" type="spawn_model"
             args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
       
-      <!-- Velocity muxer -->
-      <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"  required="true"/>
-      <node pkg="nodelet" type="nodelet" name="cmd_vel_mux"
-            args="load yocs_cmd_vel_mux/CmdVelMuxNodelet mobile_base_nodelet_manager"  required="true">
-        <param name="yaml_cfg_file" value="$(find turtlebot_bringup)/param/mux.yaml" />
-        <remap from="cmd_vel_mux/output" to="mobile_base/commands/velocity"/>
-      </node>
 
-      <!-- Bumper/cliff to pointcloud (not working, as it needs sensors/core messages) -->
-      <include file="$(find turtlebot_bringup)/launch/includes/kobuki/bumper2pc.launch.xml"/>
-
-    <!--END turtlebot_gazebo kobuki.launch.xml-->
+    <arg name="pkg_gazebo_worlds" default="$(find p3at_tutorial)"/>
 
 
+    <env name="GAZEBO_MODEL_PATH" value="$(arg pkg_gazebo_worlds)/models:$(optenv GAZEBO_MODEL_PATH)"/>
+     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
     
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"  required="true">
       <param name="publish_frequency" type="double" value="30.0" />
     </node>
+    
+    <!-- TODO: add pointcloud nodelet: -->
+    <!--rosrun nodelet nodelet standalone depth_image_proc/point_cloud_xyz camera_info:=/realsense/camera/depth/camera_info image_rect:=/realsenscamera/depth/image_raw points:=/realsense/depth/points -->
+
+    
+    <!-- Velocity muxer -->
+      <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"  required="true"/>
+      <node pkg="nodelet" type="nodelet" name="cmd_vel_mux"
+            args="load yocs_cmd_vel_mux/CmdVelMuxNodelet mobile_base_nodelet_manager"  required="true">
+        <param name="yaml_cfg_file" value="$(find turtlebot_bringup)/param/mux.yaml" />
+        <remap from="cmd_vel_mux/output" to="cmd_vel"/>
+      </node>
     
     <!-- Fake laser -->
     <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"  required="true"/>
     <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan"
           args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager"  required="true">
       <param name="scan_height" value="10"/>
-      <param name="output_frame_id" value="camera_depth_frame"/>
+      <param name="output_frame_id" value="depth"/> 
       <param name="range_min" value="0.45"/>
-      <remap from="image" to="/camera/depth/image_raw"/>
+      <remap from="image" to="/realsense/camera/depth/image_raw"/>
       <remap from="scan" to="/scan"/>
     </node>
 
   <!--END turtlebot_gazebo turtlebot_world.launch -->
 
+  <!-- rosrun nodelet nodelet standalone depth_image_proc/point_cloud_xyz image_rect:=/realsense/camera/depth/image_raw camera_info:=/realsense/camera/depth/camera_info -->
+
+  <node name="base_link_footprint_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint"/>
+
   <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/campus.yaml" required="true"/>
 
-  <!--
-  <node name="map_publisher" pkg="gazebo_utils" type="map_publisher">
-    <param name="world_file" value="$(arg world_file)"/>
-    <param name="grey_walls" value="true"/>
-    <param name="update_freq" value="1.0"/>
+  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true">
+    <param name="base_frame_id" value="base_link"/>
   </node>
-  -->
-  
-
-  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
 
 </launch>

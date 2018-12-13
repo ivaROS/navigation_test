@@ -54,6 +54,7 @@
     <kinematic>0</kinematic>
   </link>
 </model>
+</sdf>
 
 <!-- Spawn with the following command: rosrun gazebo_ros spawn_model -sdf -file /home/justin/catkin_ws/src/navigation_test/configs/models/pole_005_06.srdf -model pole -x 1
  -->

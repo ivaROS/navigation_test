@@ -45,7 +45,7 @@
       <pose frame=''>0 0.075 .1 0 -0 0</pose>
       <geometry>
         <box>
-          <size>.03 .15 .03</size>
+          <size>.03 .5 .03</size>
         </box>
       </geometry>
       <max_contacts>10</max_contacts>
@@ -54,7 +54,7 @@
       <pose frame=''>0 0.075 .1 0 -0 0</pose>
       <geometry>
         <box>
-          <size>.03 .15 .03</size>
+          <size>.03 .5 .03</size>
         </box>
       </geometry>
       <material>

@@ -74,7 +74,7 @@
       
       <!-- todo: change this to the correct namespace, and move those parameters to this package -->
       <!--<rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/PIPS_controller/PipsDWAController/PipsCollisionChecker"/> -->
-      <!--<rosparam file="$(find nav_configs)/config/quadrotor/ec_dwa.yaml" command="load"/>-->
+      <rosparam file="$(find nav_configs)/config/turtlebot_ec_dwa_params.yaml" command="load"/>
 
   </node>
 
