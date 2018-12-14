@@ -1,5 +1,5 @@
 <sdf version='1.6'>
-<model name='limbo_bar'>
+<model name='sign_post'>
   <static>true</static>
   <pose frame=''>0 0 0 0 -0 0</pose>
   <link name='link'>
@@ -16,21 +16,21 @@
       </inertia>
     </inertial>
     <collision name='v_collision'>
-      <pose frame=''>0 0 .3 0 -0 0</pose>
+      <pose frame=''>0 0 1 0 -0 0</pose>
       <geometry>
         <cylinder>
-          <radius>0.03</radius>
-          <length>.6</length>
+          <radius>0.1</radius>
+          <length>2</length>
         </cylinder>
       </geometry>
       <max_contacts>10</max_contacts>
     </collision>
     <visual name='v_visual'>
-      <pose frame=''>0 0 .3 0 -0 0</pose>
+      <pose frame=''>0 0 1 0 -0 0</pose>
       <geometry>
         <cylinder>
-          <radius>0.03</radius>
-          <length>.6</length>
+          <radius>0.1</radius>
+          <length>2</length>
         </cylinder>
       </geometry>
       <material>
@@ -45,7 +45,7 @@
       <pose frame=''>0 0.075 .1 0 -0 0</pose>
       <geometry>
         <box>
-          <size>.03 .5 .03</size>
+          <size>.1 .5 .1</size>
         </box>
       </geometry>
       <max_contacts>10</max_contacts>
@@ -54,7 +54,31 @@
       <pose frame=''>0 0.075 .1 0 -0 0</pose>
       <geometry>
         <box>
-          <size>.03 .5 .03</size>
+          <size>.1 .5 .1</size>
+        </box>
+      </geometry>
+      <material>
+        <script>
+          <name>Gazebo/Red</name>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+        </script>
+      </material>
+    </visual>
+
+    <collision name='t_collision'>
+      <pose frame=''>0 0.075 1.9 0 -0 0</pose>
+      <geometry>
+        <box>
+          <size>0.1 .5 .1</size>
+        </box>
+      </geometry>
+      <max_contacts>10</max_contacts>
+    </collision>
+    <visual name='t_visual'>
+      <pose frame=''>0 0.075 1.9 0 -0 0</pose>
+      <geometry>
+        <box>
+          <size>.1 .5 .1</size>
         </box>
       </geometry>
       <material>
