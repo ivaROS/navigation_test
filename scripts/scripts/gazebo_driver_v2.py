@@ -232,9 +232,9 @@ class GazeboDriver():
     # Spawning on top of something else leads to bizarre behavior
     # model_path = os.path.expanduser("~/.gazebo/models/first_2015_trash_can/model.sdf")
     # Fot book chapter
-    model_path = os.path.expanduser("~/.gazebo/models/drc_practice_blue_cylinder/model.sdf")
-    # path = self.rospack.get_path("nav_configs")
-    # model_path = os.path.expanduser(path + "/models/sign_post.sdf")
+    # model_path = os.path.expanduser("~/.gazebo/models/drc_practice_blue_cylinder/model.sdf")
+    path = self.rospack.get_path("nav_configs")
+    model_path = os.path.expanduser(path + "/models/sign_post.sdf")
     model_xml = load_model_xml(model_path)
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
