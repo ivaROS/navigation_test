@@ -14,9 +14,9 @@ starting_pose = [-5,0,0]
 goal = [15,15,0]
 
 # book chapter testing
-task = {'seed':seed, 'scenario':'fourth_floor', 'num_barrels':num_barrels, 'init_pose':starting_pose, 'goal':goal, 'min_obstacle_spacing':min_obstacle_spacing}
+task = {'seed':seed, 'scenario':'fourth_floor', 'num_barrels':num_barrels, 'target_id':4, 'min_obstacle_spacing':min_obstacle_spacing}
 
-task = {'seed':seed, 'scenario':'campus', 'num_barrels':num_barrels, 'target_id':1}
+# task = {'seed':seed, 'scenario':'campus', 'num_barrels':num_barrels, 'target_id':1}
 
 rospy.init_node('test_driver', anonymous=True)
 
