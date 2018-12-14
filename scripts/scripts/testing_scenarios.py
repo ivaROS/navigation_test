@@ -316,6 +316,12 @@ class FourthFloorScenario(TestingScenario):
 
         self.seed = task["seed"] if "seed" in task else 0
 
+        self.init_id = task["init_id"] if "init_id" in task else 0
+        self.target_id = task["target_id"] if "target_id" in task else 1    ##TODO: Replace these with randomly chosen ones
+        self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
+
+        self.min_spacing = task["min_obstacle_spacing"] if "num_barrels" in task else None
+
         self.init_pose = Pose()
         self.init_pose.position.x = -48
         self.init_pose.position.y = 17
@@ -333,18 +339,69 @@ class FourthFloorScenario(TestingScenario):
         self.target_pose.pose.orientation.w = 1.0
         self.target_pose.header.frame_id = 'map'
 
+
+        self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0]]
+
+
+        Zone1 = [[35.5, 14.5], [30,8.2]]
+        Zone2 = [[25,-10],[19.6,-13.9]]
+        Zone3 = [[-14.4,-13.8],[-9.93,-18.9]]
+        Zone4 = [[-30.5,10.8],[-24,7.8]]
+        Zone5 = [[-37.3,14.8],[-34,11.1]]
+
+
+        zones = [Zone1, Zone2, Zone3, Zone4, Zone5]
+
+        zones = np.swapaxes(zones, 0, 2)
+
+        x1 = zones[0][0]
+        x2 = zones[0][1]
+        y1 = zones[1][0]
+        y2 = zones[1][1]
+
+        self.minx = np.minimum(x1,x2)
+        self.maxx = np.maximum(x1,x2)
+        self.maxy = np.maximum(y1,y2)
+        self.miny = np.minimum(y1,y2)
+
+
     @staticmethod
     def getUniqueFieldNames():
         return ["num_barrels", "seed"]
 
+    def getPoseMsg(self, pose):
+        pose_msg = Pose()
+        pose_msg.position.x = pose[0]
+        pose_msg.position.y = pose[1]
+
+        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+
+        pose_msg.orientation = Quaternion(*q)
+
+        return pose_msg
+
+    def getStartingPose(self):
+        pose = self.target_poses[self.init_id]
+        init_pose = self.getPoseMsg(pose=pose)
+
+        return init_pose
+
+    def getGoal(self):
+        pose = self.target_poses[self.target_id]
+        init_pose = self.getPoseMsg(pose=pose)
+        pose_stamped = PoseStamped()
+        pose_stamped.pose = init_pose
+        pose_stamped.header.frame_id="map"
+        return pose_stamped
+
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
         self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.init_pose)
+        self.gazebo_driver.moveRobot(self.getStartingPose())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
         self.gazebo_driver.unpause()
-
 
 
 class SparseScenario(TestingScenario):
