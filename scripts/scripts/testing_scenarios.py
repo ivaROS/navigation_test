@@ -111,7 +111,7 @@ class TrashCanScenario(TestingScenario):
         self.world = "rectangular"
 
         self.seed = task["seed"] if "seed" in task else 0
-        self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
+        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
 
         self.init_pose = Pose()
         self.init_pose.position.x = 2
@@ -152,7 +152,7 @@ class CampusScenario(TestingScenario):
         self.world = "campus"
 
         self.seed = task["seed"] if "seed" in task else 0
-        self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
+        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
 
         self.init_id = task["init_id"] if "init_id" in task else 0
 
@@ -336,9 +336,12 @@ class FourthFloorScenario(TestingScenario):
 
         self.init_id = task["init_id"] if "init_id" in task else 0
         self.target_id = task["target_id"] if "target_id" in task else 1    ##TODO: Replace these with randomly chosen ones
-        self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
+        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
 
         self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
+
+        self.random = random.Random()
+        self.random.seed(self.seed)
 
         self.init_pose = Pose()
         self.init_pose.position.x = -48
@@ -359,11 +362,17 @@ class FourthFloorScenario(TestingScenario):
 
 
         self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,3.925],[-2.34,13.34,2.355],[17.44,25.05,2.355]]
-        self.init_idx = self.random.randint(0, len(self.target_poses) - 1)
 
-        while(True):
-            self.target_idx = self.random.randint(0, len(self.target_poses) - 1)
-            if(self.target_idx != self.init_idx): break
+        if self.init_id is None:
+            self.init_id = self.random.randint(0, len(self.target_poses) - 1)
+            task["init_id"] = self.init_id
+
+        if self.target_id is None:
+            while(True):
+                self.target_id = self.random.randint(0, len(self.target_poses) - 1)
+                if(self.target_id != self.init_id): break
+                task["target_id"] = self.target_id
+
 
             # dis = math.sqrt((self.target_poses[self]))
 
@@ -372,7 +381,7 @@ class FourthFloorScenario(TestingScenario):
         Zone3 = [[-14.4,-13.8],[-9.93,-18.9]]
         Zone4 = [[-30.5,10.8],[-24,7.8]]
         Zone5 = [[-37.3,14.8],[-34,11.1]]
-        Zone6 = [[-31.3,-22.3],[-27.7,-24.5]]
+        Zone6 = [[-33.3,-22.3],[-28.7,-26.5]]
         Zone7 = [[2.2,8.4],[8.2,7]]
         Zone8 = [[19.5,24.1],[25.3,19.2]]
 
@@ -408,7 +417,7 @@ class FourthFloorScenario(TestingScenario):
         return pose_msg
 
     def getStartingPose(self):
-        pose = self.target_poses[self.init_idx]
+        pose = self.target_poses[self.init_id]
         init_pose = self.getPoseMsg(pose=pose)
 
         return init_pose

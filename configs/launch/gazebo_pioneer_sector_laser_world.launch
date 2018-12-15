@@ -1,5 +1,5 @@
 <launch>
-  <arg name="world_file" default="$(find nav_configs)/world/sector_laser_world.world"/>
+  <arg name="world_file" default="$(find nav_configs)/world/sector_world_laser.world"/>
   <arg name="gui" default="false"/>
 
   <arg name="robot_model" default="'$(find nav_configs)/robots/pioneer3at.urdf.xacro'"/>
@@ -116,4 +116,5 @@
   </node>
 
   <node name="bumper_collision_detector" pkg="nav_scripts" type="bumper_collision_detector.py" required="true"/>
+  
 </launch>

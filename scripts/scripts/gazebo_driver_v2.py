@@ -234,7 +234,7 @@ class GazeboDriver():
     # Fot book chapter
     # model_path = os.path.expanduser("~/.gazebo/models/drc_practice_blue_cylinder/model.sdf")
     path = self.rospack.get_path("nav_configs")
-    model_path = os.path.expanduser(path + "/models/cylinder.sdf")
+    model_path = os.path.expanduser(path + "/models/sign_post.sdf")
     model_xml = load_model_xml(model_path)
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
