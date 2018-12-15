@@ -156,11 +156,15 @@ class CampusScenario(TestingScenario):
 
         self.init_id = task["init_id"] if "init_id" in task else 0
 
-        self.target_id = task["target_id"] if "target_id" in task else 0
+        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 0
+
+        self.target_id = task["target_id"] if "target_id" in task else None
 
 
         self.random = random.Random()
         self.random.seed(self.seed)
+
+
 
         self.init_pose = Pose()
         self.init_pose.position.x = -12
@@ -172,6 +176,10 @@ class CampusScenario(TestingScenario):
 
         self.target_poses = [[-12,4,1.57], [13,-10,1.57], [13,9.4,1.57], [-5.15,-9.25,1.57], [-13.5,15.25,0], [5.5,6.5,-1.57], [1.5,2,-1.57]]
         self.init_poses = [[-13,.5,0]]
+
+        if self.target_id is None:
+            self.target_id = self.random.randint(0,len(self.target_poses) - 1)
+            task["target_id"] = self.target_id
 
         self.target_pose = PoseStamped()
         self.target_pose.pose.position.x = 4
@@ -207,7 +215,7 @@ class CampusScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed", "target_id", "init_id"]
+        return ["num_barrels", "seed", "target_id", "init_id", "min_obstacle_spacing"]
 
     def getPoseMsg(self, pose):
         pose_msg = Pose()
@@ -229,9 +237,9 @@ class CampusScenario(TestingScenario):
 
     def getGoal(self):
         pose = self.target_poses[self.target_id]
-        init_pose = self.getPoseMsg(pose=pose)
+        pose_msg = self.getPoseMsg(pose=pose)
         pose_stamped = PoseStamped()
-        pose_stamped.pose = init_pose
+        pose_stamped.pose = pose_msg
         pose_stamped.header.frame_id="map"
         return pose_stamped
 
@@ -241,7 +249,7 @@ class CampusScenario(TestingScenario):
         self.gazebo_driver.moveRobot(self.getStartingPose())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy)
+        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
         self.gazebo_driver.unpause()
 
 
@@ -330,7 +338,7 @@ class FourthFloorScenario(TestingScenario):
         self.target_id = task["target_id"] if "target_id" in task else 1    ##TODO: Replace these with randomly chosen ones
         self.num_barrels = task["num_barrels"] if "num_barrels" in task else 0
 
-        self.min_spacing = task["min_obstacle_spacing"] if "num_barrels" in task else None
+        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
 
         self.init_pose = Pose()
         self.init_pose.position.x = -48
@@ -353,7 +361,7 @@ class FourthFloorScenario(TestingScenario):
         self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,3.925],[-2.34,13.34,2.355],[17.44,25.05,2.355]]
         self.init_idx = self.random.randint(0, len(self.target_poses) - 1)
 
-        while(True)
+        while(True):
             self.target_idx = self.random.randint(0, len(self.target_poses) - 1)
             if(self.target_idx != self.init_idx): break
 
@@ -386,7 +394,7 @@ class FourthFloorScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed"]
+        return ["num_barrels", "seed","min_obstacle_spacing"]
 
     def getPoseMsg(self, pose):
         pose_msg = Pose()
