@@ -371,7 +371,7 @@ class FourthFloorScenario(TestingScenario):
             while(True):
                 self.target_id = self.random.randint(0, len(self.target_poses) - 1)
                 if(self.target_id != self.init_id): break
-                task["target_id"] = self.target_id
+            task["target_id"] = self.target_id
 
 
             # dis = math.sqrt((self.target_poses[self]))
