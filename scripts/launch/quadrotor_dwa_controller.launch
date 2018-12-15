@@ -1,0 +1,47 @@
+<launch>
+
+  <arg name="use_recovery_behaviors" default="true"/>
+
+  <arg name="decimate" default="true"/>
+  <arg name="propagate" default="false"/>
+
+  <arg name="debug" default="false"/>
+  <arg name="valgrind" default="false"/>
+  
+  <arg name="valgrind_prefix" default="valgrind --leak-check=yes --track-origins=yes"/>
+  
+  <arg name="debug_prefix_value" default="$(arg valgrind_prefix)" if="$(arg valgrind)"/>
+  <arg name="debug_prefix_value" default="xterm -e gdb -ex run --args" unless="$(arg valgrind)"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/>
+  <arg name="debug_prefix" value="$(arg debug_prefix_value)" if="$(arg debug)"/>
+
+
+  <include file="$(find quadrotor_interface)/launch/velocity_smoother.launch.xml"/>
+
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+
+     <!-- <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/> -->
+
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/dwa_local_planner_params.yaml" command="load"/>
+      
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+      
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+
+      
+      <rosparam file="$(find nav_configs)/config/quadrotor/dwa.yaml" command="load" />
+
+  </node>
+
+</launch>
