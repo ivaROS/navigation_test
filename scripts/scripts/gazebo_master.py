@@ -780,10 +780,17 @@ class MultiMasterCoordinator:
                         self.task_queue.put(task)
         '''
 
-        for scenario in ['sector_laser']:
-            for controller in ['dwa','egocylindrical_pips_dwa']:
-                for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+
+        # for scenario in ['sector']:
+        #     for controller in ['dwa']:
+        #         for seed in range(0, 50):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer'}
+        #             self.task_queue.put(task)
+
+        for scenario in ['campus']:
+            for seed in range(0, 50):
+                for controller in ['dwa']:
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': 1.5, 'num_obstacles': 50}
                     self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package

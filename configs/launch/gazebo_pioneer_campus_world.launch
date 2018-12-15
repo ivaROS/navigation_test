@@ -114,5 +114,7 @@
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true">
     <param name="base_frame_id" value="base_link"/>
   </node>
+  
+  <node name="bumper_collision_detector" pkg="nav_scripts" type="bumper_collision_detector.py" required="true"/>
 
 </launch>

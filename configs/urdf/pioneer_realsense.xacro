@@ -190,4 +190,64 @@ name="pioneer3at_realsense"
         </sensor>
     </gazebo>
 
+    <gazebo reference="base_link">
+      <sensor name='base_link_bumper' type='contact'>
+        <contact>
+          <collision>base_link_collision</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="gripper_bumper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>world</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="p3at_front_left_wheel">
+      <sensor name='p3at_front_left_wheel_bumper' type='contact'>
+        <contact>
+          <collision>p3at_front_left_wheel_collision</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="p3at_front_left_wheel_bumper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>world</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="p3at_front_right_wheel">
+      <sensor name='p3at_front_right_wheel_bumper' type='contact'>
+        <contact>
+          <collision>p3at_front_right_wheel_collision</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="p3at_front_right_wheel_bumper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>world</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="p3at_rear_left_wheel">
+      <sensor name='p3at_rear_left_wheel_bumper' type='contact'>
+        <contact>
+          <collision>p3at_rear_left_wheel_collision</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="p3at_rear_left_wheel_bumper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>world</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="p3at_rear_right_wheel">
+      <sensor name='p3at_rear_right_wheel_bumper' type='contact'>
+        <contact>
+          <collision>p3at_rear_right_wheel_collision</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="p3at_rear_right_wheel_bumper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>world</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
 </robot>

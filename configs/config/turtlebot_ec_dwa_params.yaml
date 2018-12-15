@@ -1,6 +1,6 @@
-local_costmap: ##TODO: clear this whole thing
-  obstacle_layer:
-    observation_sources: false
+#local_costmap: ##TODO: clear this whole thing
+#  obstacle_layer:
+#    observation_sources: false
 
 
 global_costmap:
