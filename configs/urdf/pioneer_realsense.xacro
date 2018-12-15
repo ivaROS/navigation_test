@@ -190,4 +190,18 @@ name="pioneer3at_realsense"
         </sensor>
     </gazebo>
 
+    <gazebo reference="base_link">
+      <sensor name='bumper_contact' type='contact'>
+        <contact>
+          <collision>base_link_collision</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="gripper_bumper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>base_link</frameName>
+        </plugin>
+      </sensor>
+    
+    
+    </gazebo>
 </robot>
