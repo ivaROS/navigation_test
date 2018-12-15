@@ -42,8 +42,8 @@
 
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="true" launch-prefix="$(arg debug_prefix)">
-      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
-      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/pioneer/pioneer_common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/pioneer/pioneer_common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
       

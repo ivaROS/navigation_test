@@ -5,7 +5,7 @@ from testing_scenarios import TestingScenarios
 import rospy
 
 
-seed = 2
+seed = 1
 
 num_barrels = 50
 min_obstacle_spacing = 1.5

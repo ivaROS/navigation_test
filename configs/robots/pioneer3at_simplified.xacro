@@ -26,9 +26,9 @@ name="pioneer3at"
             </material>
         </visual>
         <collision>
-            <origin xyz="0 0 0.217" rpy="0 0 0"/>
+            <origin xyz="0 0 0.227" rpy="0 0 0"/>
                 <geometry>
-                  <box size="0.62 0.48 0.28"/>
+                  <box size="0.64 0.54 0.3"/>
                 </geometry>
         </collision>
     </link>
