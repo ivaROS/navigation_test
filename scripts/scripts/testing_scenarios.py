@@ -353,11 +353,11 @@ class FourthFloorScenario(TestingScenario):
         self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,3.925],[-2.34,13.34,2.355],[17.44,25.05,2.355]]
         self.init_idx = self.random.randint(0, len(self.target_poses) - 1)
 
-        # while(True)
-        #     self.target_idx = self.random.randint(0, len(self.target_poses) - 1)
-        #     if(self.target_idx == self.init_idx): continue
-        #
-        #     # dis = math.sqrt((self.target_poses[self]))
+        while(True)
+            self.target_idx = self.random.randint(0, len(self.target_poses) - 1)
+            if(self.target_idx != self.init_idx): break
+
+            # dis = math.sqrt((self.target_poses[self]))
 
         Zone1 = [[35.5, 14.5], [30,8.2]]
         Zone2 = [[25,-10],[19.6,-13.9]]
