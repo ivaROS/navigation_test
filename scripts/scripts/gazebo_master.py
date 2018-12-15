@@ -780,7 +780,7 @@ class MultiMasterCoordinator:
                         self.task_queue.put(task)
         '''
 
-        for scenario in ['sector']:
+        for scenario in ['sector_laser']:
             for controller in ['dwa','egocylindrical_pips_dwa']:
                 for seed in range(0, 50):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}

@@ -332,6 +332,9 @@ class FourthFloorScenario(TestingScenario):
 
         self.min_spacing = task["min_obstacle_spacing"] if "num_barrels" in task else None
 
+        self.random = random.Random()
+        self.random.seed(self.seed)
+
         self.init_pose = Pose()
         self.init_pose.position.x = -48
         self.init_pose.position.y = 17
@@ -353,7 +356,7 @@ class FourthFloorScenario(TestingScenario):
         self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,3.925],[-2.34,13.34,2.355],[17.44,25.05,2.355]]
         self.init_idx = self.random.randint(0, len(self.target_poses) - 1)
 
-        while(True)
+        while(True):
             self.target_idx = self.random.randint(0, len(self.target_poses) - 1)
             if(self.target_idx != self.init_idx): break
 
@@ -364,7 +367,7 @@ class FourthFloorScenario(TestingScenario):
         Zone3 = [[-14.4,-13.8],[-9.93,-18.9]]
         Zone4 = [[-30.5,10.8],[-24,7.8]]
         Zone5 = [[-37.3,14.8],[-34,11.1]]
-        Zone6 = [[-31.3,-22.3],[-27.7,-24.5]]
+        Zone6 = [[-33.3,-22.3],[-28.7,-26.5]]
         Zone7 = [[2.2,8.4],[8.2,7]]
         Zone8 = [[19.5,24.1],[25.3,19.2]]
 
@@ -406,7 +409,7 @@ class FourthFloorScenario(TestingScenario):
         return init_pose
 
     def getGoal(self):
-        pose = self.target_poses[self.target_id]
+        pose = self.target_poses[self.target_idx]
         init_pose = self.getPoseMsg(pose=pose)
         pose_stamped = PoseStamped()
         pose_stamped.pose = init_pose
