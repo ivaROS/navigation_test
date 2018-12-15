@@ -334,8 +334,8 @@ class FourthFloorScenario(TestingScenario):
 
         self.seed = task["seed"] if "seed" in task else 0
 
-        self.init_id = task["init_id"] if "init_id" in task else 0
-        self.target_id = task["target_id"] if "target_id" in task else 1    ##TODO: Replace these with randomly chosen ones
+        self.init_id = task["init_id"] if "init_id" in task else None
+        self.target_id = task["target_id"] if "target_id" in task else None    ##TODO: Replace these with randomly chosen ones
         self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
 
         self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
@@ -361,7 +361,7 @@ class FourthFloorScenario(TestingScenario):
         self.target_pose.header.frame_id = 'map'
 
 
-        self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,3.925],[-2.34,13.34,2.355],[17.44,25.05,2.355]]
+        self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,0.785],[-2.34,13.34,-0.785],[17.44,25.05,-0.785]]
 
         if self.init_id is None:
             self.init_id = self.random.randint(0, len(self.target_poses) - 1)
