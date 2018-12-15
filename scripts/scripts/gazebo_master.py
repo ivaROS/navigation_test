@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 3
+        self.num_masters = 4
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
@@ -60,7 +60,7 @@ class MultiMasterCoordinator:
 
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
-        self.fieldnames.extend(["pid","result","time","path_length"])
+        self.fieldnames.extend(["pid","result","time","path_length","robot"])
 
 
     def start(self):
@@ -100,7 +100,7 @@ class MultiMasterCoordinator:
     def processResults(self,queue):
 
         # outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
-        outputfile_name = "/data/fall2018/chapter_experiments/test_" + str(datetime.datetime.now())
+        outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -781,9 +781,9 @@ class MultiMasterCoordinator:
         '''
 
         for scenario in ['sector']:
-            for controller in ['egocylindrical_pips_dwa','dwa']:
-                for seed in range(0, 2):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed}
+            for controller in ['dwa','egocylindrical_pips_dwa']:
+                for seed in range(0, 50):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
                     self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
@@ -894,7 +894,7 @@ class GazeboMaster(mp.Process):
                 if scenario is not None:
 
 
-                    self.roslaunch_gazebo(scenario.getGazeboLaunchFile()) #pass in world info
+                    self.roslaunch_gazebo(scenario.getGazeboLaunchFile(task["robot"])) #pass in world info
 
                     if not self.gazebo_launch._shutting_down:
 
@@ -903,7 +903,7 @@ class GazeboMaster(mp.Process):
                         try:
 
                             scenario.setupScenario()
-                            self.roslaunch_controller(task["controller"], controller_args)
+                            self.roslaunch_controller(task["robot"], task["controller"], controller_args)
 
                             print "Running test..."
 
@@ -992,7 +992,7 @@ class GazeboMaster(mp.Process):
         )
         self.core.start()
 
-    def roslaunch_controller(self, controller_name, controller_args=None):
+    def roslaunch_controller(self, robot, controller_name, controller_args=None):
 
         #controller_path =
 
@@ -1008,7 +1008,7 @@ class GazeboMaster(mp.Process):
         sys.stdout = open(os.devnull, "w")
 
         self.controller_launch = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[path + "/launch/" + controller_name + "_controller.launch"],
+            run_id=uuid, roslaunch_files=[path + "/launch/" + robot + "_" + controller_name + "_controller.launch"],
             is_core=False, port=self.ros_port #, roslaunch_strs=controller_args
         )
         self.controller_launch.start()

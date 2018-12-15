@@ -4,6 +4,7 @@ from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import numpy as np
 import random
 import tf
+import math
 
 class TestingScenarios:
     def __init__(self):
@@ -20,6 +21,8 @@ class TestingScenarios:
                 return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector":
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "sector_laser":
+                return SectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sparse":
                 return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "dense":
@@ -58,10 +61,10 @@ class TestingScenario(object):
         self.init_pose = init_pose
         self.target_pose = target_pose
 
-    def getGazeboLaunchFile(self):
+    def getGazeboLaunchFile(self, robot):
         rospack = rospkg.RosPack()
         path = rospack.get_path("nav_configs")
-        return path + "/launch/gazebo_" + self.world + "_world.launch"
+        return path + "/launch/gazebo_" + robot + "_" + self.world + "_world.launch"
 
     def getStartingPose(self):
         return self.getPoseMsg(self.init_pose)
@@ -248,7 +251,7 @@ class SectorScenario(TestingScenario):
     def __init__(self, task, gazebo_driver):
         self.gazebo_driver = gazebo_driver
 
-        self.world = "sector_laser"
+        self.world = "sector"
 
         self.seed = task["seed"] if "seed" in task else 0
 
@@ -307,6 +310,13 @@ class SectorScenario(TestingScenario):
         self.gazebo_driver.unpause()
 
 
+class SectorLaserScenario(SectorScenario):
+    def __init__(self, task, gazebo_driver):
+        super(SectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "sector_laser"
+
+
 
 class FourthFloorScenario(TestingScenario):
     def __init__(self, task, gazebo_driver):
@@ -340,17 +350,26 @@ class FourthFloorScenario(TestingScenario):
         self.target_pose.header.frame_id = 'map'
 
 
-        self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0]]
+        self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,3.925],[-2.34,13.34,2.355],[17.44,25.05,2.355]]
+        self.init_idx = self.random.randint(0, len(self.target_poses) - 1)
 
+        # while(True)
+        #     self.target_idx = self.random.randint(0, len(self.target_poses) - 1)
+        #     if(self.target_idx == self.init_idx): continue
+        #
+        #     # dis = math.sqrt((self.target_poses[self]))
 
         Zone1 = [[35.5, 14.5], [30,8.2]]
         Zone2 = [[25,-10],[19.6,-13.9]]
         Zone3 = [[-14.4,-13.8],[-9.93,-18.9]]
         Zone4 = [[-30.5,10.8],[-24,7.8]]
         Zone5 = [[-37.3,14.8],[-34,11.1]]
+        Zone6 = [[-31.3,-22.3],[-27.7,-24.5]]
+        Zone7 = [[2.2,8.4],[8.2,7]]
+        Zone8 = [[19.5,24.1],[25.3,19.2]]
 
 
-        zones = [Zone1, Zone2, Zone3, Zone4, Zone5]
+        zones = [Zone1, Zone2, Zone3, Zone4, Zone5, Zone6, Zone7, Zone8]
 
         zones = np.swapaxes(zones, 0, 2)
 
@@ -381,7 +400,7 @@ class FourthFloorScenario(TestingScenario):
         return pose_msg
 
     def getStartingPose(self):
-        pose = self.target_poses[self.init_id]
+        pose = self.target_poses[self.init_idx]
         init_pose = self.getPoseMsg(pose=pose)
 
         return init_pose

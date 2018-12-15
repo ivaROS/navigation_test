@@ -1,6 +1,6 @@
 <launch>
-  <arg name="world_file" default="$(find nav_configs)/world/campus_world.world"/>
-  <arg name="gui" default="true"/>
+  <arg name="world_file" default="$(find nav_configs)/world/sector_laser_world.world"/>
+  <arg name="gui" default="false"/>
 
   <arg name="robot_model" default="'$(find nav_configs)/robots/pioneer3at.urdf.xacro'"/>
   
@@ -109,7 +109,7 @@
 
   <node name="base_link_footprint_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint"/>
 
-  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/campus.yaml" required="true"/>
+  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/sector_world.yaml" required="true"/>
 
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true">
     <param name="base_frame_id" value="base_link"/>
