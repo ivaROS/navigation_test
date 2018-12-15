@@ -25,8 +25,6 @@ class BumperChecker:
 #Not currently in use
 class OdomChecker:
     def __init__(self):
-        #self.tfBuffer = tf2_ros.Buffer()
-        #self.tf_listener = tf2_ros.TransformListener(self.tfBuffer)
         #self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
         self.not_moving = False
         self.collided = False
