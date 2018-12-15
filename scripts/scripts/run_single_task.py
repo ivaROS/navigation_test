@@ -5,7 +5,7 @@ from testing_scenarios import TestingScenarios
 import rospy
 
 
-seed = 30
+seed = 0
 
 num_barrels = 50
 min_obstacle_spacing = 1.8
@@ -17,6 +17,8 @@ goal = [15,15,0]
 task = {'seed':seed, 'scenario':'fourth_floor', 'num_barrels':num_barrels, 'target_id':4, 'min_obstacle_spacing':min_obstacle_spacing}
 
 # task = {'seed':seed, 'scenario':'campus', 'num_barrels':num_barrels, 'target_id':1}
+
+# task = {'seed':seed, 'scenario':'sector'}
 
 rospy.init_node('test_driver', anonymous=True)
 

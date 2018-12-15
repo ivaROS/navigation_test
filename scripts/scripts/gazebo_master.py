@@ -99,7 +99,8 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
+        # outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = "/data/fall2018/chapter_experiments/test_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -780,8 +781,8 @@ class MultiMasterCoordinator:
         '''
 
         for scenario in ['sector']:
-            for seed in range(0,50):
-                for controller in ['egocylindrical_pips_dwa','dwa']:
+            for controller in ['egocylindrical_pips_dwa','dwa']:
+                for seed in range(0, 2):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed}
                     self.task_queue.put(task)
 
