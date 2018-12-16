@@ -23,6 +23,8 @@ class TestingScenarios:
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector_laser":
                 return SectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "sector_extra":
+                return SectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sparse":
                 return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "dense":
@@ -323,6 +325,54 @@ class SectorLaserScenario(SectorScenario):
         super(SectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
 
         self.world = "sector_laser"
+
+
+class SectorExtraScenario(SectorScenario):
+    def __init__(self, task, gazebo_driver):
+        super(SectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "sector_extra"
+
+        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
+
+        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
+
+        # Zone1 = [[35.5, 14.5], [30, 8.2]]
+        # Zone2 = [[25, -10], [19.6, -13.9]]
+        # Zone3 = [[-14.4, -13.8], [-9.93, -18.9]]
+        # Zone4 = [[-30.5, 10.8], [-24, 7.8]]
+        # Zone5 = [[-37.3, 14.8], [-34, 11.1]]
+        # Zone6 = [[-33.3, -22.3], [-28.7, -26.5]]
+        # Zone7 = [[2.2, 8.4], [8.2, 7]]
+        # Zone8 = [[19.5, 24.1], [25.3, 19.2]]
+        #
+        # zones = [Zone1, Zone2, Zone3, Zone4, Zone5, Zone6, Zone7, Zone8]
+
+        Zone1 = [[-8.5,9.5],[8.5,-9.5]]
+        zones = [Zone1]
+        zones = np.swapaxes(zones, 0, 2)
+
+        x1 = zones[0][0]
+        x2 = zones[0][1]
+        y1 = zones[1][0]
+        y2 = zones[1][1]
+
+        self.minx = np.minimum(x1, x2)
+        self.maxx = np.maximum(x1, x2)
+        self.maxy = np.maximum(y1, y2)
+        self.miny = np.minimum(y1, y2)
+
+    def getUniqueFieldNames():
+        return ["num_barrels", "seed", "target_id", "init_id", "min_obstacle_spacing"]
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
+        self.gazebo_driver.unpause()
 
 
 
