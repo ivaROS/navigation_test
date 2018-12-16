@@ -17,8 +17,12 @@ class TestingScenarios:
                 return TrashCanScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "fourth_floor":
                 return FourthFloorScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "fourth_floor_obstacle":
+                return FourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "campus":
                 return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "campus_obstacle":
+                return CampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector":
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector_laser":
@@ -252,6 +256,26 @@ class CampusScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
+        self.gazebo_driver.unpause()
+
+class CampusObstacleScenario(CampusScenario):
+    def __init__(self, task, gazebo_driver):
+        super(CampusObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "campus_obstacle"
+
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
+
+    def getUniqueFieldNames():
+        return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
         self.gazebo_driver.unpause()
 
 
@@ -492,6 +516,26 @@ class FourthFloorScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
+        self.gazebo_driver.unpause()
+
+class FourthFloorObstacleScenario(FourthFloorScenario):
+    def __init__(self, task, gazebo_driver):
+        super(FourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "fourth_floor_obstacle"
+
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
+
+    def getUniqueFieldNames():
+        return ["num_obstacles", "seed", "min_obstacle_spacing"]
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
         self.gazebo_driver.unpause()
 
 
