@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-        self.num_masters = 3
+        self.num_masters = 4
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
@@ -789,14 +789,14 @@ class MultiMasterCoordinator:
 
         # for scenario in ['campus']:
         #     for seed in range(0, 50):
-        #         for controller in ['dwa']:
+        #         for controller in ['dwa', 'egocylindrical_pips_dwa']:
         #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': 1.5, 'num_obstacles': 50}
         #             self.task_queue.put(task)
 
-        for scenario in ['campus']:
-            for controller in ['egocylindrical_pips_dwa', 'dwa']:
+        for scenario in ['campus','fourth_floor']:
+            for controller in ['egocylindrical_pips_dwa']:
                 for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': 1.5, 'num_obstacles': 50}
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1.3, 'num_obstacles': 50}
                     self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package

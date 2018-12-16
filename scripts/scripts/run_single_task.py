@@ -5,10 +5,10 @@ from testing_scenarios import TestingScenarios
 import rospy
 
 
-seed = 1
+seed = 3
 
 num_barrels = 50
-min_obstacle_spacing = 1.5
+min_obstacle_spacing = 1.3
 
 starting_pose = [-5,0,0]
 goal = [15,15,0]
