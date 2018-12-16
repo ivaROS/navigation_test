@@ -371,7 +371,7 @@ class FourthFloorScenario(TestingScenario):
             init = self.target_poses[self.init_id]
             dis = []
             for pose in self.target_poses:
-                dis.append(math.sqrt((init[0]-pose[0])**2+(init(1)-pose[1])**2))
+                dis.append(math.sqrt((init[0]-pose[0])**2+(init[1]-pose[1])**2))
             dis_idx = sorted(range(len(dis)), key=dis.__getitem__)
             init_rand = self.random.randint(1,3)
             self.target_id = dis_idx[init_rand]

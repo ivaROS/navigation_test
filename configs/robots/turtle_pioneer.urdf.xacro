@@ -263,5 +263,216 @@
 
   </xacro:macro>
   
+  
+  <!-- Front Axles + Wheels + Hubcaps -->
+  <xacro:macro name="p3at_front" params="suffix reflect">
+      <link name="p3at_front_${suffix}_axle">
+          <inertial>
+              <mass value="0.1"/>
+              <origin xyz="0 0 0"/>
+              <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                   iyy="1.0" iyz="0.0" izz="1.0"/>
+          </inertial>
+      <visual name="base_visual">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry name="pioneer_geom">
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/axle.dae"/>
+          </geometry>
+          <material name="AxleGrey">
+              <color rgba="0.5 0.5 0.5 1"/>
+          </material>
+      </visual>
+      <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+              <box size="0.01 0.01 0.01"/>
+          </geometry>
+      </collision>
+      </link>
+      <gazebo reference="p3at_front_${suffix}_axle">
+          <material value="Gazebo/Grey"/>
+      </gazebo>
+
+      <joint name="base_front_${suffix}_axle_joint" type="fixed">
+          <origin xyz="0.135 ${reflect*0.156} 0.111" rpy="0 0 0"/>
+          <parent link="base_link"/>
+          <child link="p3at_front_${suffix}_axle"/>
+      </joint>
+
+      <link name="p3at_front_${suffix}_hub">
+          <inertial>
+              <mass value="0.1"/>
+              <origin xyz="0 0 0"/>
+              <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                   iyy="1.0" iyz="0.0" izz="1.0"/>
+          </inertial>
+      <visual name="base_visual">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry name="pioneer_geom">
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/${suffix}_hubcap.dae"/>
+          </geometry>
+          <material name="HubcapYellow">
+              <color rgba="1.0 0.811 0.151 1.0"/>
+          </material>
+      </visual>
+      <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+              <box size="0.01 0.01 0.01"/>
+          </geometry>
+      </collision>
+      </link>
+      <gazebo reference="p3at_front_${suffix}_hub">
+          <material value="Gazebo/Yellow"/>
+      </gazebo>
+
+      <joint name="base_front_${suffix}_hub_joint" type="fixed">
+          <origin xyz="0 ${reflect*0.041} 0" rpy="0 0 0"/>
+          <parent link="p3at_front_${suffix}_axle"/>
+          <child link="p3at_front_${suffix}_hub"/>
+      </joint>
+
+      <link name="p3at_front_${suffix}_wheel">
+          <inertial>
+              <mass value="0.5"/>
+              <origin xyz="0 0 0"/>
+              <inertia ixx="0.012411765597" ixy="0" ixz="0"
+           iyy="0.015218160428" iyz="0" izz="0.011763977943"/>
+        </inertial>
+      <visual name="base_visual">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry name="pioneer_geom">
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/wheel.dae"/>
+          </geometry>
+          <material name="WheelBlack">
+              <color rgba="0.117 0.117 0.117 1"/>
+          </material>
+      </visual>
+      <collision>
+          <origin xyz="0 0 0" rpy="${-3.1415927/2} 0 0"/>
+          <geometry>
+          <!--mesh filename="package://p3at_tutorial/meshes/p3at_meshes/wheel.dae"/-->
+          <cylinder radius="0.111" length="0.075"/>
+          </geometry>
+      </collision>
+      </link>
+      <gazebo reference="p3at_front_${suffix}_wheel">
+          <material value="Gazebo/Black"/>
+      </gazebo>
+
+      <joint name="p3at_front_${suffix}_wheel_joint" type="fixed">
+        <axis xyz="0 1 0"/>
+            <anchor xyz="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="p3at_front_${suffix}_hub"/>
+        <child link="p3at_front_${suffix}_wheel"/>
+      </joint>
+
+  <!-- Back Axles + Wheels + Hubcaps -->
+      <link name="p3at_back_${suffix}_axle">
+          <inertial>
+              <mass value="0.1"/>
+              <origin xyz="0 0 0"/>
+              <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                   iyy="1.0" iyz="0.0" izz="1.0"/>
+          </inertial>
+      <visual name="base_visual">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry name="pioneer_geom">
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/axle.dae"/>
+          </geometry>
+          <material name="AxleGrey">
+              <color rgba="0.5 0.5 0.5 1"/>
+          </material>
+      </visual>
+      <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/axle.dae"/>
+          </geometry>
+      </collision>
+      </link>
+      <gazebo reference="p3at_back_${suffix}_axle">
+          <material value="Gazebo/Grey"/>
+      </gazebo>
+
+      <joint name="p3at_back_${suffix}_axle_joint" type="fixed">
+          <origin xyz="-0.134 ${reflect*0.156} 0.111" rpy="0 0 0"/>
+          <parent link="base_link"/>
+          <child link="p3at_back_${suffix}_axle"/>
+      </joint>
+
+
+      <link name="p3at_back_${suffix}_hub">
+          <inertial>
+              <mass value="0.1"/>
+              <origin xyz="0 0 0"/>
+              <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                   iyy="1.0" iyz="0.0" izz="1.0"/>
+          </inertial>
+      <visual name="base_visual">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry name="pioneer_geom">
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/${suffix}_hubcap.dae"/>
+          </geometry>
+          <material name="HubcapYellow"/>
+      </visual>
+      <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/${suffix}_hubcap.dae"/>
+          </geometry>
+      </collision>
+      </link>
+      <gazebo reference="p3at_back_${suffix}_hub">
+          <material value="Gazebo/Yellow"/>
+      </gazebo>
+
+      <joint name="p3at_back_${suffix}_hub_joint" type="fixed">
+          <origin xyz="-0 ${reflect*0.041} 0" rpy="0 0 0"/>
+          <parent link="p3at_back_${suffix}_axle"/>
+          <child link="p3at_back_${suffix}_hub"/>
+      </joint>
+
+      <link name="p3at_back_${suffix}_wheel">
+          <inertial>
+              <mass value="0.5"/>
+              <origin xyz="0 0 0"/>
+              <inertia ixx="0.012411765597" ixy="0" ixz="0"
+           iyy="0.015218160428" iyz="0" izz="0.011763977943"/>
+        </inertial>
+      <visual name="base_visual">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry name="pioneer_geom">
+              <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/wheel.dae"/>
+          </geometry>
+          <material name="WheelBlack"/>
+      </visual>
+      <collision>
+          <origin xyz="0 0 0" rpy="${-3.1415927/2} 0 0"/>
+          <geometry>
+          <!--mesh filename="package://p3at_tutorial/meshes/p3at_meshes/wheel.dae"/-->
+          <cylinder radius="0.111" length="0.075"/>
+          </geometry>
+      </collision>
+      </link>
+      <gazebo reference="p3at_back_${suffix}_wheel">
+          <material value="Gazebo/Black"/>
+      </gazebo>
+
+
+
+      <joint name="p3at_back_${suffix}_wheel_joint" type="fixed">
+        <axis xyz="0 1 0"/>
+            <anchor xyz="0 0 0"/>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <parent link="p3at_back_${suffix}_hub"/>
+          <child link="p3at_back_${suffix}_wheel"/>
+      </joint>
+
+  </xacro:macro>
+  
   <kobuki/>
+  <xacro:p3at_front suffix="left" reflect="1"/>
+  <xacro:p3at_front suffix="right" reflect="-1"/>
 </robot>
