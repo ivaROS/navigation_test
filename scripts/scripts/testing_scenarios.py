@@ -368,9 +368,14 @@ class FourthFloorScenario(TestingScenario):
             task["init_id"] = self.init_id
 
         if self.target_id is None:
-            while(True):
-                self.target_id = self.random.randint(0, len(self.target_poses) - 1)
-                if(self.target_id != self.init_id): break
+            init = self.target_poses[self.init_id]
+            dis = []
+            for pose in self.target_poses:
+                dis.append(math.sqrt((init[0]-pose[0])**2+(init(1)-pose[1])**2))
+            dis_idx = sorted(range(len(dis)), key=dis.__getitem__)
+            init_rand = self.random.randint(1,3)
+            self.target_id = dis_idx[init_rand]
+
             task["target_id"] = self.target_id
 
 

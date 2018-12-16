@@ -67,7 +67,7 @@
       
       <!-- Gazebo model spawner -->
       <node name="spawn_robot_model" pkg="gazebo_ros" type="spawn_model"
-            args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
+            args="-x -13 -y .5 -unpause -urdf -param robot_description -model mobile_base"/>
       
 
     <arg name="pkg_gazebo_worlds" default="$(find p3at_tutorial)"/>

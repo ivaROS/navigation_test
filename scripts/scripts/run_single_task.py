@@ -5,7 +5,7 @@ from testing_scenarios import TestingScenarios
 import rospy
 
 
-seed = 6
+seed = 1
 
 num_barrels = 50
 min_obstacle_spacing = 1.5
@@ -16,9 +16,9 @@ goal = [15,15,0]
 # book chapter testing
 task = {'seed':seed, 'scenario':'fourth_floor', 'num_obstacles':num_barrels, 'target_id':4, 'min_obstacle_spacing':min_obstacle_spacing}
 
-task = {'seed':seed, 'scenario':'campus', 'num_obstacles':num_barrels, 'target_id':1}
+task = {'seed':seed, 'scenario':'campus', 'num_obstacles':num_barrels, 'min_obstacle_spacing':min_obstacle_spacing}
 
-task= {'scenario': 'fourth_floor', 'controller':'pips_egocylindrical_dwa', 'seed':seed, 'robot':'quadrotor', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
+#task= {'scenario': 'fourth_floor', 'controller':'pips_egocylindrical_dwa', 'seed':seed, 'robot':'quadrotor', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
 # task= {'scenario': 'fourth_floor', 'controller':'dwa', 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
 
 # task = {'seed':seed, 'scenario':'sector'}
