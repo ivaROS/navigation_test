@@ -52,8 +52,13 @@
 
     <!--END gazebo_ros empty_world.launch-->
 
+
     <!-- Quadrotor specific nodes: -->
-    <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor_with_kinect.launch" />
+    <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor_with_kinect.launch">
+      <arg name="name" value="mobile_base"/>
+      <arg name="x" value="11.5"/>
+      <arg name="y" value="6.2"/>
+    </include>
     
     <arg name="robot_model" default="$(find nav_configs)/robots/quadrotor_kinect_simplified.urdf.xacro"/>
     <arg name="urdf_file2" default="$(find xacro)/xacro $(arg robot_model) --inorder" />
@@ -61,8 +66,8 @@
     
     <node name="map_world_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map world " required="true"/>
     <node name="map_odom_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom " required="true"/>
-    <node name="altitude_controller" pkg="quadrotor_interface" type="quadrotor_altitude_controller.py"/>
-    <node name="odom_relay" pkg="topic_tools" type="relay" args="ground_truth/state odom"/>
+    <node name="altitude_controller" pkg="quadrotor_interface" type="quadrotor_altitude_controller.py" required="true"/>
+    <node name="odom_relay" pkg="topic_tools" type="relay" args="ground_truth/state odom" required="true"/>
     
     
     <!-- Fake laser -->

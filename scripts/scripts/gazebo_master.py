@@ -48,7 +48,11 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
+<<<<<<< HEAD
         self.num_masters = 4
+=======
+        self.num_masters = 1
+>>>>>>> d614aeb37c3759c94589e8f633bef77bce54699c
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
@@ -99,8 +103,8 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        # outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
-        outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
+        outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
+        #outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:

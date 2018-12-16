@@ -59,17 +59,20 @@
 
     <!--END gazebo_ros empty_world.launch-->
 
-  <!-- Quadrotor specific nodes: -->
-  <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor_with_kinect.launch" />
+
+    <!-- Quadrotor specific nodes: -->
+    <include file="$(find hector_quadrotor_gazebo)/launch/spawn_quadrotor_with_kinect.launch">
+      <arg name="name" value="mobile_base"/>
+    </include>
   
   <arg name="robot_model" default="$(find nav_configs)/robots/quadrotor_kinect_simplified.urdf.xacro"/>
   <arg name="urdf_file2" default="$(find xacro)/xacro $(arg robot_model) --inorder" />
   <param name="/simplified_robot_description" command="$(arg urdf_file2)" />
   
-  <node name="map_world_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map world " required="true"/>
-  <node name="map_odom_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom " required="true"/>
-  <node name="altitude_controller" pkg="quadrotor_interface" type="quadrotor_altitude_controller.py"/>
-  <node name="odom_relay" pkg="topic_tools" type="relay" args="ground_truth/state odom"/>
+    <node name="map_world_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map world " required="true"/>
+    <node name="map_odom_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom " required="true"/>
+    <node name="altitude_controller" pkg="quadrotor_interface" type="quadrotor_altitude_controller.py" required="true"/>
+    <node name="odom_relay" pkg="topic_tools" type="relay" args="ground_truth/state odom" required="true"/>
   
   <!-- Fake laser -->
   <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"  required="true"/>
