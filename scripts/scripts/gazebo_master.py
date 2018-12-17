@@ -48,11 +48,9 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = False
 
-<<<<<<< HEAD
+
         self.num_masters = 4
-=======
-        self.num_masters = 1
->>>>>>> d614aeb37c3759c94589e8f633bef77bce54699c
+
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
@@ -103,8 +101,8 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
-        #outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
+        # outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -797,10 +795,10 @@ class MultiMasterCoordinator:
         #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': 1.5, 'num_obstacles': 50}
         #             self.task_queue.put(task)
 
-        for scenario in ['campus','fourth_floor']:
-            for controller in ['egocylindrical_pips_dwa']:
-                for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1.3, 'num_obstacles': 50}
+        for scenario in ['sector_extra']:
+            for controller in ['dwa']:
+                for seed in range(0, 1):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50}
                     self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
