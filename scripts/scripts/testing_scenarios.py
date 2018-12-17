@@ -49,7 +49,7 @@ class TestingScenarios:
 
     @staticmethod
     def getScenarioTypes():
-        scenarios = [TrashCanScenario, SectorScenario, CampusScenario]
+        scenarios = [TrashCanScenario, SectorScenario, CampusScenario, FourthFloorObstacleScenario, CampusObstacleScenario, SectorExtraScenario]
         return scenarios
 
 
@@ -138,7 +138,7 @@ class TrashCanScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed"]
+        return ["num_obstacles", "seed"]
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
@@ -221,7 +221,7 @@ class CampusScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed", "target_id", "init_id", "min_obstacle_spacing"]
+        return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
 
     def getPoseMsg(self, pose):
         pose_msg = Pose()
@@ -266,8 +266,8 @@ class CampusObstacleScenario(CampusScenario):
 
         self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
 
-    def getUniqueFieldNames():
-        return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
+    # def getUniqueFieldNames():
+    #     return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
@@ -304,7 +304,7 @@ class SectorScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed", "target_id", "init_id"]
+        return ["num_obstacles", "seed", "target_id", "init_id"]
 
     def getPoseMsg(self, pose):
         pose_msg = Pose()
@@ -386,8 +386,9 @@ class SectorExtraScenario(SectorScenario):
         self.maxy = np.maximum(y1, y2)
         self.miny = np.minimum(y1, y2)
 
+    @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed", "target_id", "init_id", "min_obstacle_spacing"]
+        return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
@@ -482,7 +483,7 @@ class FourthFloorScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_barrels", "seed","min_obstacle_spacing"]
+        return ["num_obstacles", "seed","min_obstacle_spacing"]
 
     def getPoseMsg(self, pose):
         pose_msg = Pose()
@@ -526,8 +527,8 @@ class FourthFloorObstacleScenario(FourthFloorScenario):
 
         self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
 
-    def getUniqueFieldNames():
-        return ["num_obstacles", "seed", "min_obstacle_spacing"]
+    # def getUniqueFieldNames():
+    #     return ["num_obstacles", "seed", "min_obstacle_spacing"]
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
