@@ -25,7 +25,7 @@ holonomic_robot: false
 use_dwa: true
 angular_sim_granularity: 0.1
 sim_granularity: 0.1 # 0.025
-sim_time: 3    # 1.7
+sim_time: 4    # 1.7
 trajectory_following_time: 1
 vth_samples: 10  # 20
 vx_samples: 5

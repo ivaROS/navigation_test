@@ -234,7 +234,7 @@ class GazeboDriver():
     # Fot book chapter
     # model_path = os.path.expanduser("~/.gazebo/models/drc_practice_blue_cylinder/model.sdf")
     path = self.rospack.get_path("nav_configs")
-    model_path = os.path.expanduser(path + "/models/sign_post.sdf")
+    model_path = os.path.expanduser(path + "/models/box_lus.sdf")
     model_xml = load_model_xml(model_path)
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
@@ -252,7 +252,7 @@ class GazeboDriver():
     path = self.rospack.get_path("nav_configs")
     model_path = path + "/models/"
 
-    model_filenames = {'box':'box_02_02_05.srdf', 'pole':'pole_005_06.srdf'}
+    model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf'}
 
     model_xml = load_model_xml(model_path + model_filenames[model_type])
     robot_namespace = rospy.get_namespace()
@@ -366,7 +366,7 @@ class GazeboDriver():
 
     barrel_names = [name for name in self.models.name if "obstacle" in name]
 
-    model_types = ['box','pole']
+    model_types = ['box','cylinder']
 
     num_types = {}
     for model_type in model_types:

@@ -1,6 +1,6 @@
 <launch>
-  <arg name="world_file" default="$(find nav_configs)/world/empty_room_20x20.world"/>
-  <arg name="gui" default="true"/>
+  <arg name="world_file" default="$(find nav_configs)/world/fourth_floor.world"/>
+  <arg name="gui" default="false"/>
 
 
   <!--BEGIN turtlebot_gazebo turtlebot_world.launch -->
@@ -91,7 +91,7 @@
     <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan"
           args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager"  required="true">
       <param name="scan_height" value="10"/>
-      <param name="output_frame_id" value="/camera_depth_frame"/>
+      <param name="output_frame_id" value="camera_depth_frame"/>
       <param name="range_min" value="0.45"/>
       <remap from="image" to="/camera/depth/image_raw"/>
       <remap from="scan" to="/scan"/>
@@ -99,7 +99,7 @@
 
   <!--END turtlebot_gazebo turtlebot_world.launch -->
 
-  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/empty_room_20x20.yaml" required="true"/>
+  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/fourth_floor_gazebo.yaml" required="true"/>
 
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
 
