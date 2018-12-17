@@ -910,6 +910,7 @@ class GazeboMaster(mp.Process):
 
 
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile(task["robot"])) #pass in world info
+                    time.sleep(30)
 
                     if not self.gazebo_launch._shutting_down:
 
