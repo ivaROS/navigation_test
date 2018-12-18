@@ -189,7 +189,7 @@ class ResultAnalyzer:
                         path_time = np.mean(np.array(path_times[lookupkey]))/1e9
                         path_length = np.mean(np.array(path_lengths[lookupkey]))
 
-                        print("| " + "{0:.1f}".format(100*float(num) / total) + "% (" + str(num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m"),
+                        print("| " + "{0:.1f}".format(100*float(num) / total) + "% (" + str(num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m" + " <br>" + "{0:.2f}".format(path_time) + "s"),
                     else:
                         print("| "),
                 print("|")
@@ -368,7 +368,7 @@ if __name__ == "__main__":
     start_time = time.time()
     analyzer = ResultAnalyzer()
 
-    filenames=['/data/fall2018/chapter_experiments/test_2018-12-14 20:02:33.834043']
+    filenames=['/data/fall2018/chapter_experiments/final_box']
 
     analyzer.readFiles(filenames=filenames)
 
@@ -376,7 +376,7 @@ if __name__ == "__main__":
 
     analyzer.generateTable()
 
-    analyzer.generateSingleTable()
+    # analyzer.generateSingleTable()
 
 
     analyzer.compareControllers('egocylindrical_pips_dwa','dwa')

@@ -2,7 +2,7 @@
 
   <arg name="use_recovery_behaviors" default="true"/>
 
-  <arg name="decimate" default="true"/>
+  <arg name="decimate" default="false"/>
   <arg name="propagate" default="false"/>
 
   <arg name="gazebo" default="true"/>
@@ -69,7 +69,7 @@
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/param_name" value="/simplified_robot_description"/>
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="9" />
 
-
+      <rosparam file="$(find nav_configs)/config/turtlebot_ec_dwa_params.yaml" command="load"/>
   </node>
 
 </launch>

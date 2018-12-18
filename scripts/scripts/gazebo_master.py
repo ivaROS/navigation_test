@@ -795,10 +795,29 @@ class MultiMasterCoordinator:
         #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': 1.5, 'num_obstacles': 50}
         #             self.task_queue.put(task)
 
-        for scenario in ['sector_extra']:
-            for controller in ['dwa']:
-                for seed in range(0, 1):
+        # for scenario in ['sector_laser','sector_extra','campus_obstacle','fourth_floor_obstacle']:
+        for scenario in ['sector_extra','sector_laser']:
+            for controller in ['egocylindrical_pips_dwa','dwa']:
+                for seed in range(0, 50):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
+                    self.task_queue.put(task)
+
+        for scenario in ['campus_obstacle','fourth_floor_obstacle']:
+            for controller in ['egocylindrical_pips_dwa','dwa']:
+                for seed in range(0, 50):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50}
+                    self.task_queue.put(task)
+
+        for scenario in ['sector_extra','sector_laser']:
+            for controller in ['egocylindrical_pips_dwa','dwa']:
+                for seed in range(0, 50):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30}
+                    self.task_queue.put(task)
+
+        for scenario in ['campus_obstacle','fourth_floor_obstacle']:
+            for controller in ['egocylindrical_pips_dwa','dwa']:
+                for seed in range(0, 50):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50}
                     self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
