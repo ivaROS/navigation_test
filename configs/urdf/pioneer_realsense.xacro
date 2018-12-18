@@ -20,7 +20,7 @@ name="pioneer3at_realsense"
             </geometry>
         </collision>
         <inertial>
-            <mass value="0.0615752"/>
+            <mass value="0.001"/>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <inertia ixx="9.108e-05"
                      ixy="0"
@@ -192,11 +192,25 @@ name="pioneer3at_realsense"
 
     <gazebo reference="base_link">
       <sensor name='base_link_bumper' type='contact'>
+	<always_on>true</always_on>
         <contact>
-          <collision>base_link_collision</collision>
+          <collision>base_footprint_fixed_joint_lump__base_link_collision</collision>
         </contact>
         <update_rate> 5 </update_rate>
-        <plugin name="gripper_bumper" filename="libgazebo_ros_bumper.so">
+        <plugin name="grimpper" filename="libgazebo_ros_bumper.so">
+          <bumperTopicName>base_bumper</bumperTopicName>
+          <frameName>world</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="top_plate">
+      <sensor name='top_plate_bumper' type='contact'>
+	<always_on>true</always_on>
+        <contact>
+          <collision>base_footprint_fixed_joint_lump__top_plate_collision_8</collision>
+        </contact>
+        <update_rate> 5 </update_rate>
+        <plugin name="top_plate_bumper" filename="libgazebo_ros_bumper.so">
           <bumperTopicName>base_bumper</bumperTopicName>
           <frameName>world</frameName>
         </plugin>
@@ -204,8 +218,9 @@ name="pioneer3at_realsense"
     </gazebo>
     <gazebo reference="p3at_front_left_wheel">
       <sensor name='p3at_front_left_wheel_bumper' type='contact'>
+	<always_on>true</always_on>
         <contact>
-          <collision>p3at_front_left_wheel_collision</collision>
+          <collision>base_footprint_fixed_joint_lump__p3at_front_left_wheel_collision_3</collision>
         </contact>
         <update_rate> 5 </update_rate>
         <plugin name="p3at_front_left_wheel_bumper" filename="libgazebo_ros_bumper.so">
@@ -216,8 +231,9 @@ name="pioneer3at_realsense"
     </gazebo>
     <gazebo reference="p3at_front_right_wheel">
       <sensor name='p3at_front_right_wheel_bumper' type='contact'>
+	<always_on>true</always_on>
         <contact>
-          <collision>p3at_front_right_wheel_collision</collision>
+          <collision>base_footprint_fixed_joint_lump__p3at_front_right_wheel_collision_6</collision>
         </contact>
         <update_rate> 5 </update_rate>
         <plugin name="p3at_front_right_wheel_bumper" filename="libgazebo_ros_bumper.so">
@@ -226,25 +242,25 @@ name="pioneer3at_realsense"
         </plugin>
       </sensor>
     </gazebo>
-    <gazebo reference="p3at_rear_left_wheel">
-      <sensor name='p3at_rear_left_wheel_bumper' type='contact'>
+    <gazebo reference="p3at_back_left_wheel">
+      <sensor name='p3at_back_left_wheel_bumper' type='contact'>
         <contact>
-          <collision>p3at_rear_left_wheel_collision</collision>
+          <collision>base_footprint_fixed_joint_lump__p3at_back_left_wheel_collision_13</collision>
         </contact>
         <update_rate> 5 </update_rate>
-        <plugin name="p3at_rear_left_wheel_bumper" filename="libgazebo_ros_bumper.so">
+        <plugin name="p3at_back_left_wheel_bumper" filename="libgazebo_ros_bumper.so">
           <bumperTopicName>base_bumper</bumperTopicName>
           <frameName>world</frameName>
         </plugin>
       </sensor>
     </gazebo>
-    <gazebo reference="p3at_rear_right_wheel">
-      <sensor name='p3at_rear_right_wheel_bumper' type='contact'>
+    <gazebo reference="p3at_back_right_wheel">
+      <sensor name='p3at_back_right_wheel_bumper' type='contact'>
         <contact>
-          <collision>p3at_rear_right_wheel_collision</collision>
+          <collision>base_footprint_fixed_joint_lump__p3at_back_right_wheel_collision_16</collision>
         </contact>
         <update_rate> 5 </update_rate>
-        <plugin name="p3at_rear_right_wheel_bumper" filename="libgazebo_ros_bumper.so">
+        <plugin name="p3at_back_right_wheel_bumper" filename="libgazebo_ros_bumper.so">
           <bumperTopicName>base_bumper</bumperTopicName>
           <frameName>world</frameName>
         </plugin>

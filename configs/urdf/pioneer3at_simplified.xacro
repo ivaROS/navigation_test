@@ -28,7 +28,7 @@ name="pioneer3at"
         <collision>
             <origin xyz="-0.02 0 0.167" rpy="0 0 0"/>
                 <geometry>
-                  <box size="0.54 0.5 0.22"/>
+                  <box size="0.56 0.5 0.22"/>
                 </geometry>
         </collision>
     </link>
@@ -79,120 +79,7 @@ name="pioneer3at"
         <parent link="base_link"/>
         <child link="top_plate"/>
     </joint>
-<!-- Front + Back Sonar -->
-    <link name="front_sonar">
-        <inertial>
-            <mass value="0.1"/>
-            <origin xyz="0 0 0"/>
-            <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                 iyy="1.0" iyz="0.0" izz="1.0"/>
-        </inertial>
-        <visual name="base_visual">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry name="pioneer_geom">
-                <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/front_sonar.dae"/>
-            </geometry>
-            <material name="SonarYellow">
-                <color rgba="0.715 0.583 0.210 1.0"/>
-            </material>
-        </visual>
-    </link>
-    <gazebo reference="front_sonar">
-        <material value="Gazebo/Yellow"/>
-    </gazebo>
 
-    <joint name="base_front_joint" type="fixed">
-        <origin xyz="0.193 0 0.25" rpy="0 0 0"/>
-        <parent link="base_link"/>
-        <child link="front_sonar"/>
-    </joint>
-
-    <link name="back_sonar">
-        <inertial>
-            <mass value="0.1"/>
-            <origin xyz="0 0 0"/>
-            <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                 iyy="1.0" iyz="0.0" izz="1.0"/>
-        </inertial>
-        <visual name="base_visual">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry name="pioneer_geom">
-                <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/back_sonar.dae"/>
-            </geometry>
-            <material name="SonarYellow">
-                <color rgba="0.715 0.583 0.210 1.0"/>
-            </material>
-        </visual>
-    </link>
-    <gazebo reference="back_sonar">
-        <material value="Gazebo/Yellow"/>
-    </gazebo>
-
-    <joint name="base_back_joint" type="fixed">
-        <origin xyz="-0.187 0 0.247" rpy="0 0 0"/>
-        <parent link="base_link"/>
-        <child link="back_sonar"/>
-    </joint>
-
-<link name="back_sonar_fake">
-    <inertial>
-            <mass value="0.1"/> 
-            <origin xyz="0 0 0"/>
-            <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                 iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-<!--     <visual name="base_visual">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry name="pioneer_geom">
-                <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/back_sonar.dae"/>
-            </geometry>
-            <material name="SonarYellow">
-                <color rgba="0.715 0.583 0.210 1.0"/>
-            </material>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.01 0.01 0.01"/>
-            </geometry>
-        </collision> -->
-</link>
-
-<joint name="base_back_sonar_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 3.1415"/>
-    <parent link="back_sonar"/>
-    <child link="back_sonar_fake"/>
-</joint>
-
-<link name="imu">
-    <inertial>
-            <mass value="0.1"/> 
-            <origin xyz="0 0 0"/>
-            <inertia ixx="1.0" ixy="0.0" ixz="0.0"
-                 iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-<!--     <visual name="base_visual">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry name="pioneer_geom">
-                <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/back_sonar.dae"/>
-            </geometry>
-            <material name="SonarYellow">
-                <color rgba="0.715 0.583 0.210 1.0"/>
-            </material>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.01 0.01 0.01"/>
-            </geometry>
-        </collision> -->
-</link>
-
-<joint name="imu_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="3.1415 0 0"/>
-    <parent link="base_link"/>
-    <child link="imu"/>
-</joint>
 
 <!-- Front Axles + Wheels + Hubcaps -->
 <xacro:macro name="p3at_front" params="suffix reflect">

@@ -1,0 +1,30 @@
+<launch>
+
+  <arg name="use_recovery_behaviors" default="true"/>
+
+  <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
+      <rosparam file="$(find nav_configs)/config/pioneer/pioneer_common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/pioneer/pioneer_common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+
+
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+
+      <param name="odom_topic"                                value="/odom" />
+
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+      <rosparam file="$(find nav_configs)/config/dwa_local_planner_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+      
+      <!--<param name="controller_frequency" value="10.0" />-->
+      
+  </node>
+
+
+</launch>

@@ -1,5 +1,5 @@
 <launch>
-  <arg name="world_file" default="$(find nav_configs)/world/sector_world_laser.world"/>
+  <arg name="world_file" default="$(find nav_configs)/world/fourth_floor.world"/>
   <arg name="gui" default="false"/>
 
 
@@ -104,7 +104,7 @@
 
   <!--END turtlebot_gazebo turtlebot_world.launch -->
 
-  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/sector_world.yaml" required="true"/>
+  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/fourth_floor_gazebo.yaml" required="true"/>
 
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
 

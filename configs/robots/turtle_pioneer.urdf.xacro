@@ -67,7 +67,7 @@
                 izz="1.0"/>
         </inertial>
         <visual name="base_visual">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0.01 0 0" rpy="0 0 0"/>
             <geometry name="pioneer_geom">
                 <mesh filename="package://p3at_tutorial/meshes/p3at_meshes/top.dae"/>
             </geometry>
@@ -76,9 +76,10 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0.01 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size="0.01 0.01 0.01"/>
+		<mesh filename="package://p3at_tutorial/meshes/p3at_meshes/top.dae"/>
+                <!--<box size="0.01 0.01 0.01"/>-->
             </geometry>
         </collision>
     </link>
@@ -87,16 +88,10 @@
     </gazebo>
 
     <joint name="base_top_joint" type="fixed">
-        <origin xyz="0.003 0 0.274" rpy="0 0 0"/>
+        <origin xyz="0.028 0 0.274" rpy="0 0 0"/>
         <parent link="base_link"/>
         <child link="top_plate"/>
     </joint>
-
-
-
-
-
-
 
     <joint name="wheel_left_joint" type="continuous">
       <parent link="base_link"/>
@@ -267,8 +262,8 @@
   <!-- Front Axles + Wheels + Hubcaps -->
   <xacro:macro name="p3at_front" params="suffix reflect">
       <link name="p3at_front_${suffix}_axle">
-          <!-- <inertial>
-              <mass value="0.1"/>
+          <!--<inertial>
+              <mass value="0.001"/>
               <origin xyz="0 0 0"/>
               <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                    iyy="1.0" iyz="0.0" izz="1.0"/>
@@ -300,12 +295,12 @@
       </joint>
 
       <link name="p3at_front_${suffix}_hub">
-          <!-- <inertial>
-              <mass value="0.1"/>
+          <!--<inertial>
+              <mass value="0.001"/>
               <origin xyz="0 0 0"/>
               <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                    iyy="1.0" iyz="0.0" izz="1.0"/>
-          </inertial> -->
+          </inertial>-->
       <visual name="base_visual">
           <origin xyz="0 0 0" rpy="0 0 0"/>
           <geometry name="pioneer_geom">
@@ -333,12 +328,12 @@
       </joint>
 
       <link name="p3at_front_${suffix}_wheel">
-          <!-- <inertial>
-              <mass value="0.5"/>
+          <!--<inertial>
+              <mass value="0.001"/>
               <origin xyz="0 0 0"/>
               <inertia ixx="0.012411765597" ixy="0" ixz="0"
            iyy="0.015218160428" iyz="0" izz="0.011763977943"/>
-        </inertial> -->
+        </inertial>-->
       <visual name="base_visual">
           <origin xyz="0 0 0" rpy="0 0 0"/>
           <geometry name="pioneer_geom">
@@ -371,11 +366,11 @@
   <!-- Back Axles + Wheels + Hubcaps -->
       <link name="p3at_back_${suffix}_axle">
           <!--<inertial>
-              <mass value="0.1"/>
+              <mass value="0.001"/>
               <origin xyz="0 0 0"/>
               <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                    iyy="1.0" iyz="0.0" izz="1.0"/>
-          </inertial> -->
+          </inertial>-->
       <visual name="base_visual">
           <origin xyz="0 0 0" rpy="0 0 0"/>
           <geometry name="pioneer_geom">
@@ -405,7 +400,7 @@
 
       <link name="p3at_back_${suffix}_hub">
           <!--<inertial>
-              <mass value="0.1"/>
+              <mass value="0.001"/>
               <origin xyz="0 0 0"/>
               <inertia ixx="1.0" ixy="0.0" ixz="0.0"
                    iyy="1.0" iyz="0.0" izz="1.0"/>
@@ -436,7 +431,7 @@
 
       <link name="p3at_back_${suffix}_wheel">
           <!--<inertial>
-              <mass value="0.5"/>
+              <mass value="0.001"/>
               <origin xyz="0 0 0"/>
               <inertia ixx="0.012411765597" ixy="0" ixz="0"
            iyy="0.015218160428" iyz="0" izz="0.011763977943"/>

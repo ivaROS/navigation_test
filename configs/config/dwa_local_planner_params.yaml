@@ -24,7 +24,7 @@ DWAPlannerROS:
 # Forward Simulation Parameters
   angular_sim_granularity: 0.1
   sim_granularity: 0.1 # 0.025
-  sim_time: 1.0       # 1.7
+  sim_time: 4.0       # 1.7
   vx_samples: 6       # 3
   vy_samples: 1       # diff drive robot, there is only one sample
   vtheta_samples: 20  # 20
