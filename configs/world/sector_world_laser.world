@@ -187,7 +187,7 @@
         <pose frame=''>-4.91761 2.85891 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='cabinet_bottom_plate'>
-          <pose frame=''>-4.91761 2.85891 0 0 -0 0</pose>
+          <pose frame=''>-4.91761 2.85891 0 0 -0 3.14</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -197,7 +197,7 @@
         <pose frame=''>-7.60906 -4.6363 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='cabinet_bottom_plate'>
-          <pose frame=''>-7.60906 -4.6363 0 0 -0 0</pose>
+          <pose frame=''>-7.60906 -4.6363 0 0 -0 3.14</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -207,7 +207,7 @@
         <pose frame=''>7.23254 -2.86873 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='cabinet_bottom_plate'>
-          <pose frame=''>7.23254 -2.86873 0 0 -0 0</pose>
+          <pose frame=''>7.23254 -2.86873 0 0 -0 3.14</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
