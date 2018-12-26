@@ -368,7 +368,7 @@ if __name__ == "__main__":
     start_time = time.time()
     analyzer = ResultAnalyzer()
 
-    filenames=['/data/fall2018/chapter_experiments/final_box']
+    filenames=['/data/fall2018/chapter_experiments/chapter_experiments_2018-12-20 16:02:52.231211']
 
     analyzer.readFiles(filenames=filenames)
 
