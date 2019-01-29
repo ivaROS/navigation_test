@@ -5,7 +5,9 @@ local_costmap: ##TODO: clear this whole thing
 
 global_costmap:
   obstacle_layer:
+    observation_sources: scan bump collisions
     collisions:
       topic: /move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions
   
-
+EgocylindricalPipsDWAPlannerROS:
+  goal_search_radius: 3

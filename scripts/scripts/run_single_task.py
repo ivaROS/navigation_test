@@ -7,7 +7,7 @@ import rospy
 
 seed = 0
 
-num_barrels = 50
+num_barrels = 30
 min_obstacle_spacing = 1
 
 starting_pose = [-5,0,0]

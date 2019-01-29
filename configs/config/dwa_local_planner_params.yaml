@@ -42,8 +42,8 @@ DWAPlannerROS:
   oscillation_reset_dist: 0.05  # 0.05   - how far to travel before resetting oscillation flags
 
 # Debugging
-  publish_traj_pc : true
-  publish_cost_grid_pc: true
+  publish_traj_pc : false
+  publish_cost_grid_pc: false
 
   holonomic_robot: false
   

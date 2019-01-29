@@ -19,16 +19,24 @@ class TestingScenarios:
                 return FourthFloorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "fourth_floor_obstacle":
                 return FourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "full_fourth_floor_obstacle":
+                return FullFourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "campus":
                 return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "campus_obstacle":
                 return CampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "full_campus_obstacle":
+                return FullCampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector":
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector_laser":
                 return SectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "full_sector_laser":
+                return FullSectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector_extra":
                 return SectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "full_sector_extra":
+                return FullSectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sparse":
                 return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "dense":
@@ -279,6 +287,13 @@ class CampusObstacleScenario(CampusScenario):
         self.gazebo_driver.unpause()
 
 
+class FullCampusObstacleScenario(CampusObstacleScenario):
+    def __init__(self, task, gazebo_driver):
+        super(FullCampusObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "full_campus_obstacle"
+
+
 
 
 class SectorScenario(TestingScenario):
@@ -351,6 +366,13 @@ class SectorLaserScenario(SectorScenario):
         self.world = "sector_laser"
 
 
+class FullSectorLaserScenario(SectorLaserScenario):
+    def __init__(self, task, gazebo_driver):
+        super(FullSectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "full_sector_laser"
+
+
 class SectorExtraScenario(SectorScenario):
     def __init__(self, task, gazebo_driver):
         super(SectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
@@ -398,6 +420,13 @@ class SectorExtraScenario(SectorScenario):
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
         self.gazebo_driver.unpause()
+
+
+class FullSectorExtraScenario(SectorExtraScenario):
+    def __init__(self, task, gazebo_driver):
+        super(FullSectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "full_sector_extra"
 
 
 
@@ -538,6 +567,14 @@ class FourthFloorObstacleScenario(FourthFloorScenario):
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
         self.gazebo_driver.unpause()
+
+
+class FullFourthFloorObstacleScenario(FourthFloorObstacleScenario):
+    def __init__(self, task, gazebo_driver):
+        super(FullFourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "full_fourth_floor_obstacle"
+
 
 
 class SparseScenario(TestingScenario):
