@@ -820,26 +820,51 @@ class MultiMasterCoordinator:
         #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50}
         #             self.task_queue.put(task)
 
-        for scenario in ['sector_extra','sector_laser','full_sector_extra', 'full_sector_laser']:
-            for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        # for scenario in ['sector_extra','sector_laser','full_sector_extra', 'full_sector_laser']:
+        #     for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        #         for seed in range(0, 50):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
+        #             self.task_queue.put(task)
+        #
+        # for scenario in ['campus_obstacle','fourth_floor_obstacle','full_campus_obstacle', 'full_fourth_floor_obstacle']:
+        #     for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        #         for seed in range(0, 50):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50}
+        #             self.task_queue.put(task)
+        #
+        # for scenario in ['sector_extra','sector_laser','full_sector_extra', 'full_sector_laser']:
+        #     for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        #         for seed in range(0, 50):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30}
+        #             self.task_queue.put(task)
+        #
+        # for scenario in ['campus_obstacle','fourth_floor_obstacle','full_campus_obstacle', 'full_fourth_floor_obstacle']:
+        #     for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        #         for seed in range(0, 50):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50}
+        #             self.task_queue.put(task)
+
+
+        for scenario in ['full_sector_extra', 'full_sector_laser']:
+            for controller in ['dwa']:
                 for seed in range(0, 50):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
                     self.task_queue.put(task)
 
-        for scenario in ['campus_obstacle','fourth_floor_obstacle','full_campus_obstacle', 'full_fourth_floor_obstacle']:
-            for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        for scenario in ['full_campus_obstacle', 'full_fourth_floor_obstacle']:
+            for controller in ['dwa']:
                 for seed in range(0, 50):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50}
                     self.task_queue.put(task)
 
-        for scenario in ['sector_extra','sector_laser','full_sector_extra', 'full_sector_laser']:
-            for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        for scenario in ['full_sector_extra', 'full_sector_laser']:
+            for controller in ['dwa']:
                 for seed in range(0, 50):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30}
                     self.task_queue.put(task)
 
-        for scenario in ['campus_obstacle','fourth_floor_obstacle','full_campus_obstacle', 'full_fourth_floor_obstacle']:
-            for controller in ['egocylindrical_pips_dwa_sim_1', 'egocylindrical_pips_dwa_sim_2', 'egocylindrical_pips_dwa_sim_3', 'egocylindrical_pips_dwa_sim_4']:
+        for scenario in ['full_campus_obstacle', 'full_fourth_floor_obstacle']:
+            for controller in ['dwa']:
                 for seed in range(0, 50):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50}
                     self.task_queue.put(task)
