@@ -1,8 +1,9 @@
 import csv
 import time
-from gazebo_master import MultiMasterCoordinator
+#from gazebo_master import MultiMasterCoordinator
 import math
 import numpy as np
+import copy
 
 def filter(results, whitelist=None, blacklist=None):
     filtered_results = []
@@ -24,7 +25,6 @@ def filter(results, whitelist=None, blacklist=None):
     return filtered_results
 
 class ResultAnalyzer:
-
 
     def readFile(self, filename, whitelist = None, blacklist = None):
         with open(filename, 'rb') as csvfile:
@@ -193,6 +193,114 @@ class ResultAnalyzer:
                     else:
                         print("| "),
                 print("|")
+
+    def generateGenericTable(self, independent, dependent):
+        #if type(x) is not str and isinstance(x, collections.Sequence)
+
+        statistics = {}
+        key_values = {}
+        path_times = {}
+        path_lengths = {}
+        for entry in self.results:
+            condition = {key: entry[key] for key in independent + [dependent]}
+            conditionset = frozenset(condition.items())
+
+            # print conditionset
+
+            if not conditionset in statistics:
+                statistics[conditionset] = 1
+                path_times[conditionset] = [int(entry["time"])]
+                path_lengths[conditionset] = [float(entry["path_length"])]
+            else:
+                statistics[conditionset] = statistics[conditionset] + 1
+                path_times[conditionset].append(int(entry["time"]))
+                path_lengths[conditionset].append(float(entry["path_length"]))
+
+            for key, value in condition.items():
+                if not key in key_values:
+                    key_values[key] = set()
+                key_values[key].add(value)
+
+        max_depth = len(independent)
+
+        def processLayer(shared_conditions_dict={}, depth=0):
+            if depth == max_depth:
+
+                lookup_keys = []
+                total=0
+                for dependent_value in key_values[dependent]: #TODO: use all permutations of multiple dependents
+                    key = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
+                    if key in statistics:
+                        total += statistics[key]
+
+                #print("| " + str(controller)),
+                for dependent_value in key_values[dependent]:
+                    lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
+                    if lookupkey in statistics:
+                        num = statistics[lookupkey]
+                        #path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
+                        #path_length = np.mean(np.array(path_lengths[lookupkey]))
+
+                        #print("| " + "{0:.1f}".format(100 * float(num) / total) + "% (" + str(
+                        #    num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m" + " <br>" + "{0:.2f}".format(
+                        #    path_time) + "s"),
+
+                        print("| " + "{0:.1f}".format(100 * float(num) / total) + "% (" + str(
+                            num) + ") "),
+                    else:
+                        print("| "),
+
+                dependent_value="SUCCEEDED"
+                lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
+                if lookupkey in statistics:
+                    path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
+                    path_length = np.mean(np.array(path_lengths[lookupkey]))
+
+                    print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
+                        path_time) + "s"),
+
+                else:
+                    print("| "),
+                print("|")
+
+
+            else:
+                condition_name = independent[depth]
+
+                if depth == max_depth-1:
+
+                    print("")
+                    print("| " + condition_name),
+                    for result in key_values[dependent]:
+                        print(" | " + str(result)),
+                        
+                    print(" | " + "path length | path time"),
+
+                    print("|")
+
+                    for i in range(len(key_values[dependent]) + 3):
+                        print("| -------"),
+
+                    print("|")
+
+                else:
+                    print("")
+                    print(condition_name + ":")
+
+                for condition_value in sorted(key_values[condition_name]):
+                    if depth == max_depth-1:
+                      print("| " + str(condition_value)),
+                    else:
+                        print("")
+                        print(condition_value + ":")
+
+                    cond_dict = copy.deepcopy(shared_conditions_dict)
+                    cond_dict[condition_name]=condition_value
+
+                    processLayer(cond_dict, depth+1)
+
+
+        processLayer()
 
     def generateSingleTable(self):
         statistics = {}
@@ -368,15 +476,28 @@ if __name__ == "__main__":
     start_time = time.time()
     analyzer = ResultAnalyzer()
 
-    filenames=['/data/fall2018/chapter_experiments/chapter_experiments_2019-01-25 22:10:11.548983']
+    filenames=['/home/justin/Downloads/chapter_experiments_2019-01-25 22:10:11.548983']
 
     analyzer.readFiles(filenames=filenames)
 
-    analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
+    filenames2=['/home/justin/Downloads/box_turtle1','/home/justin/Downloads/turtlebot1']
 
-    analyzer.generateTable()
+    analyzer.readFiles(filenames=filenames2,whitelist={'controller':'dwa'})
+
+    filenames3=['/home/justin/Downloads/chapter_experiments_2019-01-30 14:33:35.057813']
+
+    analyzer.readFiles(filenames=filenames3)
+    #analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
+
+    #analyzer.generateTable()
+
+    #analyzer.generateGenericTable(independent=['scenario', 'robot', 'controller'], dependent='result')
+
+    analyzer.generateGenericTable(independent=['controller','robot', 'scenario'], dependent='result')
+
 
     # analyzer.generateSingleTable()
 
 
-    analyzer.compareControllers('egocylindrical_pips_dwa','dwa')
+    #analyzer.compareControllers('egocylindrical_pips_dwa','dwa')
+
