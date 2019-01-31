@@ -1098,7 +1098,7 @@ class GazeboMaster(mp.Process):
             self.gazebo_launch.start()
 
         try:
-            msg = rospy.wait_for_message("/odom", Odometry, 10)
+            msg = rospy.wait_for_message("/odom", Odometry, 30)
         except rospy.exceptions.ROSException:
             print "Error! odometry not received!"
             return False
