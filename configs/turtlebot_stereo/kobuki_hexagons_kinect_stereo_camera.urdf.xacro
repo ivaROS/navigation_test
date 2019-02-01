@@ -11,7 +11,7 @@
   <xacro:include filename="$(find kobuki_description)/urdf/kobuki.urdf.xacro" />
   <xacro:include filename="$(find turtlebot_description)/urdf/stacks/hexagons.urdf.xacro"/>
   <xacro:include filename="$(find turtlebot_description)/urdf/sensors/kinect.urdf.xacro"/>
-  <xacro:include filename="$(find sparse_stereo)/turtlebot_stereo/camera.urdf.xacro"/>
+  <xacro:include filename="$(find nav_configs)/turtlebot_stereo/camera.urdf.xacro"/>
   
   <kobuki/>
   <stack_hexagons parent="base_link"/>

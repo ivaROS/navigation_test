@@ -49,12 +49,12 @@
           <image>
             <width>640</width>
             <height>480</height>
-            <format>L8</format>
-            <!--format>R8G8B8</format-->
+            <!--<format>L8</format>-->
+            <format>B8G8R8</format>
           </image>
           <clip>
             <near>0.1</near>
-            <far>8</far>
+            <far>20</far>
           </clip>
           <noise>
             <type>gaussian</type>
@@ -68,12 +68,12 @@
           <image>
             <width>640</width>
             <height>480</height>
-            <format>L8</format>
-            <!--format>R8G8B8</format-->
+            <!--<format>L8</format>-->
+            <format>B8G8R8</format>
           </image>
           <clip>
             <near>0.1</near>
-            <far>8</far>
+            <far>20</far>
           </clip>
           <noise>
             <type>gaussian</type>

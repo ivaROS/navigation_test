@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <robot name="sensor_camera" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:include filename="$(find sparse_stereo)/turtlebot_stereo/turtlebot_gazebo.urdf.xacro"/>
+  <xacro:include filename="$(find nav_configs)/turtlebot_stereo/turtlebot_gazebo.urdf.xacro"/>
   <xacro:include filename="$(find turtlebot_description)/urdf/turtlebot_properties.urdf.xacro"/>
 
   <!-- Hokuyo 2D LIDAR -->
   <xacro:macro name="sensor_camera" params="parent">
     <joint name="additional_camera" type="fixed">
-      <origin xyz="0.1 0.0 0.41" rpy="${cam_or} ${cam_op} ${cam_oy}" />
+      <origin xyz="0.1 0.0 0.2" rpy="${cam_or} ${cam_op} ${cam_oy}" />
       <parent link="base_link" />
       <child link="stereo_camera_frame" />
     </joint>

@@ -1,5 +1,5 @@
 <launch>
-  <arg name="world_file" default="$(find nav_configs)/world/sector_world_laser_stixel.world"/>
+  <arg name="world_file" default="$(find nav_configs)/world/campus_world_stixel.world"/>
   <arg name="gui" default="false"/>
 
 
@@ -88,9 +88,9 @@
     </node>
     
     <!-- Fake laser -->
-    <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager_depth" args="manager"  required="true"/>
-    <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan_depth"
-          args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager_depth"  required="true">
+    <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"  required="true"/>
+    <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan"
+          args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager"  required="true">
       <param name="scan_height" value="10"/>
       <param name="output_frame_id" value="camera_depth_frame"/>
       <param name="range_min" value="0.45"/>
@@ -100,7 +100,7 @@
 
   <!--END turtlebot_gazebo turtlebot_world.launch -->
 
-  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/sector_world.yaml" required="true"/>
+  <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/campus.yaml" required="true"/>
 
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
 
