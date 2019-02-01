@@ -7,7 +7,7 @@ import rospy
 
 seed = 0
 
-num_barrels = 30
+num_barrels = 50
 min_obstacle_spacing = 1
 
 starting_pose = [-5,0,0]
@@ -22,7 +22,7 @@ task = {'seed':seed, 'scenario':'campus', 'num_obstacles':num_barrels, 'min_obst
 # task= {'scenario': 'fourth_floor', 'controller':'dwa', 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
 
 # task= {'scenario': 'sector_laser', 'controller':'dwa', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
-task= {'scenario': 'sector_extra', 'controller':'egocylindrical_pips_dwa', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
+task= {'scenario': 'campus_obstacle', 'controller':'egocylindrical_pips_dwa', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
 #
 # task = {'seed':seed, 'scenario':'campus_obstacle', 'num_obstacles':num_barrels, 'min_obstacle_spacing':min_obstacle_spacing}
 # task = {'seed':seed, 'scenario':'fourth_floor_obstacle', 'num_obstacles':num_barrels, 'min_obstacle_spacing':min_obstacle_spacing}

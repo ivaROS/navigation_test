@@ -252,7 +252,8 @@ class GazeboDriver():
     path = self.rospack.get_path("nav_configs")
     model_path = path + "/models/"
 
-    model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf'}
+    # model_filenames = {'box': 'box_lus.sdf', 'cylinder': 'cylinder.sdf'}
+    model_filenames = {'box': 'box_lus_gf.sdf', 'cylinder': 'cylinder_gf.sdf'}
 
     model_xml = load_model_xml(model_path + model_filenames[model_type])
     robot_namespace = rospy.get_namespace()
