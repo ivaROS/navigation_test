@@ -1,6 +1,6 @@
 <launch>
   <arg name="world_file" default="$(find nav_configs)/world/campus_world.world"/>
-  <arg name="gui" default="false"/>
+  <arg name="gui" default="true"/>
 
 
   <!--BEGIN turtlebot_gazebo turtlebot_world.launch -->
@@ -10,7 +10,7 @@
     <arg name="battery"   value="$(optenv TURTLEBOT_BATTERY /proc/acpi/battery/BAT0)"/>  <!-- /proc/acpi/battery/BAT0 --> 
 
     <arg name="stacks"    value="$(optenv TURTLEBOT_STACKS hexagons)"/>  <!-- circles, hexagons --> 
-    <arg name="3d_sensor" value="$(optenv TURTLEBOT_3D_SENSOR kinect)"/>  <!-- kinect, asus_xtion_pro --> 
+    <arg name="3d_sensor" value="kinect"/>  <!-- kinect, asus_xtion_pro --> 
 
 
     <!--BEGIN gazebo_ros empty_world.launch-->

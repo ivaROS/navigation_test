@@ -21,22 +21,30 @@ class TestingScenarios:
                 return FourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "full_fourth_floor_obstacle":
                 return FullFourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "stereo_fourth_floor_obstacle":
+                return StereoFourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "campus":
                 return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "campus_obstacle":
                 return CampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "full_campus_obstacle":
                 return FullCampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "stereo_campus_obstacle":
+                return StereoCampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector":
                 return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector_laser":
                 return SectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "full_sector_laser":
                 return FullSectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "stereo_sector_laser":
+                return StereoSectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sector_extra":
                 return SectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "full_sector_extra":
                 return FullSectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "stereo_sector_extra":
+                return StereoSectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "sparse":
                 return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "dense":
@@ -293,6 +301,12 @@ class FullCampusObstacleScenario(CampusObstacleScenario):
 
         self.world = "full_campus_obstacle"
 
+class StereoCampusObstacleScenario(CampusObstacleScenario):
+    def __init__(self, task, gazebo_driver):
+        super(StereoCampusObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "stereo_campus_obstacle"
+
 
 
 
@@ -372,6 +386,13 @@ class FullSectorLaserScenario(SectorLaserScenario):
 
         self.world = "full_sector_laser"
 
+class StereoSectorLaserScenario(SectorLaserScenario):
+    def __init__(self, task, gazebo_driver):
+        super(StereoSectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "stereo_sector_laser"
+
+
 
 class SectorExtraScenario(SectorScenario):
     def __init__(self, task, gazebo_driver):
@@ -427,6 +448,12 @@ class FullSectorExtraScenario(SectorExtraScenario):
         super(FullSectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
 
         self.world = "full_sector_extra"
+
+class StereoSectorExtraScenario(SectorExtraScenario):
+    def __init__(self, task, gazebo_driver):
+        super(StereoSectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "stereo_sector_extra"
 
 
 
@@ -574,6 +601,12 @@ class FullFourthFloorObstacleScenario(FourthFloorObstacleScenario):
         super(FullFourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
 
         self.world = "full_fourth_floor_obstacle"
+
+class StereoFourthFloorObstacleScenario(FourthFloorObstacleScenario):
+    def __init__(self, task, gazebo_driver):
+        super(StereoFourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+
+        self.world = "stereo_fourth_floor_obstacle"
 
 
 

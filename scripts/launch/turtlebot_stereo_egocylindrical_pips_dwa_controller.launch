@@ -35,7 +35,7 @@
         <remap from="/camera/right/camera_info" to="/multisense_sl/camera/right/camera_info"/>
   </node>-->
 
-  <include file="$(find stereo_depth)/launch/stereo_disparity.launch"/>
+  
 
   <!--<param name="/egocylinder/depth_to_egocylindrical_nodelet/width" value="512"/>
   <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
@@ -64,6 +64,7 @@
       <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="EgocylindricalPipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="EgocylindricalPipsDWAPlannerROS"/>
       
+      <param name="EgocylindricalPipsDWAPlannerROS/sim_time" value="$(optenv GM_PARAM_SIM_TIME 1)"/>
       
       <rosparam file="$(find nav_configs)/config/custom_recovery_params.yaml" command="load" if="$(arg use_recovery_behaviors)"/>
       <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>

@@ -49,7 +49,7 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
 
-        self.num_masters = 3
+        self.num_masters = 4
 
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
@@ -102,8 +102,8 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
-        #outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
+        # outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
+        outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -797,38 +797,55 @@ class MultiMasterCoordinator:
         #             self.task_queue.put(task)
 
         # for scenario in ['sector_laser','sector_extra','campus_obstacle','fourth_floor_obstacle']:
-        '''
+
         for scenario in ['sector_extra','sector_laser']:
-            for controller in ['depth_pips_dwa']:
+            for controller in ['egocylindrical_pips_dwa']:
                 for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
                     self.task_queue.put(task)
 
         for scenario in ['campus_obstacle','fourth_floor_obstacle']:
-            for controller in ['depth_pips_dwa']:
+            for controller in ['egocylindrical_pips_dwa']:
                 for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50}
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
                     self.task_queue.put(task)
 
         for scenario in ['sector_extra','sector_laser']:
-            for controller in ['depth_pips_dwa']:
+            for controller in ['egocylindrical_pips_dwa']:
                 for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30}
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
                     self.task_queue.put(task)
 
         for scenario in ['campus_obstacle','fourth_floor_obstacle']:
-            for controller in ['depth_pips_dwa']:
+            for controller in ['egocylindrical_pips_dwa']:
                 for seed in range(0, 50):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50}
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
                     self.task_queue.put(task)
-        '''
 
-        task = {'scenario': 'sector_laser', 'controller': 'egocylindrical_pips_dwa', 'seed': 0, 'robot': 'turtlebot'}
-        self.task_queue.put(task)
 
-        for sim_time in [1,2,3]:
-            task = {'scenario': 'sector_laser', 'controller': 'egocylindrical_pips_dwa', 'seed': 0, 'robot': 'turtlebot', 'controller_args':{'sim_time':sim_time}}
-            self.task_queue.put(task)
+        # task = {'scenario': 'sector_laser', 'controller': 'egocylindrical_pips_dwa', 'seed': 0, 'robot': 'turtlebot'}
+        # self.task_queue.put(task)
+        #
+        # for sim_time in [1,2,3]:
+        #     task = {'scenario': 'sector_laser', 'controller': 'egocylindrical_pips_dwa', 'seed': 0, 'robot': 'turtlebot', 'controller_args':{'sim_time':sim_time}}
+        #     self.task_queue.put(task)
+
+        # for scenario in ['stereo_sector_extra', 'stereo_sector_laser']:
+        #     for sim_time in [1, 2, 3, 4]:
+        #         for controller in ['stereo_egocylindrical_pips_dwa']:
+        #             for seed in range(0, 50):
+        #                 task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot',
+        #                         'min_obstacle_spacing': 1, 'num_obstacles': 30, 'controller_args':{'sim_time':sim_time}}
+        #                 self.task_queue.put(task)
+        #
+        # for scenario in ['stereo_campus_obstacle', 'stereo_fourth_floor_obstacle']:
+        #     for sim_time in [1, 2, 3, 4]:
+        #         for controller in ['stereo_egocylindrical_pips_dwa']:
+        #             for seed in range(0, 50):
+        #                 task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot',
+        #                         'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':sim_time}}
+        #                 self.task_queue.put(task)
+
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):

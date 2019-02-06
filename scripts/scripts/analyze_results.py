@@ -476,15 +476,15 @@ if __name__ == "__main__":
     start_time = time.time()
     analyzer = ResultAnalyzer()
 
-    filenames=['/home/justin/Downloads/chapter_experiments_2019-01-25 22:10:11.548983']
+    # filenames=['/home/justin/Downloads/chapter_experiments_2019-01-25 22:10:11.548983']
+    #
+    # analyzer.readFiles(filenames=filenames)
+    #
+    # filenames2=['/home/justin/Downloads/box_turtle1','/home/justin/Downloads/turtlebot1']
+    #
+    # analyzer.readFiles(filenames=filenames2,whitelist={'controller':'dwa'})
 
-    analyzer.readFiles(filenames=filenames)
-
-    filenames2=['/home/justin/Downloads/box_turtle1','/home/justin/Downloads/turtlebot1']
-
-    analyzer.readFiles(filenames=filenames2,whitelist={'controller':'dwa'})
-
-    filenames3=['/home/justin/Downloads/chapter_experiments_2019-01-30 14:33:35.057813']
+    filenames3=['/data/fall2018/chapter_experiments/chapter_experiments_2019-02-05 22:04:49.412218']
 
     analyzer.readFiles(filenames=filenames3)
     #analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
