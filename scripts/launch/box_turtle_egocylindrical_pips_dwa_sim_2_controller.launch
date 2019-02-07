@@ -68,6 +68,7 @@
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/param_name" value="/simplified_robot_description"/>
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="9" />
+      <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/show_im" value="true" />
 
       <rosparam file="$(find nav_configs)/config/turtlebot_ec_dwa_params.yaml" command="load"/>
   </node>
