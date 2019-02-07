@@ -34,6 +34,7 @@ name="pioneer3at_realsense"
 
     <!-- Virtual links representing the cameras positons and orientations-->
     <link name="color" />
+    <link name="color_frame" />
     <link name="depth" />
     <link name="ired1" />
     <link name="ired2" />
@@ -45,6 +46,14 @@ name="pioneer3at_realsense"
         <!-- <origin xyz="0 -0.046 0.004" rpy="0 0 0"/> -->
         <!-- The default position is change since in Rviz the cloud depth axis is Z not X-->
         <origin xyz="0 -0.046 0.004" rpy="${pi/2} ${pi} ${pi/2}"/>
+    </joint>
+    
+    <joint name="color_frame_joint" type="fixed">
+        <parent link="rs200_camera" />
+        <child link="color_frame" />
+        <!-- <origin xyz="0 -0.046 0.004" rpy="0 0 0"/> -->
+        <!-- The default position is change since in Rviz the cloud depth axis is Z not X-->
+        <origin xyz="0 -0.046 0.004" rpy="0 0 0"/>
     </joint>
 
     <joint name="depth_joint" type="fixed">
@@ -82,7 +91,7 @@ name="pioneer3at_realsense"
     </gazebo>
 
     <!-- Load parameters to model's main link-->
-    <gazebo reference="rs200_camera">
+    <gazebo reference="color_frame">
         <self_collide>0</self_collide>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
