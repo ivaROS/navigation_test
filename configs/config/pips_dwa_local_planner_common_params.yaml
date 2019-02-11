@@ -1,6 +1,6 @@
 # Debug output
 publish_traj_pc : false
-publish_cost_grid_pc: false
+publish_cost_grid_pc: true
 
 # Limits
 acc_lim_theta: 3.2 # 3.2

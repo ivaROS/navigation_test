@@ -484,7 +484,7 @@ if __name__ == "__main__":
     #
     # analyzer.readFiles(filenames=filenames2,whitelist={'controller':'dwa'})
 
-    filenames3=['/data/fall2018/chapter_experiments/chapter_experiments_2019-02-07 21:39:32.518592']
+    filenames3=['/data/fall2018/chapter_experiments/chapter_experiments_2019-02-09 23:57:55.282014']
 
     analyzer.readFiles(filenames=filenames3)
     #analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
