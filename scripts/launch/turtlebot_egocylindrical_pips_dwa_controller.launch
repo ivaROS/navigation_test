@@ -32,7 +32,7 @@
   <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
   <include file="$(find egocylindrical)/launch/nodelets.launch"/>
 
-  <node name="egocircle_node" pkg="pips_dwa_implementation" type="ego_circle"/>
+  <node name="egocircle_node" pkg="egocircle" type="ego_circle"/>
 
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
@@ -68,7 +68,9 @@
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg info_to_use)" />
 
       <!-- <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
-      
+
+      <param name="EgocylindricalPipsDWAPlannerROS/obstacle_cost_mode" value="$(optenv GM_PARAM_OBSTACLE_COST_MODE 0)"/>      
+
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/floor_tolerance" value=".05" />
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/show_im" value="true" />

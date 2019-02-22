@@ -17,6 +17,8 @@
       <rosparam file="$(find nav_configs)/config/dwa_local_planner_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="DWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+
+      <param name="DWAPlannerROS/sum_scores" value="$(optenv GM_PARAM_SUM_SCORES false)"/>
       
       <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
       
