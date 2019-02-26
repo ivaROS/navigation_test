@@ -484,7 +484,7 @@ if __name__ == "__main__":
     #
     # analyzer.readFiles(filenames=filenames2,whitelist={'controller':'dwa'})
 
-    filenames3=['/data/fall2018/chapter_experiments/chapter_experiments_2019-02-21 21:51:47.795343']
+    filenames3=['/data/fall2018/chapter_experiments/chapter_experiments_2019-02-26 01:53:04.931652']
 
     analyzer.readFiles(filenames=filenames3)
     #analyzer.computeStatistics(independent=['scenario', 'controller'], dependent=['result'])
@@ -493,7 +493,7 @@ if __name__ == "__main__":
 
     #analyzer.generateGenericTable(independent=['scenario', 'robot', 'controller'], dependent='result')
 
-    analyzer.generateGenericTable(independent=['controller','robot', 'obstacle_cost_mode', 'scenario'], dependent='result')
+    analyzer.generateGenericTable(independent=['controller','robot', 'scenario'], dependent='result')
 
 
     # analyzer.generateSingleTable()

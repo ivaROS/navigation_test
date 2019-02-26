@@ -32,7 +32,7 @@
   <param name="/egocylinder/depth_to_egocylindrical_nodelet/height" value="80"/> -->
   <include file="$(find nav_scripts)/launch/pioneer/egocylinder.launch"/>
 
-  <node name="egocircle_node" pkg="pips_dwa_implementation" type="ego_circle"/>
+  <node name="egocircle_node" pkg="egocircle" type="ego_circle"/>
 
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
@@ -66,6 +66,8 @@
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg image_to_use)" />
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg info_to_use)" />
+
+      <param name="EgocylindricalPipsDWAPlannerROS/obstacle_cost_mode" value="$(optenv GM_PARAM_OBSTACLE_COST_MODE 1)"/> 
       
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/param_name" value="/simplified_robot_description"/>
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="9" />

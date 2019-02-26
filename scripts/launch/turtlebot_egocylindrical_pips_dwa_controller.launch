@@ -69,7 +69,7 @@
 
       <!-- <remap from="/move_base/EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
 
-      <param name="EgocylindricalPipsDWAPlannerROS/obstacle_cost_mode" value="$(optenv GM_PARAM_OBSTACLE_COST_MODE 0)"/>      
+      <param name="EgocylindricalPipsDWAPlannerROS/obstacle_cost_mode" value="$(optenv GM_PARAM_OBSTACLE_COST_MODE 1)"/>      
 
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6" />
       <param name="EgocylindricalPipsDWAPlannerROS/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/floor_tolerance" value=".05" />
