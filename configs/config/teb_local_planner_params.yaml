@@ -60,7 +60,7 @@ TebLocalPlannerROS:
     weight_acc_lim_x: 1
     weight_acc_lim_theta: 1
     weight_kinematics_nh: 1000
-    weight_kinematics_forward_drive: 1
+    weight_kinematics_forward_drive: 1 # changed: was 1. set to ~1000 to prevent driving backwards
     weight_kinematics_turning_radius: 1
     weight_optimaltime: 1
     weight_obstacle: 50
@@ -79,6 +79,6 @@ TebLocalPlannerROS:
     h_signature_threshold: 0.1
     obstacle_keypoint_offset: 0.1
     obstacle_heading_threshold: 0.45
-    visualize_hc_graph: False
+    visualize_hc_graph: True # was False
     
-    selection_cost_hystersis: .7  # new_cost must be < old_cost * this
+    selection_cost_hysteresis: .7  # new_cost must be < old_cost * this
