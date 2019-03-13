@@ -1,5 +1,7 @@
 TebLocalPlannerROS:
 
+    xy_goal_tolerance: .1
+
     odom_topic: odom
     map_frame: /map
 
@@ -16,7 +18,7 @@ TebLocalPlannerROS:
 
     max_vel_x: 0.5 # Changed!
     max_vel_x_backwards: 0.2
-    max_vel_theta: .3 # Logically, this should be 5.0. However, that makes it turn slower for some reason
+    max_vel_theta: 5.0
     acc_lim_x: 1.0
     acc_lim_theta: 2.0
     min_turning_radius: 0.0
@@ -34,12 +36,12 @@ TebLocalPlannerROS:
     # GoalTolerance
     free_goal_vel: False
 
-    #allow_init_with_backwards_motion: false #doesn't seem to work
+    allow_init_with_backwards_motion: false #doesn't seem to work
 
 
     # Obstacles
 
-    min_obstacle_dist: 0.4
+    min_obstacle_dist: 0.25
     include_costmap_obstacles: True
     costmap_obstacles_behind_robot_dist: 1.0
     obstacle_poses_affected: 30
@@ -60,7 +62,7 @@ TebLocalPlannerROS:
     weight_acc_lim_x: 1
     weight_acc_lim_theta: 1
     weight_kinematics_nh: 1000
-    weight_kinematics_forward_drive: 1 # changed: was 1. set to ~1000 to prevent driving backwards
+    weight_kinematics_forward_drive: 1000 # changed: was 1. set to ~1000 to prevent driving backwards
     weight_kinematics_turning_radius: 1
     weight_optimaltime: 1
     weight_obstacle: 50
