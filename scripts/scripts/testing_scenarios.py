@@ -669,7 +669,8 @@ class SparseScenario(TestingScenario):
         self.gazebo_driver.moveRobot(self.getStartingPose())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_obstacle_spacing)
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny,
+                                         maxy=self.maxy, grid_spacing=self.min_obstacle_spacing, model_types=['pole','square_post'])
         self.gazebo_driver.unpause()
 
 

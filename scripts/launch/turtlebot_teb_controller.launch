@@ -3,7 +3,7 @@
   
   <arg name="converter" default="false"/>
   
-  <arg name="egocircle" default="false"/>
+  <arg name="egocircle" default="true"/>
   
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 

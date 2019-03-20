@@ -249,14 +249,14 @@ class GazeboDriver():
     # Must be unique in the gazebo world - failure otherwise
     # Spawning on top of something else leads to bizarre behavior
 
-
-    path = self.rospack.get_path("nav_configs")
-    model_path = path + "/models/"
-
     # model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf'}
-    model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf'}
+    model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf', 'pole':'pole_005_06.sdf', 'square_post':'box_02_02_05.sdf'}
 
-    model_xml = load_model_xml(model_path + model_filenames[model_type])
+    if model_type not in model_filenames:
+      rospy.logerr("Model type [" + str(model_type) + "] is unknown! Known types are: ") #TODO: print list of types
+      return False
+
+    model_xml = load_model_xml(self.model_path + model_filenames[model_type])
     robot_namespace = rospy.get_namespace()
     gazebo_namespace = "/gazebo"
     reference_frame = ""
@@ -265,6 +265,7 @@ class GazeboDriver():
                                                       robot_namespace, initial_pose, reference_frame, gazebo_namespace)
 
     #time.sleep(.1)
+    return success
 
   def spawn_package_model(self, model_name, package_name, model_path, initial_pose):
     # Must be unique in the gazebo world - failure otherwise
@@ -357,7 +358,7 @@ class GazeboDriver():
       if not res.success:
         print res.status_message
 
-  def moveObstacles(self, n, minx=None, miny=None, maxx=None, maxy=None, grid_spacing=None):
+  def moveObstacles(self, n, minx=None, miny=None, maxx=None, maxy=None, grid_spacing=None, model_types = ['box','cylinder']):
     self.poses = []
 
     minx = self.minx if minx is None else minx
@@ -368,7 +369,6 @@ class GazeboDriver():
 
     barrel_names = [name for name in self.models.name if "obstacle" in name]
 
-    model_types = ['box','cylinder']
 
     num_types = {}
     for model_type in model_types:
@@ -384,7 +384,7 @@ class GazeboDriver():
       #self.setLink(name, pose)
 
     for i, xy in enumerate(
-            self.barrel_points(xmins=minx, ymins=miny, xmaxs=maxx, ymaxs=maxy, min_dist=grid_spacing, num_barrels=n)):
+            self.barrel_points(xmins=minx, ymins=miny, xmaxs=maxx, ymaxs=maxy, min_dist=grid_spacing, num_barrels=n, max_tries=2000)):
       # print i, xy
 
       model_type = self.random.choice(model_types)
@@ -529,6 +529,9 @@ class GazeboDriver():
     #self.unpauseService()
     
     #rospy.on_shutdown(self.shutdown)
+
+    path = self.rospack.get_path("nav_configs")
+    self.model_path = path + "/models/"
 
 
 
