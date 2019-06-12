@@ -7,11 +7,11 @@ import rospy
 
 seed = 28
 
-num_barrels = 50
-min_obstacle_spacing = 1
+num_barrels = 150
+min_obstacle_spacing = 0.5
 
-starting_pose = [-5,0,0]
-goal = [15,15,0]
+starting_pose = [-9,0,0]
+goal = [9,4,0]
 
 # book chapter testing
 task = {'seed':seed, 'scenario':'fourth_floor', 'num_obstacles':num_barrels, 'target_id':4, 'min_obstacle_spacing':min_obstacle_spacing}
@@ -28,6 +28,8 @@ task= {'scenario': 'full_sector_extra', 'controller':'egocylindrical_pips_dwa', 
 # task = {'seed':seed, 'scenario':'fourth_floor_obstacle', 'num_obstacles':num_barrels, 'min_obstacle_spacing':min_obstacle_spacing}
 
 # task = {'seed':seed, 'scenario':'sector'}
+
+task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
 
 rospy.init_node('test_driver', anonymous=True)
 

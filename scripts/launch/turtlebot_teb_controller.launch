@@ -8,10 +8,16 @@
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
   <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)"/>
+  
+  
+  <arg name="debug" default="false"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
 
   <!-- xterm -e gdb -ex run - -args -->
 
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="">
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="false" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
@@ -30,6 +36,7 @@
       
       <param name="TebLocalPlannerROS/include_costmap_obstacles" value="false" if="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/include_egocircle_obstacles" value="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/use_gaps" value="$(arg egocircle)"/>
       
       <!--Ultimately, we do want to disable the local costmap observation sources. However, currently the trajectory feasibility 
           analysis depends on it. Once it has been updated to use the egocircle we can disable it again. -->
