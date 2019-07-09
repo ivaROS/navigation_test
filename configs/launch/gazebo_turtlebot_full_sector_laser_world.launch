@@ -1,6 +1,6 @@
 <launch>
   <arg name="world_file" default="$(find nav_configs)/world/sector_world_laser.world"/>
-  <arg name="gui" default="false"/>
+  <arg name="gui" default="true"/>
 
 
   <!--BEGIN turtlebot_gazebo turtlebot_world.launch -->
