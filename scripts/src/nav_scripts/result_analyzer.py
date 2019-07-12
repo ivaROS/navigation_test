@@ -23,16 +23,21 @@ def filter(results, whitelist=None, blacklist=None):
             filtered_results.append(entry)
     return filtered_results
 
+def readFile(filename):
+    with open(filename, 'rb') as csvfile:
+        datareader = csv.DictReader(csvfile, restval='')
+
+        result_list = []
+        fieldnames = datareader.fieldnames
+        for entry in datareader:
+            result_list.append(entry)
+            
+        return result_list
+
 class ResultAnalyzer:
 
     def readFile(self, filename, whitelist = None, blacklist = None):
-        with open(filename, 'rb') as csvfile:
-            datareader = csv.DictReader(csvfile, restval='')
-
-            result_list = []
-            fieldnames = datareader.fieldnames
-            for entry in datareader:
-                result_list.append(entry)
+        result_list = readFile(filename)
         filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist)
         self.results += filtered_list
 
