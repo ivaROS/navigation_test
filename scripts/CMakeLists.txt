@@ -10,6 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   tf2_ros
 )
+
+catkin_python_setup()
+
 catkin_package(
   #INCLUDE_DIRS include
   #LIBRARIES nav_scripts
