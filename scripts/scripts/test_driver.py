@@ -2,7 +2,7 @@
 import rospy
 import actionlib
 from move_base_msgs.msg import *
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
 from pprint import pprint
 import tf
 from actionlib_msgs.msg import GoalStatus
@@ -11,7 +11,12 @@ from kobuki_msgs.msg import BumperEvent
 import tf2_ros
 import math
 import std_srvs.srv as std_srvs
-
+from sensor_msgs.msg import LaserScan
+import rosbag
+import datetime
+import os
+from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseActionFeedback
+import threading
 
 class BumperChecker:
     def __init__(self):
@@ -21,6 +26,54 @@ class BumperChecker:
     def bumperCB(self,data):
         if data.state == BumperEvent.PRESSED:
             self.collided = True
+
+class ResultRecorder:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
+        self.scan_sub = rospy.Subscriber("scan", LaserScan, self.scanCB, queue_size=1)
+        #self.goal_sub = rospy.Subscriber("move_base/goal", MoveBaseActionGoal, self.goalCB, queue_size=1)
+
+        self.scan = None
+        self.feedback = None
+
+        bagpath = "~/simulation_data/" + str(datetime.datetime.now()) + ".bag"
+        self.bagfilepath = os.path.expanduser(bagpath)
+        print "bag file = " + self.bagfilepath + "\n"
+        self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
+
+    def record(self, twist, scan, feedback):
+        self.lock.acquire()
+        self.bagfile.write("scan", scan, scan.header.stamp)
+        self.bagfile.write("cmd", twist, scan.header.stamp)
+        self.bagfile.write("feedback", feedback, scan.header.stamp)
+        self.lock.release()
+
+    def twistCB(self, data):
+        if(self.scan is not None and self.feedback is not None):
+            self.record(data, self.scan, self.feedback)
+
+    def scanCB(self, data):
+        self.lock.acquire()
+        self.scan = data
+        self.lock.release()
+
+    def setGoal(self, data):
+        self.lock.acquire()
+        self.bagfile.write("goal", data, data.target_pose.header.stamp)
+        self.lock.release()
+
+    def feedback_cb(self, data):
+        self.lock.acquire()
+        self.feedback = data
+        self.lock.release()
+
+    def done(self):
+        self.lock.acquire()
+        self.vel_sub.unregister()
+        self.scan_sub.unregister()
+        self.lock.release()
+
 
 #Not currently in use
 class OdomChecker:
@@ -159,6 +212,8 @@ def run_test(goal_pose):
     odom_checker = OdomChecker()
     odom_accumulator = OdomAccumulator()
 
+    result_recorder = ResultRecorder()
+
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print "waiting for server"
     client.wait_for_server()
@@ -169,9 +224,11 @@ def run_test(goal_pose):
     goal.target_pose = goal_pose
     goal.target_pose.header.stamp = rospy.Time.now()
 
+    result_recorder.setGoal(goal)
+
     # Send the goal!
     print "sending goal"
-    client.send_goal(goal)
+    client.send_goal(goal, feedback_cb= result_recorder.feedback_cb)
     print "waiting for result"
 
     r = rospy.Rate(5)
@@ -203,6 +260,8 @@ def run_test(goal_pose):
 
     task_time = str(rospy.Time.now() - start_time)
 
+    result_recorder.done()
+
     path_length = str(odom_accumulator.getPathLength())
 
     if result is None:
@@ -232,7 +291,7 @@ def run_test(goal_pose):
         else:
             result = "UNKNOWN"
 
-    return {'result': result, 'time': task_time, 'path_length': path_length}
+    return {'result': result, 'time': task_time, 'path_length': path_length, 'bag_file_path': result_recorder.bagfilepath}
 
 if __name__ == "__main__":
     try:

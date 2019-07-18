@@ -1,5 +1,5 @@
 import rospkg
-from gazebo_driver_v2 import GazeboDriver
+from nav_scripts.gazebo_driver import GazeboDriver
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import numpy as np
 import random

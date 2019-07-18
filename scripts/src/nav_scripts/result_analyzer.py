@@ -3,6 +3,7 @@ import time
 import math
 import numpy as np
 import copy
+import os
 
 def filter(results, whitelist=None, blacklist=None):
     filtered_results = []
@@ -24,7 +25,9 @@ def filter(results, whitelist=None, blacklist=None):
     return filtered_results
 
 def readFile(filename):
-    with open(filename, 'rb') as csvfile:
+    expanded_filename = os.path.expanduser(filename)
+
+    with open(expanded_filename, 'rb') as csvfile:
         datareader = csv.DictReader(csvfile, restval='')
 
         result_list = []
@@ -34,6 +37,11 @@ def readFile(filename):
             
         return result_list
 
+
+def getPrunedList(results, keys):
+    return [{k: entry[k] for k in keys if k in entry} for entry in results]
+
+
 class ResultAnalyzer:
 
     def readFile(self, filename, whitelist = None, blacklist = None):
@@ -42,6 +50,9 @@ class ResultAnalyzer:
         self.results += filtered_list
 
     def readFiles(self, filenames, whitelist=None, blacklist = None):
+        if isinstance(filenames, str):
+          filenames = [filenames]
+          
         for filename in filenames:
             self.readFile(filename, whitelist=whitelist, blacklist=blacklist)
 
@@ -49,9 +60,7 @@ class ResultAnalyzer:
         self.__init__()
 
     def getPrunedList(self, keys):
-        results = []
-        for entry in self.results:
-            {k: entry[k] for k in keys}
+        return getPrunedList(self.results, keys=keys)
 
     def getCases(self, has=None, hasnot=None):
         results = []
@@ -71,6 +80,9 @@ class ResultAnalyzer:
             if stillgood:
                 results.append(entry)
         return results
+        
+    def getCases2(self, has=None, hasnot=None):
+        return filter(self.results, whitelist=has, blacklist=hasnot)
 
     def getFailCases(self, controller):
         has = {'controller': controller}
