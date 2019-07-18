@@ -48,31 +48,51 @@ class ResultRecorder:
         self.bagfile.write("cmd", twist, scan.header.stamp)
         self.bagfile.write("feedback", feedback, scan.header.stamp)
         self.lock.release()
+        rospy.loginfo("Sample recorded!")
+
 
     def twistCB(self, data):
+        rospy.loginfo("Command received!")
+
         if(self.scan is not None and self.feedback is not None):
             self.record(data, self.scan, self.feedback)
 
     def scanCB(self, data):
+        rospy.loginfo("Scan received!")
+
         self.lock.acquire()
         self.scan = data
         self.lock.release()
+        rospy.loginfo("Scan updated!")
+
 
     def setGoal(self, data):
+        rospy.loginfo("Goal received!")
+
         self.lock.acquire()
         self.bagfile.write("goal", data, data.target_pose.header.stamp)
         self.lock.release()
+        rospy.loginfo("Goal recorded!")
+
 
     def feedback_cb(self, data):
+        rospy.loginfo("Pose received!")
+
         self.lock.acquire()
         self.feedback = data
         self.lock.release()
+        rospy.loginfo("Pose recorded!")
+
 
     def done(self):
+        rospy.loginfo("'Done' Commanded!")
+
         self.lock.acquire()
         self.vel_sub.unregister()
         self.scan_sub.unregister()
         self.lock.release()
+        rospy.loginfo("'Done' accomplished!")
+
 
 
 #Not currently in use
