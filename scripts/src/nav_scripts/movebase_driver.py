@@ -17,6 +17,7 @@ import datetime
 import os
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseActionFeedback
 import threading
+import time
 
 class BumperChecker:
     def __init__(self):
@@ -44,15 +45,16 @@ class ResultRecorder:
 
     def record(self, twist, scan, feedback):
         self.lock.acquire()
-        self.bagfile.write("scan", scan, scan.header.stamp)
+        start_t = time.time()
+        self.bagfile.write("point_scan", scan, scan.header.stamp)
         self.bagfile.write("cmd", twist, scan.header.stamp)
         self.bagfile.write("feedback", feedback, scan.header.stamp)
         self.lock.release()
-        rospy.loginfo("Sample recorded!")
+        rospy.loginfo("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
 
 
     def twistCB(self, data):
-        rospy.loginfo("Command received!")
+        rospy.logdebug("Command received!")
 
         if(self.scan is not None and self.feedback is not None):
             self.record(data, self.scan, self.feedback)
@@ -90,6 +92,7 @@ class ResultRecorder:
         self.lock.acquire()
         self.vel_sub.unregister()
         self.scan_sub.unregister()
+        self.bagfile.close()
         self.lock.release()
         rospy.loginfo("'Done' accomplished!")
 

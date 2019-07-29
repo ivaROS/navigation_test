@@ -5,18 +5,29 @@ import numpy as np
 import copy
 import os
 
+def isMatch(entry, key, value):
+    if key not in entry:
+        return False
+    else:
+        v = entry[key]
+        if isinstance(value, basestring) and v != value:
+            return False
+        elif v not in value:
+            return False
+    return True
+
 def filter(results, whitelist=None, blacklist=None):
     filtered_results = []
     for entry in results:
         stillgood = True
         if whitelist is not None:
             for key, value in whitelist.items():
-                if key not in entry or entry[key] not in value or value not in entry[key]:
+                if not isMatch(entry, key, value):
                     stillgood = False
                     break
         if blacklist is not None:
             for key, value in blacklist.items():
-                if key in entry and entry[key] in value:
+                if isMatch(entry, key, value):
                     stillgood = False
                     break
 
@@ -40,6 +51,7 @@ def readFile(filename):
 
 def getPrunedList(results, keys):
     return [{k: entry[k] for k in keys if k in entry} for entry in results]
+
 
 
 class ResultAnalyzer:

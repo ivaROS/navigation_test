@@ -7,8 +7,7 @@ import sys
 import rospkg
 import roslaunch
 import time
-import test_driver
-from gazebo_driver_v2 import GazeboDriver
+import nav_scripts.movebase_driver as test_driver
 import rosgraph
 import threading
 import Queue
@@ -49,9 +48,9 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
 
-        self.num_masters = 1
+        self.num_masters = 4
 
-        self.save_results = False
+        self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -64,7 +63,7 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot"])
         self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-
+        self.fieldnames.extend(["bag_file_path"])
 
     def start(self):
         self.startResultsProcessing()
@@ -102,8 +101,8 @@ class MultiMasterCoordinator:
 
     def processResults(self,queue):
 
-        # outputfile_name = "~/Documents/dl3_gazebo_results_" + str(datetime.datetime.now())
-        outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
+        outputfile_name = "~/simulation_data/results_" + str(datetime.datetime.now())
+        #outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -923,14 +922,23 @@ class MultiMasterCoordinator:
         #                         'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':sim_time}}
         #                 self.task_queue.put(task)
 
-        for seed in range(0, 50):
-            for controller in ['dwa']:
-                for scenario in ['full_sector_extra','full_sector_laser','full_campus_obstacle','full_fourth_floor_obstacle']:
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
-                    self.task_queue.put(task)
-                for scenario in ['sparse','medium','dense']:
+        for controller in ['dwa']:
+            '''
+            #for scenario in ['sparse','medium','dense']:
+            for scenario in ['medium']:
+                for seed in range(50,1000):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
                     self.task_queue.put(task)
+            for scenario in ['sparse','dense']:
+                for seed in range(0,1000):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+                    self.task_queue.put(task)
+            '''
+            for scenario in ['full_sector_laser']: #,'full_sector_extra','full_campus_obstacle','full_fourth_floor_obstacle']:
+                for seed in range(200,10000):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
+                    self.task_queue.put(task)
+
 
 
     #This list should be elsewhere, possibly in the configs package
@@ -960,6 +968,10 @@ class MultiMasterCoordinator:
         task = {'scenario': 'trashcans', 'num_barrels': 3, 'controller': 'octo_dwa', 'seed': 54}
         for _ in range(5):
             self.task_queue.put(task)
+
+    def singletask(self):
+        task = {'scenario': 'campus', 'robot': 'turtlebot', 'controller': None}
+        self.task_queue.put(task)
 
     def addTasks1(self):
         controllers = ["pips_dwa", "octo_dwa", "teb"]
@@ -1003,6 +1015,9 @@ class GazeboMaster(mp.Process):
         os.environ["ROS_MASTER_URI"] = self.ros_master_uri
         os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
 
+        #if 'SIMULATION_RESULTS_DIR' in os.environ:
+
+
         if self.gui==False:
             if 'DISPLAY' in os.environ:
                 del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
@@ -1044,7 +1059,9 @@ class GazeboMaster(mp.Process):
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile(task["robot"])) #pass in world info
                     #time.sleep(30)
 
-                    if not self.gazebo_launch._shutting_down:
+                    if task["controller"] is None:
+                        result = "nothing"
+                    elif not self.gazebo_launch._shutting_down:
 
                         controller_args = task["controller_args"] if "controller_args" in task else {}
 
@@ -1231,7 +1248,9 @@ if __name__ == "__main__":
     master = MultiMasterCoordinator()
     master.start()
     master.addTasks()
+    #master.singletask()
     master.waitToFinish()
+    #rospy.spin()
     master.shutdown()
     end_time = time.time()
     print "Total time: " + str(end_time - start_time)
