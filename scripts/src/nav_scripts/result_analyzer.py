@@ -12,7 +12,7 @@ def isMatch(entry, key, value):
         v = entry[key]
         if isinstance(value, basestring) and v != value:
             return False
-        elif v not in value:
+        elif v not in value:    #try adding str(v)
             return False
     return True
 
@@ -74,6 +74,7 @@ class ResultAnalyzer:
     def getPrunedList(self, keys):
         return getPrunedList(self.results, keys=keys)
 
+    '''
     def getCases(self, has=None, hasnot=None):
         results = []
         for entry in self.results:
@@ -92,9 +93,13 @@ class ResultAnalyzer:
             if stillgood:
                 results.append(entry)
         return results
-        
-    def getCases2(self, has=None, hasnot=None):
+    '''
+
+    def getCases(self, has=None, hasnot=None):
         return filter(self.results, whitelist=has, blacklist=hasnot)
+
+    def getCases2(self, has=None, hasnot=None):
+        return self.getCases(has=has, hasnot=hasnot)
 
     def getFailCases(self, controller):
         has = {'controller': controller}
