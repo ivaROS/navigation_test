@@ -1,0 +1,10 @@
+<launch>
+
+  <node name="groundtruth_costmap_inflator" pkg="costmap_2d" type="costmap_2d_node">
+    <rosparam command="load" file="$(find nav_configs)/config/ground_truth_inflation_params.yaml" ns="costmap"/>
+    
+  </node>
+  
+  
+
+</launch>
