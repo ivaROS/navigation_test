@@ -1,7 +1,7 @@
 import rospy
 import random
 import sys, os, time
-from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Quaternion, Transform, TransformStamped
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Quaternion, Transform, TransformStamped, PointStamped, PoseArray
 from copy import deepcopy
 import threading
 
@@ -18,7 +18,7 @@ import std_msgs.msg as std_msgs
 
 class CostmapDriver(object):
     def __init__(self, seed=0):
-        self.thresh = 100#253 #costmap_2d::INSCRIBED_INFLATED_OBSTACLE
+        self.thresh = 99#253 #costmap_2d::INSCRIBED_INFLATED_OBSTACLE
         self.size_x = 0
         self.size_y = 0
         self.resolution = 1
@@ -33,6 +33,8 @@ class CostmapDriver(object):
         self.inflated_ground_truth_map_topic = "/groundtruth_costmap_inflator/costmap/costmap"
 
         self.map_sub = rospy.Subscriber(self.inflated_ground_truth_map_topic, OccupancyGrid, self.mapCB, queue_size=1)
+
+        self.pose_sub = rospy.Subscriber("/clicked_point", PointStamped, self.pointCB, queue_size=1)
 
         self.random = random.Random()
         self.seed = seed
@@ -51,6 +53,11 @@ class CostmapDriver(object):
         self.preprocessMap()
         self.lock.release()
 
+    def pointCB(self, point):
+        self.lock.acquire()
+        issafe = self.isSafe(point.point.x, point.point.y)
+        self.lock.release()
+        print issafe
 
     def preprocessMap(self):
         map = np.reshape(np.array(self.data), newshape=(self.size_y, self.size_x))
@@ -79,6 +86,7 @@ class CostmapDriver(object):
 
     def isSafe(self, wx, wy):
         cost = self.getCost(wx,wy)
+        print cost
         return cost < self.thresh
 
     def getCost(self, wx, wy):
@@ -93,11 +101,11 @@ class CostmapDriver(object):
         return mx, my
 
     def cellsToIndex(self, mx, my):
-        return my * self.size_x_ + mx
+        return my * self.size_x + mx
 
     def indexToCells(self, index):
-        my = index / self.size_x_
-        mx = index - (my * self.size_x_)
+        my = index / self.size_x
+        mx = index - (my * self.size_x)
         return mx, my
     
     def mapToWorld(self, mx, my):
