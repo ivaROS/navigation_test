@@ -106,6 +106,8 @@
   <node name="ground_truth_map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/ground_truth/training_room.yaml" required="true">
     <remap from="map" to="groundtruth/map"/>
   </node>
+  
+  <include file="$(find nav_configs)/launch/inflated_ground_truth_publisher.launch"/>
 
   <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
 

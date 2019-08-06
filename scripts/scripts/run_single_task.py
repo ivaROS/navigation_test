@@ -29,7 +29,7 @@ task= {'scenario': 'full_sector_extra', 'controller':'egocylindrical_pips_dwa', 
 
 # task = {'seed':seed, 'scenario':'sector'}
 
-task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing, 'num_obstacles': num_barrels}
+task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot'}
 
 rospy.init_node('test_driver', anonymous=True)
 

@@ -32,7 +32,11 @@ class CostmapDriver(object):
 
         self.inflated_ground_truth_map_topic = "/groundtruth_costmap_inflator/costmap/costmap"
 
-        self.map_sub = rospy.Subscriber(self.inflated_ground_truth_map_topic, OccupancyGrid, self.mapCB, queue_size=1)
+        #self.map_sub = rospy.Subscriber(self.inflated_ground_truth_map_topic, OccupancyGrid, self.mapCB, queue_size=1)
+
+        rospy.loginfo("Waiting for message on " + self.inflated_ground_truth_map_topic)
+        map = rospy.wait_for_message(self.inflated_ground_truth_map_topic, OccupancyGrid)
+        self.mapCB(map)
 
         self.pose_sub = rospy.Subscriber("/clicked_point", PointStamped, self.pointCB, queue_size=1)
 
@@ -78,11 +82,8 @@ class CostmapDriver(object):
         self.lock.release()
 
         pos += self.nprandom.random_sample(size=2)*self.resolution/2
-        pose = Pose()
-        pose.position.x = pos[0]
-        pose.position.y = pos[1]
-        pose.orientation.w = 1
-        return pose
+
+        return pos
 
     def isSafe(self, wx, wy):
         cost = self.getCost(wx,wy)
@@ -128,12 +129,14 @@ if __name__ == '__main__':
 
         poseStamped = PoseStamped()
         poseStamped.header.frame_id="map"
+        poseStamped.pose.orientation.w = 1
 
         while not rospy.is_shutdown():
             if driver.data is not None:
-                pose = driver.getSafePose()
-                if pose is not None:
-                    poseStamped.pose = pose
+                pos = driver.getSafePose()
+                if pos is not None:
+                    poseStamped.pose.position.x = pos[0]
+                    poseStamped.pose.position.y = pos[1]
                     poseStamped.header.stamp = rospy.Time.now()
                     pub.publish(poseStamped)
 

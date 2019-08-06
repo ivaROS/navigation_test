@@ -922,6 +922,7 @@ class MultiMasterCoordinator:
         #                         'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':sim_time}}
         #                 self.task_queue.put(task)
 
+
         for controller in ['dwa']:
             '''
             #for scenario in ['sparse','medium','dense']:
@@ -933,12 +934,17 @@ class MultiMasterCoordinator:
                 for seed in range(0,1000):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
                     self.task_queue.put(task)
-            '''
+            
             for scenario in ['full_sector_laser']: #,'full_sector_extra','full_campus_obstacle','full_fourth_floor_obstacle']:
                 for seed in range(200,10000):
                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
                     self.task_queue.put(task)
+            '''
 
+            for scenario in ['training_room']:
+                for seed in range(0,3000):
+                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+                    self.task_queue.put(task)
 
 
     #This list should be elsewhere, possibly in the configs package

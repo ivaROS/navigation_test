@@ -32,8 +32,7 @@ class ResultRecorder:
     def __init__(self):
         self.lock = threading.Lock()
         self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
-        self.scan_sub = rospy.Subscriber("scan", LaserScan, self.scanCB, queue_size=1)
-        #self.goal_sub = rospy.Subscriber("move_base/goal", MoveBaseActionGoal, self.goalCB, queue_size=1)
+        self.scan_sub = rospy.Subscriber("point_scan", LaserScan, self.scanCB, queue_size=1)
 
         self.scan = None
         self.feedback = None
@@ -46,11 +45,11 @@ class ResultRecorder:
     def record(self, twist, scan, feedback):
         self.lock.acquire()
         start_t = time.time()
-        self.bagfile.write("point_scan", scan, scan.header.stamp)
+        self.bagfile.write("scan", scan, scan.header.stamp)
         self.bagfile.write("cmd", twist, scan.header.stamp)
         self.bagfile.write("feedback", feedback, scan.header.stamp)
         self.lock.release()
-        rospy.loginfo("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
+        rospy.logdebug("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
 
 
     def twistCB(self, data):
@@ -60,41 +59,41 @@ class ResultRecorder:
             self.record(data, self.scan, self.feedback)
 
     def scanCB(self, data):
-        rospy.loginfo("Scan received!")
+        rospy.logdebug("Scan received!")
 
         self.lock.acquire()
         self.scan = data
         self.lock.release()
-        rospy.loginfo("Scan updated!")
+        rospy.logdebug("Scan updated!")
 
 
     def setGoal(self, data):
-        rospy.loginfo("Goal received!")
+        rospy.logdebug("Goal received!")
 
         self.lock.acquire()
         self.bagfile.write("goal", data, data.target_pose.header.stamp)
         self.lock.release()
-        rospy.loginfo("Goal recorded!")
+        rospy.logdebug("Goal recorded!")
 
 
     def feedback_cb(self, data):
-        rospy.loginfo("Pose received!")
+        rospy.logdebug("Pose received!")
 
         self.lock.acquire()
         self.feedback = data
         self.lock.release()
-        rospy.loginfo("Pose recorded!")
+        rospy.logdebug("Pose recorded!")
 
 
     def done(self):
-        rospy.loginfo("'Done' Commanded!")
+        rospy.logdebug("'Done' Commanded!")
 
         self.lock.acquire()
         self.vel_sub.unregister()
         self.scan_sub.unregister()
         self.bagfile.close()
         self.lock.release()
-        rospy.loginfo("'Done' accomplished!")
+        rospy.logdebug("'Done' accomplished!")
 
 
 

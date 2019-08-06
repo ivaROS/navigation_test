@@ -1,5 +1,6 @@
 import rospkg
 from nav_scripts.gazebo_driver import GazeboDriver
+from nav_scripts.costmap_driver import CostmapDriver
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import numpy as np
 import random
@@ -55,6 +56,8 @@ class TestingScenarios:
                 return CorridorZigzagScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "corridor_zigzag_door":
                 return CorridorZigzagDoorScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "training_room":
+                return TrainingRoomScenario(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -65,7 +68,7 @@ class TestingScenarios:
 
     @staticmethod
     def getScenarioTypes():
-        scenarios = [TrashCanScenario, SectorScenario, CampusScenario, FourthFloorObstacleScenario, CampusObstacleScenario, SectorExtraScenario]
+        scenarios = [TrashCanScenario, SectorScenario, CampusScenario, FourthFloorObstacleScenario, CampusObstacleScenario, SectorExtraScenario, SparseScenario, DenseScenario, MediumScenario, TrainingRoomScenario]
         return scenarios
 
 
@@ -75,6 +78,18 @@ class TestingScenarios:
         for scenario in TestingScenarios.getScenarioTypes():
             fieldnames.extend(scenario.getUniqueFieldNames())
         return fieldnames
+
+def getPoseMsg(pose):
+    pose_msg = Pose()
+    pose_msg.position.x = pose[0]
+    pose_msg.position.y = pose[1]
+
+    q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+    # msg = Quaternion(*q)
+
+    pose_msg.orientation = Quaternion(*q)
+
+    return pose_msg
 
 class TestingScenario(object):
     def __init__(self, world, init_pose, target_pose, gazebo_driver):
@@ -739,3 +754,52 @@ class CorridorZigzagDoorScenario(CorridorZigzagScenario):
     def __init__(self, task, gazebo_driver):
         super(CorridorZigzagDoorScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
         self.world = "corridor_zigzag_door"
+
+
+
+class TrainingRoomScenario(TestingScenario):
+    #costmap_driver = None
+
+    def __init__(self, task, gazebo_driver):
+        self.gazebo_driver = gazebo_driver
+        self.seed = task["seed"] if "seed" in task else 0
+        self.world = "training_room"
+
+        self.random = random.Random()
+        self.random.seed(self.seed)
+
+        #pos = self.costmap_driver.getSafePose()
+        #pos = [pos[0], pos[1], self.random.uniform(0,2*math.pi)]
+        #self.init_pose = getPoseMsg(pose=pos)
+        #self.target_pose = getPoseMsg(pose=self.costmap_driver.getSafePose())
+
+
+    @staticmethod
+    def getUniqueFieldNames():
+        return []
+
+    def getStartingPose(self):
+        pose = self.costmap_driver.getSafePose()
+        pose = [pose[0], pose[1], self.random.uniform(0, 2 * math.pi)]
+        init_pose = self.getPoseMsg(pose=pose)
+
+        return init_pose
+
+    def getGoal(self):
+        pose = self.costmap_driver.getSafePose()
+        pose = [pose[0], pose[1], 0]
+        pose_msg = self.getPoseMsg(pose=pose)
+        pose_stamped = PoseStamped()
+        pose_stamped.pose = pose_msg
+        pose_stamped.header.frame_id="map"
+        return pose_stamped
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.costmap_driver = CostmapDriver(self.seed)
+
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.unpause()

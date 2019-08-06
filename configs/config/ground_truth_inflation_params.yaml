@@ -9,7 +9,7 @@ plugins:
 # - {name: obstacle_layer,          type: "costmap_2d::VoxelLayer"}
  - {name: inflation_layer,         type: "costmap_2d::InflationLayer"}
 
-robot_radius: 0.20
+robot_radius: 0.25
 
 static_layer:
   enabled:              true

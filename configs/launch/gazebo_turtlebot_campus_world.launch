@@ -50,7 +50,9 @@
         <param name="gazebo/pub_clock_frequency" value="$(arg pub_clock_frequency)" />
       </group>
       <node name="gazebo" pkg="gazebo_ros" type="$(arg script_type)" respawn="$(arg respawn_gazebo)" output="screen"
-	    args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)" required="true"/>
+	    args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)" required="true">
+	      <remap from="map" to="ground_truth_map"/>
+	    </node>
 	
       <!-- start gazebo client -->
       <group if="$(arg gui)">
@@ -65,7 +67,7 @@
       
       <!-- Gazebo model spawner -->
       <node name="spawn_turtlebot_model" pkg="gazebo_ros" type="spawn_model"
-            args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
+            args="-x 11 -y 6 -unpause -urdf -param robot_description -model mobile_base"/>
       
       <!-- Velocity muxer -->
       <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"  required="true"/>
