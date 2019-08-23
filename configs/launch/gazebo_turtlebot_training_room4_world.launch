@@ -1,5 +1,5 @@
 <launch>
-  <arg name="world_file" default="$(find nav_configs)/world/10x10_training_room.world"/>
+  <arg name="world_file" default="$(find nav_configs)/world/10x10_training_room4.world"/>
   <arg name="gui" default="false"/>
 
 
@@ -103,7 +103,7 @@
 
   <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/training_room.yaml" required="true"/>
   
-  <node name="ground_truth_map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/ground_truth/training_room.yaml" required="true">
+  <node name="ground_truth_map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/ground_truth/training_room4.yaml" required="true">
     <remap from="map" to="groundtruth/map"/>
   </node>
   

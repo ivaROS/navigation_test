@@ -1,0 +1,9 @@
+<launch>
+  <arg name="model_path" default='/home/justin/simulation_data/tensorflow_root/keras/laser-goal-cmd-v10-global_all/0/checkpoints/optimized_model.pb' />
+
+  <include file="$(find nav_scripts)/launch/turtlebot_p2d_controller.launch">
+    <arg name="model_path" value="$(arg model_path)"/>
+  </include>
+
+</launch>
+    

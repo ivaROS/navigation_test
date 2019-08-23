@@ -923,27 +923,39 @@ class MultiMasterCoordinator:
         #                 self.task_queue.put(task)
 
 
-        for controller in ['dwa']:
-            '''
-            #for scenario in ['sparse','medium','dense']:
-            for scenario in ['medium']:
-                for seed in range(50,1000):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-                    self.task_queue.put(task)
-            for scenario in ['sparse','dense']:
-                for seed in range(0,1000):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-                    self.task_queue.put(task)
-            
-            for scenario in ['full_sector_laser']: #,'full_sector_extra','full_campus_obstacle','full_fourth_floor_obstacle']:
-                for seed in range(200,10000):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
-                    self.task_queue.put(task)
-            '''
+        # for controller in ['dwa']:
+        #     '''
+        #     #for scenario in ['sparse','medium','dense']:
+        #     for scenario in ['medium']:
+        #         for seed in range(50,1000):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+        #             self.task_queue.put(task)
+        #     for scenario in ['sparse','dense']:
+        #         for seed in range(0,1000):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+        #             self.task_queue.put(task)
+        #
+        #     for scenario in ['full_sector_laser']: #,'full_sector_extra','full_campus_obstacle','full_fourth_floor_obstacle']:
+        #         for seed in range(200,10000):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
+        #             self.task_queue.put(task)
+        #     '''
+        #
+        #
+        #     for scenario in ['training_room_global', 'training_room2_global']:
+        #         for seed in range(0,4000):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+        #             self.task_queue.put(task)
+        #
+        #     for scenario in ['training_room', 'training_room2']:
+        #         for seed in range(0,4000):
+        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+        #             self.task_queue.put(task)
 
-            for scenario in ['training_room']:
-                for seed in range(0,3000):
-                    task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+        for scenario in ['training_room', 'training_room2']:
+            for seed in range(0, 4000):
+                for controller in ['p2d', 'p2d_global']:
+                    task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
                     self.task_queue.put(task)
 
 

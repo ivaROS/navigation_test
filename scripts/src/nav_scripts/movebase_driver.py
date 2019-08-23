@@ -234,7 +234,10 @@ def run_test(goal_pose):
     odom_checker = OdomChecker()
     odom_accumulator = OdomAccumulator()
 
-    result_recorder = ResultRecorder()
+    record = False
+
+    if record:
+        result_recorder = ResultRecorder()
 
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print "waiting for server"
@@ -246,11 +249,16 @@ def run_test(goal_pose):
     goal.target_pose = goal_pose
     goal.target_pose.header.stamp = rospy.Time.now()
 
-    result_recorder.setGoal(goal)
+    if record:
+        result_recorder.setGoal(goal)
 
     # Send the goal!
     print "sending goal"
-    client.send_goal(goal, feedback_cb= result_recorder.feedback_cb)
+    if record:
+        client.send_goal(goal, feedback_cb= result_recorder.feedback_cb)
+    else:
+        client.send_goal(goal)
+
     print "waiting for result"
 
     r = rospy.Rate(5)
@@ -282,7 +290,8 @@ def run_test(goal_pose):
 
     task_time = str(rospy.Time.now() - start_time)
 
-    result_recorder.done()
+    if record:
+        result_recorder.done()
 
     path_length = str(odom_accumulator.getPathLength())
 
@@ -313,7 +322,10 @@ def run_test(goal_pose):
         else:
             result = "UNKNOWN"
 
-    return {'result': result, 'time': task_time, 'path_length': path_length, 'bag_file_path': result_recorder.bagfilepath}
+    if record:
+        return {'result': result, 'time': task_time, 'path_length': path_length, 'bag_file_path': result_recorder.bagfilepath}
+    else:
+        return {'result': result, 'time': task_time, 'path_length': path_length}
 
 if __name__ == "__main__":
     try:

@@ -58,6 +58,12 @@ class TestingScenarios:
                 return CorridorZigzagDoorScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "training_room":
                 return TrainingRoomScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "training_room2":
+                return TrainingRoomScenario2(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "training_room_global":
+                return TrainingRoomGlobalScenario(task=task, gazebo_driver=self.gazebo_driver)
+            elif scenario_type == "training_room2_global":
+                return TrainingRoomGlobalScenario2(task=task, gazebo_driver=self.gazebo_driver)
             else:
                 print "Error! Unknown scenario type [" + scenario_type + "]"
                 return None
@@ -803,3 +809,60 @@ class TrainingRoomScenario(TestingScenario):
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.unpause()
+        
+class TrainingRoomScenario2(TestingScenario):
+    #costmap_driver = None
+
+    def __init__(self, task, gazebo_driver):
+        self.gazebo_driver = gazebo_driver
+        self.seed = task["seed"] if "seed" in task else 0
+        self.world = "training_room4"
+
+        self.random = random.Random()
+        self.random.seed(self.seed)
+
+        #pos = self.costmap_driver.getSafePose()
+        #pos = [pos[0], pos[1], self.random.uniform(0,2*math.pi)]
+        #self.init_pose = getPoseMsg(pose=pos)
+        #self.target_pose = getPoseMsg(pose=self.costmap_driver.getSafePose())
+
+
+    @staticmethod
+    def getUniqueFieldNames():
+        return []
+
+    def getStartingPose(self):
+        pose = self.costmap_driver.getSafePose()
+        pose = [pose[0], pose[1], self.random.uniform(0, 2 * math.pi)]
+        init_pose = self.getPoseMsg(pose=pose)
+
+        return init_pose
+
+    def getGoal(self):
+        pose = self.costmap_driver.getSafePose()
+        pose = [pose[0], pose[1], 0]
+        pose_msg = self.getPoseMsg(pose=pose)
+        pose_stamped = PoseStamped()
+        pose_stamped.pose = pose_msg
+        pose_stamped.header.frame_id="map"
+        return pose_stamped
+
+    def setupScenario(self):
+        self.gazebo_driver.checkServicesTopics(10)
+        self.costmap_driver = CostmapDriver(self.seed)
+
+        self.gazebo_driver.pause()
+        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.gazebo_driver.unpause()
+
+class TrainingRoomGlobalScenario(TrainingRoomScenario):
+    def __init__(self, task, gazebo_driver):
+        super(TrainingRoomGlobalScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+        self.world = "training_room_global"
+
+class TrainingRoomGlobalScenario2(TrainingRoomScenario2):
+    def __init__(self, task, gazebo_driver):
+        super(TrainingRoomGlobalScenario2, self).__init__(task=task, gazebo_driver=gazebo_driver)
+        self.world = "training_room4_global"
