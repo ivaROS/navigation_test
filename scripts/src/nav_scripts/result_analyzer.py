@@ -242,12 +242,19 @@ class ResultAnalyzer:
 
             if not conditionset in statistics:
                 statistics[conditionset] = 1
-                path_times[conditionset] = [int(entry["time"])]
-                path_lengths[conditionset] = [float(entry["path_length"])]
+                path_times[conditionset] = {}
+                path_lengths[conditionset] = {}
             else:
                 statistics[conditionset] = statistics[conditionset] + 1
-                path_times[conditionset].append(int(entry["time"]))
-                path_lengths[conditionset].append(float(entry["path_length"]))
+
+            if entry['seed'] not in path_times[conditionset]:
+                path_times[conditionset][entry['seed']] = []
+
+            if entry['seed'] not in path_lengths[conditionset]:
+                path_lengths[conditionset][entry['seed']] = []
+
+            path_times[conditionset][entry['seed']] += [int(entry["time"])]
+            path_lengths[conditionset][entry['seed']] += [float(entry["path_length"])]
 
             for key, value in condition.items():
                 if not key in key_values:
@@ -256,7 +263,7 @@ class ResultAnalyzer:
 
         max_depth = len(independent)
 
-        def processLayer(shared_conditions_dict={}, depth=0):
+        def processLayer(shared_conditions_dict={}, depth=0, shared_safe_keys=None):
             if depth == max_depth:
 
                 lookup_keys = []
@@ -286,8 +293,13 @@ class ResultAnalyzer:
                 dependent_value="SUCCEEDED"
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
                 if lookupkey in statistics:
-                    path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
-                    path_length = np.mean(np.array(path_lengths[lookupkey]))
+                    times =[path_times[lookupkey][k] for k in shared_safe_keys]
+                    times = np.array(sum(times, []))
+                    path_time = np.mean(times) / 1e9
+
+                    path_length =[path_lengths[lookupkey][k] for k in shared_safe_keys]
+                    path_length = np.array(sum(path_length, []))
+                    path_length = np.mean(path_length)
 
                     print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
                         path_time) + "s"),
@@ -299,8 +311,24 @@ class ResultAnalyzer:
 
             else:
                 condition_name = independent[depth]
+                safe_keys = None
 
                 if depth == max_depth-1:
+
+                    dependent_value = "SUCCEEDED"
+                    if 'controller' in key_values:
+                        for controller in key_values['controller']:
+                            lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value, 'controller': controller}.items())
+
+                            if lookupkey in path_times:
+                                controller_safe_keys = path_times[lookupkey]
+                                controller_safe_keys = controller_safe_keys.keys()
+                                if safe_keys is None:
+                                    safe_keys = set(controller_safe_keys)
+                                else:
+                                    safe_keys = safe_keys.intersection(controller_safe_keys)
+                            else:
+                                pass
 
                     print("")
                     print("| " + condition_name),
@@ -330,7 +358,7 @@ class ResultAnalyzer:
                     cond_dict = copy.deepcopy(shared_conditions_dict)
                     cond_dict[condition_name]=condition_value
 
-                    processLayer(cond_dict, depth+1)
+                    processLayer(cond_dict, depth+1, safe_keys)
 
 
         processLayer()

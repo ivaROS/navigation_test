@@ -1,0 +1,2 @@
+killall gzserver gzclient python robot_state_publisher map_server nodelet move_base map_transform_publisher rosmaster rosout costmap_2d_node ego_circle
+

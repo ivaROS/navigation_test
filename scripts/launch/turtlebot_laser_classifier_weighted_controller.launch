@@ -1,0 +1,18 @@
+<launch>
+  <arg name="cmd_topic" default="cmd_vel_mux/input/navi"/>
+  <arg name="model_path" default='/home/justin/simulation_data/tensorflow_root/keras/laser-classifier-global-goal-weighted/optimized_model.pb' />
+  
+  <node name="laser_controller" pkg="laser_classifier_ros" type="laser_controller.py" output="log">
+    <param name="model_path" value="$(arg model_path)"/>
+    <remap from="goal" to="move_base_simple/goal"/>
+    <remap from="cmd" to="$(arg cmd_topic)"/>
+  </node>
+
+  <node name="egocircle" pkg="egocircle" type="ego_circle"/>
+  
+  <node name="cc_service" pkg="laser_classifier_ros" type="collision_checker_service_provider_node"/>
+
+  <include file="$(find egocylindrical)/launch/nodelets.launch"/>
+  
+</launch>
+    

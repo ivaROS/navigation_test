@@ -30,8 +30,10 @@ class BumperChecker:
 
 class ResultRecorder:
     def __init__(self):
+        from laser_classifier_ros.msg import GlobalSample
         self.lock = threading.Lock()
-        self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
+        #self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
+        self.sample_sub = rospy.Subscriber("/move_base/DWAPlannerROS/global_sample", GlobalSample, self.sampleCB, queue_size=4)
         self.scan_sub = rospy.Subscriber("point_scan", LaserScan, self.scanCB, queue_size=1)
 
         self.scan = None
@@ -57,6 +59,15 @@ class ResultRecorder:
 
         if(self.scan is not None and self.feedback is not None):
             self.record(data, self.scan, self.feedback)
+
+    def sampleCB(self, data):
+        rospy.logdebug("Command received!")
+
+        self.lock.acquire()
+        if(self.scan is not None):
+            data.scan = self.scan
+            self.bagfile.write("global_sample", data, self.scan.header.stamp)
+        self.lock.release()
 
     def scanCB(self, data):
         rospy.logdebug("Scan received!")
@@ -89,8 +100,9 @@ class ResultRecorder:
         rospy.logdebug("'Done' Commanded!")
 
         self.lock.acquire()
-        self.vel_sub.unregister()
+        #self.vel_sub.unregister()
         self.scan_sub.unregister()
+        self.sample_sub.unregister()
         self.bagfile.close()
         self.lock.release()
         rospy.logdebug("'Done' accomplished!")

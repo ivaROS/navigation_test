@@ -1,9 +1,12 @@
 <launch>
   <arg name="use_recovery_behaviors" default="true"/>
   
-  <arg name="converter" default="false"/>
+  <arg name="egocircle" default="false"/>
   
-  <arg name="egocircle" default="true"/>
+  <arg name="converter" default="false" if="$(arg egocircle)"/>
+  <arg name="converter" default="true" unless="$(arg egocircle)"/>
+  
+  <arg name="simple_exploration" default="false"/>
   
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
@@ -16,8 +19,11 @@
   <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
 
   <!-- xterm -e gdb -ex run - -args -->
+  
+  
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/>
 
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log" clear_params="false" launch-prefix="$(arg debug_prefix)">
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="false" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
@@ -36,8 +42,12 @@
       
       <param name="TebLocalPlannerROS/include_costmap_obstacles" value="false" if="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/include_egocircle_obstacles" value="$(arg egocircle)"/>
-      <param name="TebLocalPlannerROS/use_gaps" value="$(arg egocircle)"/> <!-- Note: technically, using egocircle doesn't require using gaps, though gaps does require egocircle -->
-      
+      <param name="TebLocalPlannerROS/gap_h_signature" value="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/gap_exploration" value="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/egocircle_feasibility" value="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/simple_exploration" value="$(arg simple_exploration)"/>
+      <param name="TebLocalPlannerROS/weight_gap" value="0"/> <!-- unless="$(arg egocircle)"/> -->
+            
       <!-- Disable the local costmap observation sources if they will not be used -->
       <param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>
       
@@ -45,6 +55,8 @@
 
       
   </node>
+
+
 
 
 

@@ -31,6 +31,9 @@ task= {'scenario': 'full_sector_extra', 'controller':'egocylindrical_pips_dwa', 
 
 task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot'}
 
+task = {'seed':seed, 'scenario':'full_fourth_floor_obstacle', 'num_obstacles':50, 'min_obstacle_spacing':min_obstacle_spacing}
+
+
 rospy.init_node('test_driver', anonymous=True)
 
 #test_driver.reset_costmaps()
@@ -48,4 +51,4 @@ scenario.setupScenario()
 
 result = test_driver.run_test(goal_pose=scenario.getGoal())
 
-print(result)
+#print(result)

@@ -14,7 +14,7 @@ TebLocalPlannerROS:
     global_plan_overwrite_orientation: True
     max_global_plan_lookahead_dist: 3.0
     feasibility_check_no_poses: 5
-    detour_threshold: -1
+    detour_threshold: -.1
 
     # Robot
 
@@ -64,7 +64,7 @@ TebLocalPlannerROS:
     weight_acc_lim_x: 1
     weight_acc_lim_theta: 1
     weight_kinematics_nh: 1000
-    weight_kinematics_forward_drive: 1 # changed: was 1. set to ~1000 to prevent driving backwards
+    weight_kinematics_forward_drive: 1000 # changed: was 1. set to ~1000 to prevent driving backwards
     weight_kinematics_turning_radius: 1
     weight_optimaltime: 1
     weight_obstacle: 500
@@ -76,10 +76,10 @@ TebLocalPlannerROS:
     enable_homotopy_class_planning: True
     enable_multithreading: True #True
     simple_exploration: True #was False
-    max_number_classes: 20
+    max_number_classes: 4
     roadmap_graph_no_samples: 15
-    roadmap_graph_area_width: 5
-    h_signature_prescaler: 0.5 #was 0.5
+    roadmap_graph_area_width: 6
+    h_signature_prescaler: 1 #was 0.5
     h_signature_threshold: 0.1 #was .1
     obstacle_keypoint_offset: 0.1
     obstacle_heading_threshold: 0.45 #was 0.45

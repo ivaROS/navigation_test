@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find nav_scripts)/launch/turtlebot_teb_controller.launch">
+    <arg name="egocircle" value="true"/>
+  </include>
+</launch>
+  

@@ -144,7 +144,7 @@ class GazeboDriver():
         response = self.setModelState(state)
 
         if(response.success):
-          rospy.loginfo("Successfully set pose of " + str(model_name) + " to " + str(pose))
+          rospy.logdebug("Successfully set pose of " + str(model_name) + " to " + str(pose))
           retval = True
         else:
           rospy.logwarn("Error setting model pose: " + str(response.status_message))
@@ -169,7 +169,7 @@ class GazeboDriver():
         response = self.setLinkStateService(linkstate)
 
         if(response.success):
-          rospy.loginfo("Successfully set link state of " + str(model_name) + " to " + str(pose))
+          rospy.logdebug("Successfully set link state of " + str(model_name) + " to " + str(pose))
           return True
         else:
           rospy.logwarn("Error setting link state: " + str(response.status_message))
@@ -253,7 +253,7 @@ class GazeboDriver():
     model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf', 'pole':'pole_005_06.sdf', 'square_post':'box_02_02_05.sdf'}
 
     if model_type not in model_filenames:
-      rospy.logerr("Model type [" + str(model_type) + "] is unknown! Known types are: ") #TODO: print list of types
+      rospy.logerr("Model type [" + str(model_type) + "] is unknown! Known types are: ") #TODO: print list of types; maybe model_filenames.iter()?
       return False
 
     model_xml = load_model_xml(self.model_path + model_filenames[model_type])
@@ -453,6 +453,7 @@ class GazeboDriver():
     rospy.wait_for_service(self.delete_model_service_name, timeout=timeout)
 
   def __init__(self, as_node = True, seed=None):
+    # TODO: Autodetect if node started (possibly by trying a rospy call within try clause) and start one if needed
     if as_node:
       rospy.init_node('gazebo_state_recorder')
     

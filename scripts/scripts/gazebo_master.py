@@ -168,8 +168,8 @@ class MultiMasterCoordinator:
         self.result_queue.join()
         print "All results processed!"
 
-        for result in self.result_list:
-            print result
+        #for result in self.result_list:
+        #    print result
 
     # This list should be elsewhere, possibly in the configs package
     def addTasks(self):
@@ -951,13 +951,65 @@ class MultiMasterCoordinator:
         #         for seed in range(0,4000):
         #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
         #             self.task_queue.put(task)
+        #
+        # for scenario in ['training_room', 'training_room2']:
+        #     for seed in range(0, 4000):
+        #         for controller in ['p2d', 'p2d_global']:
+        #             task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
+        #             self.task_queue.put(task)
+        '''
+        for controller in ['dwa']:
+             for scenario in ['training_room', 'training_room2']:
+                 for seed in range(0,2000):
+                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+                     self.task_queue.put(task)
+             for scenario in ['full_sector_laser', 'full_campus_obstacle', 'full_fourth_floor_obstacle']:
+                 for seed in range(0,1000):
+                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+                     self.task_queue.put(task)
+             for scenario in ['dense', 'medium']:
+                 for seed in range(0, 1000):
+                     task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
+                     self.task_queue.put(task)
+             for scenario in ['training_room_global', 'training_room2_global']:
+                 for seed in range(0,1000):
+                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
+                     self.task_queue.put(task)
+        '''
 
-        for scenario in ['training_room', 'training_room2']:
-            for seed in range(0, 4000):
-                for controller in ['p2d', 'p2d_global']:
+        '''
+        for scenario in ['training_room']:
+            for seed in range(0, 300):
+                for controller in ['laser_classifier_weighted_2d_no_neg']:  # 'laser_classifier_weighted',
                     task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
                     self.task_queue.put(task)
+        '''
 
+        '''
+        for scenario in ['training_room','training_room2','dense']:
+            for seed in range(0, 500):
+                for controller in ['laser_classifier_weighted_2d_no_neg']: #'laser_classifier_weighted',, 'p2d'
+                    task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
+                    self.task_queue.put(task)
+        '''
+
+        for scenario in ['dense',]:
+            for seed in range(0, 200):
+                for controller in ['teb', 'dwa', 'ego_teb']:
+                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot'}
+                    self.task_queue.put(task)
+
+            for seed in range(0, 200):
+                for controller in ['teb', 'dwa', 'ego_teb']:
+                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': 0.5}
+                    self.task_queue.put(task)
+
+        for scenario in ['full_campus_obstacle', 'full_fourth_floor_obstacle']:
+            for seed in range(0, 200):
+                for controller in ['teb', 'dwa', 'ego_teb']:
+                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'num_obstacles': 50,
+                            'min_obstacle_spacing': 0.5, 'robot': 'turtlebot'}
+                    self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):
