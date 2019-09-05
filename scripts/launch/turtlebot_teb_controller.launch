@@ -23,7 +23,7 @@
   
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/>
 
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="false" launch-prefix="$(arg debug_prefix)">
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
@@ -47,7 +47,8 @@
       <param name="TebLocalPlannerROS/egocircle_feasibility" value="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/simple_exploration" value="$(arg simple_exploration)"/>
       <param name="TebLocalPlannerROS/weight_gap" value="0"/> <!-- unless="$(arg egocircle)"/> -->
-            
+      <param name="TebLocalPlannerROS/feasibility_check_no_tebs" value="4" if="$(arg egocircle)"/>
+      
       <!-- Disable the local costmap observation sources if they will not be used -->
       <param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>
       
