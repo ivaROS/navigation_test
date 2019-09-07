@@ -293,6 +293,9 @@ class ResultAnalyzer:
                 dependent_value="SUCCEEDED"
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
                 if lookupkey in statistics:
+                    if shared_safe_keys is None:
+                        shared_safe_keys = path_times[lookupkey].keys()
+
                     times =[path_times[lookupkey][k] for k in shared_safe_keys]
                     times = np.array(sum(times, []))
                     path_time = np.mean(times) / 1e9

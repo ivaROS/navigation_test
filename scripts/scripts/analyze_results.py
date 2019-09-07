@@ -18,6 +18,10 @@ if __name__ == "__main__":
 
     analyzer.readFiles(filenames = filenames)
 
+    analyzer.clear()
+    filenames = ['/home/justin/simulation_data/results_2019-09-04 23:39:17.669680'] #p2d, nothing altered
+    analyzer.readFiles(filenames=filenames, whitelist={'controller': ['p2d']})
+
     #
     # analyzer.readFiles(filenames=filenames)
     #

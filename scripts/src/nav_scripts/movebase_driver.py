@@ -218,7 +218,7 @@ def reset_costmaps():
     service = rospy.ServiceProxy("move_base/clear_costmaps", std_srvs.Empty)
     service()
 
-def run_test(goal_pose):
+def run_test(goal_pose, record=False):
     # Get a node handle and start the move_base action server
     # init_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1)
 

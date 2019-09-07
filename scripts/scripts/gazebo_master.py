@@ -39,7 +39,7 @@ def port_in_use(port):
 
 
 class MultiMasterCoordinator:
-    def __init__(self):
+    def __init__(self, num_masters=4):
         signal.signal(signal.SIGINT, self.signal_shutdown)
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.children_shutdown = mp.Value(c_bool, False)
@@ -48,7 +48,7 @@ class MultiMasterCoordinator:
         self.should_shutdown = False
 
 
-        self.num_masters = 4
+        self.num_masters = num_masters
 
         self.save_results = True
         self.task_queue_capacity = 2000 #2*self.num_masters
@@ -1004,6 +1004,8 @@ class MultiMasterCoordinator:
                     task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': 0.5}
                     self.task_queue.put(task)
         '''
+
+        '''
         for scenario in ['full_fourth_floor_obstacle']:
             for seed in range(75, 200):
                 for controller in ['teb', 'dwa', 'ego_teb']:
@@ -1017,6 +1019,17 @@ class MultiMasterCoordinator:
                     task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
                             'min_obstacle_spacing': 0.5}
                     self.task_queue.put(task)
+        '''
+
+
+
+        for scenario in ['dense']:
+            for min_obstacle_spacing in [1.0, 0.5]:
+                for seed in range(0, 200):
+                    for controller in ['ego_teb']:
+                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                'min_obstacle_spacing': min_obstacle_spacing, 'record': True}
+                        self.task_queue.put(task)
 
 
     #This list should be elsewhere, possibly in the configs package
@@ -1153,8 +1166,9 @@ class GazeboMaster(mp.Process):
 
                             #master = rosgraph.Master('/mynode')
 
+                            record = task["record"] if "record" in task else False
                             #TODO: make this a more informative type
-                            result = test_driver.run_test(goal_pose=scenario.getGoal())
+                            result = test_driver.run_test(goal_pose=scenario.getGoal(), record=record)
 
                         except rospy.ROSException as e:
                             result = "ROSException: " + str(e)
@@ -1323,13 +1337,31 @@ class GazeboMaster(mp.Process):
 if __name__ == "__main__":
 
     start_time = time.time()
-    master = MultiMasterCoordinator()
+    master = MultiMasterCoordinator(4)
     master.start()
     master.addTasks()
+    
     #master.singletask()
     master.waitToFinish()
     #rospy.spin()
     master.shutdown()
     end_time = time.time()
     print "Total time: " + str(end_time - start_time)
+    
+    start_time = time.time()
+    master = MultiMasterCoordinator(2)
+    master.start()
+    for scenario in ['full_fourth_floor_obstacle', 'full_sector_laser', 'full_campus_obstacle']:
+        for seed in range(0, 50):
+            for controller in ['p2d', 'laser_classifier_weighted_2d_no_neg']:
+                task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'num_obstacles': 50,
+                        'min_obstacle_spacing': 0.5, 'robot': 'turtlebot', 'record': False}
+                master.task_queue.put(task)
+
+    master.waitToFinish()
+
+    master.shutdown()
+    end_time = time.time()
+    print "Total time: " + str(end_time - start_time)
+
 
