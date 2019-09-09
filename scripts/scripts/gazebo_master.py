@@ -1024,13 +1024,20 @@ class MultiMasterCoordinator:
 
 
         for scenario in ['dense']:
-            for min_obstacle_spacing in [1.0, 0.5]:
-                for seed in range(0, 200):
-                    for controller in ['ego_teb']:
+            for min_obstacle_spacing in [0.5, 1.0]:
+                for seed in range(0, 20):
+                    for controller in ['ego_teb', 'ego_teb_2s', 'ego_teb_4s', 'ego_teb_10s', 'teb', 'teb_2s', 'teb_4s', 'teb_10s']:
                         task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                'min_obstacle_spacing': min_obstacle_spacing, 'record': True}
+                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
                         self.task_queue.put(task)
-
+            for min_obstacle_spacing in [0.5, 1.0]:
+                for seed in range(20, 200):
+                    for controller in ['ego_teb', 'ego_teb_2s', 'ego_teb_4s', 'ego_teb_10s', 'teb', 'teb_2s',
+                                       'teb_4s', 'teb_10s']:
+                        task = {'controller': controller, 'seed': seed, 'scenario': scenario,
+                                'robot': 'turtlebot',
+                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
+                        self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):
@@ -1347,7 +1354,8 @@ if __name__ == "__main__":
     master.shutdown()
     end_time = time.time()
     print "Total time: " + str(end_time - start_time)
-    
+
+    '''
     start_time = time.time()
     master = MultiMasterCoordinator(2)
     master.start()
@@ -1363,5 +1371,5 @@ if __name__ == "__main__":
     master.shutdown()
     end_time = time.time()
     print "Total time: " + str(end_time - start_time)
-
+    '''
 

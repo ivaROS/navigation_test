@@ -60,7 +60,7 @@ class SimulationStepper(object):
     def __init__(self):
         self.mode = 0
         self.driver = GazeboDriver(as_node=True)
-        self.sub = rospy.Subscriber("cmd", Twist, self.pause, queue_size=1)
+        self.sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.pause, queue_size=1)
 
     def pause(self, cmd):
         #print(str(cmd))

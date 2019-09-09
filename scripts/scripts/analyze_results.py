@@ -40,6 +40,12 @@ if __name__ == "__main__":
 
     analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
 
+    analyzer.clear()
+    filenames = ['/home/justin/simulation_data/results_2019-09-06 05:04:56.753298'] #p2d and classifier, nothing altered
+    analyzer.readFiles(filenames=filenames, whitelist={})
+    analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
+
+
 
     # analyzer.generateSingleTable()
 
