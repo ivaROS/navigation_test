@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find nav_scripts)/launch/turtlebot_ego_teb_gap_kin_controller.launch">
+    <arg name="global_planning_freq" value="0.1"/>
+  </include>
+</launch>

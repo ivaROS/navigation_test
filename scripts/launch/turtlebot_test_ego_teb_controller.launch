@@ -1,0 +1,55 @@
+<launch>
+  <arg name="use_recovery_behaviors" default="true"/>
+  
+  <arg name="simple_exploration" default="false"/>
+  <arg name="egocircle" default="true"/>
+  
+  <arg name="debug" default="false"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
+
+  <!-- xterm -e gdb -ex run - -args -->
+  
+  
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/>
+
+  <node pkg="teb_local_planner" type="test_optim_node" respawn="false" name="TebLocalPlannerROS" output="screen" clear_params="true" ns="move_base" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+      <remap from="scan" to="nothing"/>
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+
+      <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+      <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
+      
+
+      <param name="include_costmap_obstacles" value="false" if="$(arg egocircle)"/>
+      <param name="include_egocircle_obstacles" value="$(arg egocircle)"/>
+      <param name="gap_h_signature" value="$(arg egocircle)"/>
+      <param name="gap_exploration" value="$(arg egocircle)"/>
+      <param name="egocircle_feasibility" value="$(arg egocircle)"/>
+      <param name="simple_exploration" value="$(arg simple_exploration)"/>
+      <param name="weight_gap" value="0"/> <!-- unless="$(arg egocircle)"/> -->
+      <param name="gap_boundary_exponent" value="2" unless="$(arg egocircle)"/>
+      <param name="feasibility_check_no_tebs" value="4" if="$(arg egocircle)"/>
+      <param name="detour_threshold" value="-1"/>
+      <param name="obstacle_heading_threshold" value="-1"/>
+      <param name="visualize_hc_graph" value="true"/>
+  </node>
+
+
+  <node pkg="tf" type="static_transform_publisher" name="start_frame_pub" args="-2 0 0 0 0 0 odom fixed_start 100"/>
+
+  	<!-- RVIZ -->
+  	<!--<node pkg="rviz" type="rviz" name="rviz" args="-d $(find teb_local_planner)/cfg/rviz_ego_test_optim.rviz" /> -->
+
+
+</launch>
