@@ -29,6 +29,7 @@ task= {'scenario': 'full_sector_extra', 'controller':'egocylindrical_pips_dwa', 
 
 # task = {'seed':seed, 'scenario':'sector'}
 
+seed = 7
 task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing':0.75}
 
 #task = {'seed':seed, 'scenario':'full_fourth_floor_obstacle', 'num_obstacles':50, 'min_obstacle_spacing':min_obstacle_spacing}
