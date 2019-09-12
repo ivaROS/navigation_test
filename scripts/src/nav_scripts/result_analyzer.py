@@ -16,7 +16,7 @@ def isMatch(entry, key, value):
             return False
     return True
 
-def filter(results, whitelist=None, blacklist=None):
+def filter(results, whitelist=None, blacklist=None, defaults=None):
     filtered_results = []
     for entry in results:
         stillgood = True
@@ -30,7 +30,10 @@ def filter(results, whitelist=None, blacklist=None):
                 if isMatch(entry, key, value):
                     stillgood = False
                     break
-
+        if defaults is not None:
+            for key, value in defaults.items():
+                if key not in entry:
+                    entry[key] = value
         if stillgood:
             filtered_results.append(entry)
     return filtered_results
@@ -56,17 +59,17 @@ def getPrunedList(results, keys):
 
 class ResultAnalyzer:
 
-    def readFile(self, filename, whitelist = None, blacklist = None):
+    def readFile(self, filename, whitelist = None, blacklist = None, defaults=None):
         result_list = readFile(filename)
-        filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist)
+        filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist, defaults=defaults)
         self.results += filtered_list
 
-    def readFiles(self, filenames, whitelist=None, blacklist = None):
+    def readFiles(self, filenames, whitelist=None, blacklist = None, defaults=None):
         if isinstance(filenames, str):
           filenames = [filenames]
           
         for filename in filenames:
-            self.readFile(filename, whitelist=whitelist, blacklist=blacklist)
+            self.readFile(filename, whitelist=whitelist, blacklist=blacklist, defaults=defaults)
 
     def clear(self):
         self.__init__()
