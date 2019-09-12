@@ -1,5 +1,5 @@
 <launch>
-  <arg name="global_planning_freq" default=".25"/>
+  <arg name="global_planning_freq" default=".1"/>
   <include file="$(find nav_scripts)/launch/turtlebot_ego_teb_strong_wide_gap_controller.launch">
     <arg name="global_planning_freq" value="$(arg global_planning_freq)"/>
   </include>

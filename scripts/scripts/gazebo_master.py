@@ -1043,7 +1043,8 @@ class MultiMasterCoordinator:
         for scenario in ['dense']:
             for min_obstacle_spacing in [.75]:
                 for seed in range(0, 100):
-                    for controller in ['dwa', 'dwa_4s', 'dwa_10s', 'teb', 'teb_4s', 'ego_teb', 'ego_teb_4s', 'ego_teb_4s_gap', 'ego_teb_4s_strong_gap', 'ego_teb_4s_strong_wide_gap', 'teb_10s', 'ego_teb_10s', 'ego_teb_10s_gap', 'ego_teb_4s_gap_kin', 'ego_teb_10s_gap_kin' ]:
+                    #for controller in ['dwa', 'dwa_4s', 'dwa_10s', 'teb', 'teb_4s', 'ego_teb', 'ego_teb_4s', 'ego_teb_4s_gap', 'ego_teb_4s_strong_gap', 'ego_teb_4s_strong_wide_gap', 'teb_10s', 'ego_teb_10s', 'ego_teb_10s_gap', 'ego_teb_4s_gap_kin', 'ego_teb_10s_gap_kin' ]:
+                    for controller in ['ego_teb_4s_strong_gap', 'ego_teb_4s_strong_wide_gap', 'ego_teb_10s_strong_gap', 'ego_teb_10s_strong_wide_gap']:
                         task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
                                 'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
                         self.task_queue.put(task)
