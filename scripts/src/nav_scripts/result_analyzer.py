@@ -16,8 +16,20 @@ def isMatch(entry, key, value):
             return False
     return True
 
+def convertToStrings(dict):
+    if dict is not None:
+        for key, value in dict.items():
+            if not isinstance(value, basestring):
+                if isinstance(value, list):
+                    for i in range(len(value)):
+                        value[i] = str(value[i])
+                else:
+                    dict[key] = str(value)
+
 def filter(results, whitelist=None, blacklist=None, defaults=None):
     filtered_results = []
+    convertToStrings(whitelist)
+    convertToStrings(blacklist)
     for entry in results:
         stillgood = True
         if whitelist is not None:

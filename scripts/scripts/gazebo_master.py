@@ -1039,7 +1039,7 @@ class MultiMasterCoordinator:
                                 'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
                         self.task_queue.put(task)
         '''
-        
+        '''
         for scenario in ['dense']:
             for min_obstacle_spacing in [.75]:
                 for seed in range(0, 100):
@@ -1051,7 +1051,24 @@ class MultiMasterCoordinator:
                         task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
                                 'min_obstacle_spacing': min_obstacle_spacing, 'record': False, 'feasibility_check_no_poses':-1}
                         self.task_queue.put(task)
+        '''
+        '''
+        for scenario in ['dense']:
+            for min_obstacle_spacing in [.75]:
+                for seed in range(0, 200):
+                    for controller in ['teb', 'teb_2s', 'teb_4s', 'teb_10s', 'ego_teb_gap']:
+                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
+                        self.task_queue.put(task)
+        '''
 
+        for scenario in ['dense']:
+            for min_obstacle_spacing in [.75]:
+                for seed in range(0, 100):
+                    for controller in ['teb_2s']:
+                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
+                        self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):
