@@ -1064,11 +1064,49 @@ class MultiMasterCoordinator:
 
         for scenario in ['dense']:
             for min_obstacle_spacing in [.75]:
-                for seed in range(0, 100):
-                    for controller in ['teb_2s']:
-                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
-                        self.task_queue.put(task)
+                for seed in range(0, 200):
+                    for global_planning_freq in [1, .5, .25, .1]:
+                        for feasibility_check_no_poses in [5, 10, -1]:
+                            for controller in ['general_teb']:
+                                for costmap_converter_plugin in ['PolygonsDBSMCCH', 'PolygonsDBSConcaveHull']:
+                                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
+                                                'controller_args': {'converter': 'true', 'costmap_converter_plugin': 'costmap_converter::CostmapTo'+costmap_converter_plugin, 'global_planning_freq': global_planning_freq,
+                                                                    'feasibility_check_no_poses': feasibility_check_no_poses, 'simple_exploration': 'false'}}
+                                        self.task_queue.put(task)
+
+                            for controller in ['general_ego_teb']:
+                                for feasibility_check_no_tebs in [1, 4]:
+                                    for egocircle_early_pruning in ['false', 'true']:
+                                        for weight_gap in [0]:
+                                            task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                                    'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
+                                                    'controller_args': {'weight_gap':weight_gap, 'global_planning_freq': global_planning_freq, 'egocircle_early_pruning': egocircle_early_pruning,
+                                                                        'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'simple_exploration': 'false'}}
+                                            self.task_queue.put(task)
+
+                                        for [gap_boundary_threshold, gap_boundary_ratio] in [[0.1,0.2], [0.4,0.5], [0.8,0.9]]:
+                                            for weight_gap in [1000]:
+                                                for gap_boundary_exponent in [1,2,4]:
+                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
+                                                            'controller_args': {'weight_gap':weight_gap, 'gap_boundary_exponent':gap_boundary_exponent, 'global_planning_freq': global_planning_freq,
+                                                                                'egocircle_early_pruning': egocircle_early_pruning, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
+                                                                                'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'simple_exploration': 'false'}}
+                                                    self.task_queue.put(task)
+
+                                            for weight_gap in [10000]:
+                                                for gap_boundary_exponent in [1, 2]:
+                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario,
+                                                            'robot': 'turtlebot',
+                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
+                                                            'controller_args': {'weight_gap': weight_gap, 'egocircle_early_pruning': egocircle_early_pruning,
+                                                                                'gap_boundary_exponent': gap_boundary_exponent, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
+                                                                                'global_planning_freq': global_planning_freq,
+                                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
+                                                                                'feasibility_check_no_tebs': feasibility_check_no_tebs,
+                                                                                'simple_exploration': 'false'}}
+                                                    self.task_queue.put(task)
 
     #This list should be elsewhere, possibly in the configs package
     def addTasks10(self):
