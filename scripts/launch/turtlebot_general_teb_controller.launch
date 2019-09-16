@@ -1,10 +1,10 @@
 <launch>
   <arg name="use_recovery_behaviors" default="true"/>
-  <arg name="converter" default="$(optenv GM_PARAM_COSTMAP_CONVERTER true)"/>
-  <arg name="costmap_converter_plugin" default="$(optenv GM_PARAM_COSTMAP_CONVERTER_PLUGIN costmap_converter::CostmapToPolygonsDBSMCCH)"/>
-  <arg name="simple_exploration" default="$(optenv GM_PARAM_SIMPLE_EXPLORATION false)"/>
-  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
-  <arg name="feasibility_check_no_poses" default="$(optenv GM_PARAM_FEASIBILITY_CHECK_NO_POSES 5)"/>
+  <arg name="converter" default="$(env GM_PARAM_CONVERTER )"/>
+  <arg name="costmap_converter_plugin" default="$(env GM_PARAM_COSTMAP_CONVERTER_PLUGIN )"/>
+  <arg name="simple_exploration" default="$(env GM_PARAM_SIMPLE_EXPLORATION )"/>
+  <arg name="global_planning_freq" default="$(env GM_PARAM_GLOBAL_PLANNING_FREQ )"/>
+  <arg name="feasibility_check_no_poses" default="$(env GM_PARAM_FEASIBILITY_CHECK_NO_POSES )"/>
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->

@@ -294,7 +294,7 @@ def run_test(goal_pose, record=False):
         elif odom_checker.not_moving:
             keep_waiting = False
             result = "STUCK"
-        elif (rospy.Time.now() - start_time > rospy.Duration(300)):
+        elif (rospy.Time.now() - start_time > rospy.Duration(600)):
             keep_waiting = False
             result = "TIMED_OUT"
         else:
