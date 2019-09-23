@@ -38,6 +38,7 @@ class CostmapDriver(object):
         map = rospy.wait_for_message(self.inflated_ground_truth_map_topic, OccupancyGrid)
         self.mapCB(map)
 
+        # This is just for debugging/testing purposes
         self.pose_sub = rospy.Subscriber("/clicked_point", PointStamped, self.pointCB, queue_size=1)
 
         self.random = random.Random()
@@ -46,21 +47,18 @@ class CostmapDriver(object):
         self.nprandom = np.random.RandomState(seed)
 
     def mapCB(self, map):
-        self.lock.acquire()
-
-        self.size_x = map.info.width
-        self.size_y = map.info.height
-        self.resolution = map.info.resolution
-        self.origin_x = map.info.origin.position.x
-        self.origin_y = map.info.origin.position.y
-        self.data = map.data
-        self.preprocessMap()
-        self.lock.release()
+        with self.lock:
+            self.size_x = map.info.width
+            self.size_y = map.info.height
+            self.resolution = map.info.resolution
+            self.origin_x = map.info.origin.position.x
+            self.origin_y = map.info.origin.position.y
+            self.data = map.data
+            self.preprocessMap()
 
     def pointCB(self, point):
-        self.lock.acquire()
-        issafe = self.isSafe(point.point.x, point.point.y)
-        self.lock.release()
+        with self.lock:
+            issafe = self.isSafe(point.point.x, point.point.y)
         print issafe
 
     def preprocessMap(self):
@@ -72,14 +70,13 @@ class CostmapDriver(object):
 
 
     def getSafePose(self):
-        self.lock.acquire()
-        num_poses = self.safe_poses.shape[0]
-        if num_poses == 0:
-            return None
+        with self.lock:
+            num_poses = self.safe_poses.shape[0]
+            if num_poses == 0:
+                return None
 
-        rand_ind = self.nprandom.randint(low=0, high=num_poses)
-        pos = self.safe_poses[rand_ind,:]
-        self.lock.release()
+            rand_ind = self.nprandom.randint(low=0, high=num_poses)
+            pos = self.safe_poses[rand_ind,:]
 
         pos += self.nprandom.random_sample(size=2)*self.resolution/2
 

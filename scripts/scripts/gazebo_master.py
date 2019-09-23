@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import subprocess
 import multiprocessing as mp
 import os
 import sys
@@ -8,19 +7,17 @@ import rospkg
 import roslaunch
 import time
 import nav_scripts.movebase_driver as test_driver
-import rosgraph
 import threading
 import Queue
 from ctypes import c_bool
 
 import signal
-
+import itertools
 import socket
 import contextlib
 
 from testing_scenarios import TestingScenarios
 
-from actionlib_msgs.msg import GoalStatusArray
 from nav_msgs.msg import Odometry
 import rospy
 import csv
@@ -62,7 +59,7 @@ class MultiMasterCoordinator:
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot"])
-        self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
+        #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
         self.fieldnames.extend(["bag_file_path",'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
     def start(self):
@@ -102,7 +99,6 @@ class MultiMasterCoordinator:
     def processResults(self,queue):
 
         outputfile_name = "~/simulation_data/results_" + str(datetime.datetime.now())
-        #outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'wb') as csvfile:
@@ -112,7 +108,7 @@ class MultiMasterCoordinator:
             datawriter = csv.DictWriter(csvfile, fieldnames=fieldnames, restval='', extrasaction='ignore')
             datawriter.writeheader()
 
-            while not self.should_shutdown: #This means that results stop getting saved to file as soon as I try to kill it
+            while not self.should_shutdown: #This means that results stop getting saved to file as soon shutdown is commanded
                 try:
                     task = queue.get(block=False)
 
@@ -152,1132 +148,29 @@ class MultiMasterCoordinator:
 
         self.should_shutdown = True
 
-        #for process in self.gazebo_masters:
-        #    if process.is_alive():
-        #        process.join()
-        #sys.exit(0)
-
-    def waitToFinish(self):
+    def wait_to_finish(self):
         print "Waiting until everything done!"
         self.task_queue.join()
         print "All tasks processed!"
         with self.soft_shutdown.get_lock():
             self.soft_shutdown.value = True
 
-        #The problem is that this won't happen if I end prematurely...
+        #The problem is that this won't happen if things end prematurely...
         self.result_queue.join()
         print "All results processed!"
 
-        #for result in self.result_list:
-        #    print result
 
-    # This list should be elsewhere, possibly in the configs package
-    def addTasks(self):
-        controllers = ["dwa", "teb", "pips_dwa", "pips_ni" ]  # "rl_single", "rl_goal",
-        '''
-        for a in range(0, 50):
-            for controller in controllers: #controllers:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        
-        for a in range(0, 50):
-            for controller in ["pips_dwa_propagated", "rl_single"]:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        
+    def add_tasks(self, tasks):
+        [tasks1, tasks2] =  itertools.tee(tasks,2)
 
+        for task in tasks1:
+            pass
+            #Verify task/ensure can generate each one, or at least that everything is in fieldnames
 
-        for a in range(0, 50):
-            for controller in ['regression_goal', 'regression_goal_propagated','pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single','multiclass', "pips_dwa_propagated", "pips_dwa", 'pips_ni_propagated']: #'rl_goal'
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        '''
-
-        '''
-        for a in range(0, 50):
-            for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal', 'regression_goal_propagated']: #'rl_goal'
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-
-        for a in range(0, 50):
-            for controller in ['multiclass', "pips_dwa_propagated", "pips_dwa"]:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        '''
-        '''
-        for a in range(50, 150):
-            for controller in ['pips_ni', 'multiclass_propagated', 'rl_goal', 'rl_single', 'regression_goal', 'regression_goal_propagated', 'multiclass', "pips_dwa_propagated", "pips_dwa", 'teb', 'dwa']:  # 'rl_goal'
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        '''
-
-        '''
-        for a in [a for a in range(52,97) if a not in [57,58,59,62,66,63,65,67,79,80,87,88,90]]:
-            for controller in ['egocylindrical_pips_dwa']:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        '''
-        '''
-        for a in range(52,97):
-            for controller in ['depth_pips_dwa']:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                    self.task_queue.put(task)
-        '''
-
-        '''
-        for a in range(1, 100):
-            for controller in ['dwa']: #, 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                self.task_queue.put(task)
-        '''
-
-        '''
-        for a in range(52, 97):
-            for controller in ['pips_ec_rh']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                self.task_queue.put(task)
-        '''
-
-        '''
-        for a in range(0,100):
-            for controller in ['pips_ec_rh','depth_pips_dwa','egocylindrical_pips_dwa','dwa','teb']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                for repetition in range(1):
-                    task = {'scenario': 'sector', 'controller': controller, 'seed': a}
-                self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['campus', 'sector']:
-            for a in range(0, 20):
-                for controller in ['egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa', 'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_barrels':20} #, 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                        self.task_queue.put(task)
-
-        for scenario in ['campus', 'sector']:
-            for a in range(20, 100):
-                for controller in ['egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa',
-                                   'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                'num_barrels': 20}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                        self.task_queue.put(task)
-        '''
-
-        # for scenario in ['sector']:
-        #     for a in range(64,100):
-        #         for controller in ['egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa', 'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-        #             for repetition in range(1):
-        #                 task = {'scenario': scenario, 'controller': controller, 'seed': a}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-        #                 self.task_queue.put(task)
-
-        '''
-        for scenario in ['campus']:
-            for num_barrels in [0,10]:
-                for a in range(0,100):
-                    for controller in ['teb','egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa',
-                                       'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                            self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['campus']:
-            for num_barrels in [10]:
-                for a in range(36,100):
-                    for controller in ['teb','egocylindrical_pips_dwa', 'egocylindrical_pips_dwa_no_recovery', 'dwa',
-                                       'dwa_no_recovery']:  # , 'teb', 'egocylindrical_pips_dwa', 'depth_pips_dwa']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                            self.task_queue.put(task)
-
-        for scenario in ['campus','sector']:
-            for num_barrels in [20]:
-                for a in range(0, 100):
-                    for controller in ['teb']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                            self.task_queue.put(task)
-                            
-        '''
-
-        '''
-        #I stopped the above just before it finished the last one
-        task = {'scenario': 'sector', 'controller': 'teb', 'seed': 2,
-                'num_barrels': 20}
-        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for num_barrels in [20]:
-                for a in range(52,97):
-                    for controller in ['depth_pips_dwa']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                            self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['sector']:
-            for num_barrels in [20]:
-                for a in range(52, 97):
-                    for controller in ['egocylindrical_pips_dwa']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                            self.task_queue.put(task)
-        '''
-
-        '''
-        #rerunning cases that failed in both prior sets
-        for scenario in ['sector']:
-            for num_barrels in [20]:
-                for a in [53,57,67,74,79]:
-                    for controller in ['egocylindrical_pips_dwa']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'seed': a,
-                                    'num_barrels': num_barrels}  # , 'controller_args':['use_recovery_behaviors:=' + recovery_behaviors]}
-                            self.task_queue.put(task)
-        '''
-
-        '''
-        #These didn't finish
-        for scenario in ['campus']:
-            for num_barrels in [0,10,20]:
-                for a in range(0,100):
-                    for controller in ['egocylindrical_pips_dwa']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller, 'num_barrels': num_barrels, 'seed': a}
-                            self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(0,100):
-                for controller in ['egocylindrical_pips_dwa','pips_ec_rh','egocylindrical_pips_dwa_no_recovery','pips_ec_rh_no_recovery']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-
-        #Except for the first 3, these didn't run
-        for scenario in ['campus']:
-            for num_barrels in [0, 10, 20]:
-                for a in range(0, 100):
-                    for controller in ['egocylindrical_pips_dwa','pips_ec_rh','egocylindrical_pips_dwa_no_recovery','pips_ec_rh_no_recovery']:
-                        for repetition in range(1):
-                            task = {'scenario': scenario, 'controller': controller,
-                                    'num_barrels': num_barrels, 'seed': a}
-                            self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['sector']:
-            for a in range(0,40):
-                for controller in ['egocylindrical_pips_dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(40, 100):
-                for controller in ['egocylindrical_pips_dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(40, 100):
-                for controller in ['pips_ec_rh']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(33, 40):
-                for controller in ['egocylindrical_pips_dwa', 'pips_ec_rh', 'egocylindrical_pips_dwa_no_recovery',
-                                   'pips_ec_rh_no_recovery', 'teb', 'dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-
-            for a in range(40, 61):
-                for controller in [
-                                   'egocylindrical_pips_dwa_no_recovery',
-                                   'pips_ec_rh_no_recovery', 'teb', 'dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(61, 100):
-                for controller in [
-                    'egocylindrical_pips_dwa_no_recovery',
-                    'pips_ec_rh_no_recovery', 'teb', 'dwa']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-            for a in range(94, 100):
-                for controller in ['pips_ec_rh']:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-                        
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(0, 100):
-                for controller in ['pips_ec_rh'
-                    'baseline_rl_goal',
-                    'goal_regression', 'multiclass'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-
-        '''
-        #Switched to circles for this one
-        for scenario in ['sector']:
-            for a in range(0, 100):
-                for controller in ['pips_ec_rh'
-                    #'baseline_rl_goal',
-                    #'goal_regression', 'multiclass'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        #new circle model here
-        for scenario in ['sector']:
-            for a in range(0, 100):
-                for controller in ['rl_goal'
-                                   # 'baseline_rl_goal',
-                                   # 'goal_regression', 'multiclass'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(18, 50):
-                for controller in ['pips_ec_rh'
-                                   # 'baseline_rl_goal',
-                                   # 'goal_regression', 'multiclass'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-
-        for scenario in ['sector']:
-            for a in range(0, 50):
-                for controller in ['rl_single'
-                                   # 'baseline_rl_goal',
-                                   # 'goal_regression', 'multiclass'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(0, 100):
-                for controller in ['rl_goal'
-                                    ,'multiclass'
-                                    ,'regression_goal'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(0, 50):
-                for controller in ['rl_goal_no_recovery'
-                                    ,'multiclass_no_recovery'
-                                    ,'rl_single_no_recovery'
-                                    ,'pips_ec_rh_no_recovery'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        
-        '''
-        for scenario in ['sector']:
-            for a in range(0, 50):
-                for controller in [
-                                    'pips_ec_rh_no_recovery_5'
-                                    ,'pips_ec_rh_no_recovery_25'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sector']:
-            for a in range(0, 50):
-                for controller in [
-                                    'pips_ec_rh_no_recovery_9'
-                                    ,'pips_ec_rh_no_recovery_15'
-                                    ,'pips_ec_rh_no_recovery_19'
-                                   ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['sparse','dense']:
-            for a in range(0, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    ,'multiclass_no_recovery'
-                    ,'dwa_no_recovery'
-                    ,'depth_pips_dwa_no_recovery'
-                    ,'pips_ec_rh_no_recovery'
-                    ,'regression_goal_no_recovery'
-                    ,'rl_single_no_recovery'
-                    ,'rl_goal_sat_no_recovery'
-                    ,'rl_sat_single_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['dense']:
-            for a in range(0, 50):
-                for controller in [
-                    'baseline_to_goal_no_recovery'
-                    , 'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-
-        for scenario in ['sparse']:
-            for a in range(0, 50):
-                for controller in [
-                    'baseline_to_goal_no_recovery'
-                    , 'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sparse','dense']:
-            for a in range(0, 50):
-                for controller in [
-                    'pips_ec_rh_no_recovery_5'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['medium']:
-            for a in range(0, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    ,'multiclass_no_recovery'
-                    ,'dwa_no_recovery'
-                    ,'depth_pips_dwa_no_recovery'
-                    ,'pips_ec_rh_no_recovery'
-                    ,'regression_goal_no_recovery'
-                    ,'rl_single_no_recovery'
-                    ,'rl_goal_sat_no_recovery'
-                    ,'rl_sat_single_no_recovery'
-                    ,'pips_ec_rh_no_recovery_5'
-                    ,'baseline_to_goal_no_recovery'
-                    ,'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['medium','dense']: #'sparse',
-            for a in range(0, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    ,'multiclass_no_recovery'
-                    ,'dwa_no_recovery'
-                    ,'depth_pips_dwa_no_recovery'
-                    ,'pips_ec_rh_no_recovery'
-                    ,'regression_goal_no_recovery'
-                    ,'rl_single_no_recovery'
-                    ,'rl_goal_sat_no_recovery'
-                    ,'rl_sat_single_no_recovery'
-                    ,'pips_ec_rh_no_recovery_5'
-                    ,'baseline_to_goal_no_recovery'
-                    ,'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['corridor_zigzag','corridor_zigzag_door']:  # 'sparse',
-            for a in range(0, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    , 'multiclass_no_recovery'
-                    , 'dwa_no_recovery'
-                    , 'depth_pips_dwa_no_recovery'
-                    , 'pips_ec_rh_no_recovery'
-                    , 'regression_goal_no_recovery'
-                    , 'rl_single_no_recovery'
-                    , 'rl_goal_sat_no_recovery'
-                    , 'rl_sat_single_no_recovery'
-                    , 'pips_ec_rh_no_recovery_5'
-                    , 'baseline_to_goal_no_recovery'
-                    , 'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles':6, 'min_obstacle_spacing':1.5}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['corridor_zigzag_door']:  # 'sparse',
-            for a in range(39, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    , 'multiclass_no_recovery'
-                    , 'dwa_no_recovery'
-                    , 'depth_pips_dwa_no_recovery'
-                    , 'pips_ec_rh_no_recovery'
-                    , 'regression_goal_no_recovery'
-                    , 'rl_single_no_recovery'
-                    , 'rl_goal_sat_no_recovery'
-                    , 'rl_sat_single_no_recovery'
-                    , 'pips_ec_rh_no_recovery_5'
-                    , 'baseline_to_goal_no_recovery'
-                    , 'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
-                                'min_obstacle_spacing': 1.5}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['dense','medium','sparse']:
-            for a in range(0, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    , 'multiclass_no_recovery'
-                    , 'pips_ec_rh_no_recovery'
-                    , 'regression_goal_no_recovery'
-                    , 'rl_single_no_recovery'
-                    , 'rl_goal_sat_no_recovery'
-                    , 'rl_sat_single_no_recovery'
-                    , 'pips_ec_rh_no_recovery_5'
-                    , 'baseline_to_goal_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        
-        
-        for scenario in ['corridor_zigzag','corridor_zigzag_door']:
-            for a in range(0, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    , 'multiclass_no_recovery'
-                    , 'pips_ec_rh_no_recovery'
-                    , 'regression_goal_no_recovery'
-                    , 'rl_single_no_recovery'
-                    , 'rl_goal_sat_no_recovery'
-                    , 'rl_sat_single_no_recovery'
-                    , 'pips_ec_rh_no_recovery_5'
-                    , 'baseline_to_goal_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
-                                'min_obstacle_spacing': 1.5}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['sparse']:
-            for a in range(44, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    , 'multiclass_no_recovery'
-                    , 'pips_ec_rh_no_recovery'
-                    , 'regression_goal_no_recovery'
-                    , 'rl_single_no_recovery'
-                    , 'rl_goal_sat_no_recovery'
-                    , 'rl_sat_single_no_recovery'
-                    , 'pips_ec_rh_no_recovery_5'
-                    , 'baseline_to_goal_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['corridor_zigzag','corridor_zigzag_door']:
-            for a in range(0, 50):
-                for controller in [
-                        'rl_goal_combo_no_recovery'
-                        ,'rl_goal_combo_no_recovery_3_5'
-                        ,'rl_goal_combo_no_recovery_5_3'
-                        ,'rl_goal_combo_no_recovery_3_3'
-                     ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
-                                'min_obstacle_spacing': 1.5}
-                        self.task_queue.put(task)
-                        
-        for scenario in ['medium','sparse']:
-            for a in range(0, 50):
-                for controller in [
-                        'rl_goal_combo_no_recovery'
-                        ,'rl_goal_combo_no_recovery_3_5'
-                        ,'rl_goal_combo_no_recovery_5_3'
-                        ,'rl_goal_combo_no_recovery_3_3'
-                     ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['corridor_zigzag', 'corridor_zigzag_door']:
-            for a in range(40, 50):
-                for controller in [
-                    'rl_goal_no_recovery'
-                    , 'multiclass_no_recovery'
-                    , 'dwa_no_recovery'
-                    , 'depth_pips_dwa_no_recovery'
-                    , 'pips_ec_rh_no_recovery'
-                    , 'regression_goal_no_recovery'
-                    , 'rl_single_no_recovery'
-                    , 'rl_goal_sat_no_recovery'
-                    , 'rl_sat_single_no_recovery'
-                    , 'pips_ec_rh_no_recovery_5'
-                    , 'baseline_to_goal_no_recovery'
-                    , 'teb_no_recovery'
-                ]:
-                    for repetition in range(1):
-                        task = {'scenario': scenario, 'controller': controller, 'seed': a, 'num_obstacles': 6,
-                                'min_obstacle_spacing': 1.5}
-                        self.task_queue.put(task)
-        '''
-
-
-        # for scenario in ['sector']:
-        #     for controller in ['dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer'}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['campus']:
-        #     for seed in range(0, 50):
-        #         for controller in ['dwa', 'egocylindrical_pips_dwa']:
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'pioneer', 'min_obstacle_spacing': 1.5, 'num_obstacles': 50}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['sector_laser','sector_extra','campus_obstacle','fourth_floor_obstacle']:
-
-        # for scenario in ['sector_extra','sector_laser']:
-        #     for controller in ['egocylindrical_pips_dwa']:
-        #         for obstacle_cost_mode in [0, 1, 2]:
-        #             for seed in range(0, 50):
-        #                 task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30, 'controller_args':{'sim_time':2, 'obstacle_cost_mode':obstacle_cost_mode}}
-        #                 self.task_queue.put(task)
-        #
-        # for scenario in ['campus_obstacle','fourth_floor_obstacle']:
-        #     for controller in ['egocylindrical_pips_dwa']:
-        #         for obstacle_cost_mode in [0, 1, 2]:
-        #             for seed in range(0, 50):
-        #                 task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50, 'controller_args':{'sim_time':2, 'obstacle_cost_mode':obstacle_cost_mode}}
-        #                 self.task_queue.put(task)
-        #
-        #
-        # for scenario in ['sector_extra','sector_laser']:
-        #     for controller in ['dwa']:
-        #         for sum_scores in [0, 1]:
-        #             for seed in range(0, 50):
-        #                 task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30, 'controller_args':{'sim_time':2, 'sum_scores':sum_scores}}
-        #                 self.task_queue.put(task)
-        #
-        # for scenario in ['campus_obstacle','fourth_floor_obstacle']:
-        #     for controller in ['dwa']:
-        #         for sum_scores in [0, 1]:
-        #             for seed in range(0, 50):
-        #                 task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50, 'controller_args':{'sim_time':2, 'sum_scores':sum_scores}}
-        #                 self.task_queue.put(task)
-
-        # for scenario in ['sector_extra','sector_laser']:
-        #     for controller in ['dwa','egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['campus_obstacle','fourth_floor_obstacle']:
-        #     for controller in ['dwa','egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['sector_extra','sector_laser']:
-        #     for controller in ['dwa','egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['campus_obstacle','fourth_floor_obstacle']:
-        #     for controller in ['dwa','egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['full_sector_extra','full_sector_laser']:
-        #     for controller in ['dwa','egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['full_campus_obstacle','full_fourth_floor_obstacle']:
-        #     for controller in ['dwa','egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['full_sector_extra','full_sector_laser']:
-        #     for controller in ['egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['full_campus_obstacle','full_fourth_floor_obstacle']:
-        #     for controller in ['egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['stereo_sector_extra']:
-        #     for controller in ['stereo_egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['stereo_fourth_floor_obstacle']:
-        #     for controller in ['stereo_egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':2}}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['stereo_sector_extra']:
-        #     for controller in ['stereo_egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 30, 'controller_args': {'sim_time': 2}}
-        #             self.task_queue.put(task)
-
-        # for scenario in ['stereo_fourth_floor_obstacle']:
-        #     for controller in ['stereo_egocylindrical_pips_dwa']:
-        #         for seed in range(0, 50):
-        #             task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'box_turtle', 'min_obstacle_spacing': 1.2, 'num_obstacles': 50, 'controller_args': {'sim_time': 2}}
-        #             self.task_queue.put(task)
-
-
-        # task = {'scenario': 'sector_laser', 'controller': 'egocylindrical_pips_dwa', 'seed': 0, 'robot': 'turtlebot'}
-        # self.task_queue.put(task)
-        #
-        # for sim_time in [1,2,3]:
-        #     task = {'scenario': 'sector_laser', 'controller': 'egocylindrical_pips_dwa', 'seed': 0, 'robot': 'turtlebot', 'controller_args':{'sim_time':sim_time}}
-        #     self.task_queue.put(task)
-
-        # for scenario in ['stereo_sector_extra', 'stereo_sector_laser']:
-        #     for sim_time in [1, 2, 3, 4]:
-        #         for controller in ['stereo_egocylindrical_pips_dwa']:
-        #             for seed in range(0, 50):
-        #                 task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot',
-        #                         'min_obstacle_spacing': 1, 'num_obstacles': 30, 'controller_args':{'sim_time':sim_time}}
-        #                 self.task_queue.put(task)
-        #
-        # for scenario in ['stereo_campus_obstacle', 'stereo_fourth_floor_obstacle']:
-        #     for sim_time in [1, 2, 3, 4]:
-        #         for controller in ['stereo_egocylindrical_pips_dwa']:
-        #             for seed in range(0, 50):
-        #                 task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot',
-        #                         'min_obstacle_spacing': 1, 'num_obstacles': 50, 'controller_args':{'sim_time':sim_time}}
-        #                 self.task_queue.put(task)
-
-
-        # for controller in ['dwa']:
-        #     '''
-        #     #for scenario in ['sparse','medium','dense']:
-        #     for scenario in ['medium']:
-        #         for seed in range(50,1000):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-        #             self.task_queue.put(task)
-        #     for scenario in ['sparse','dense']:
-        #         for seed in range(0,1000):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-        #             self.task_queue.put(task)
-        #
-        #     for scenario in ['full_sector_laser']: #,'full_sector_extra','full_campus_obstacle','full_fourth_floor_obstacle']:
-        #         for seed in range(200,10000):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles': 30}
-        #             self.task_queue.put(task)
-        #     '''
-        #
-        #
-        #     for scenario in ['training_room_global', 'training_room2_global']:
-        #         for seed in range(0,4000):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-        #             self.task_queue.put(task)
-        #
-        #     for scenario in ['training_room', 'training_room2']:
-        #         for seed in range(0,4000):
-        #             task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-        #             self.task_queue.put(task)
-        #
-        # for scenario in ['training_room', 'training_room2']:
-        #     for seed in range(0, 4000):
-        #         for controller in ['p2d', 'p2d_global']:
-        #             task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
-        #             self.task_queue.put(task)
-        '''
-        for controller in ['dwa']:
-             for scenario in ['training_room', 'training_room2']:
-                 for seed in range(0,2000):
-                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-                     self.task_queue.put(task)
-             for scenario in ['full_sector_laser', 'full_campus_obstacle', 'full_fourth_floor_obstacle']:
-                 for seed in range(0,1000):
-                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-                     self.task_queue.put(task)
-             for scenario in ['dense', 'medium']:
-                 for seed in range(0, 1000):
-                     task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
-                     self.task_queue.put(task)
-             for scenario in ['training_room_global', 'training_room2_global']:
-                 for seed in range(0,1000):
-                     task= {'scenario': scenario, 'controller':controller, 'seed':seed, 'robot':'turtlebot'}
-                     self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['training_room']:
-            for seed in range(0, 300):
-                for controller in ['laser_classifier_weighted_2d_no_neg']:  # 'laser_classifier_weighted',
-                    task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
-                    self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['training_room','training_room2','dense']:
-            for seed in range(0, 500):
-                for controller in ['laser_classifier_weighted_2d_no_neg']: #'laser_classifier_weighted',, 'p2d'
-                    task = {'scenario': scenario, 'controller': controller, 'seed': seed, 'robot': 'turtlebot'}
-                    self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['dense',]:
-            for seed in range(0, 200):
-                for controller in ['teb', 'dwa', 'ego_teb']:
-                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot'}
-                    self.task_queue.put(task)
-
-            for seed in range(0, 200):
-                for controller in ['teb', 'dwa', 'ego_teb']:
-                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': 0.5}
-                    self.task_queue.put(task)
-        '''
-
-        '''
-        for scenario in ['full_fourth_floor_obstacle']:
-            for seed in range(75, 200):
-                for controller in ['teb', 'dwa', 'ego_teb']:
-                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'num_obstacles': 50,
-                            'min_obstacle_spacing': 0.5, 'robot': 'turtlebot'}
-                    self.task_queue.put(task)
-
-        for scenario in ['dense', ]:
-            for seed in range(0, 200):
-                for controller in ['p2d', 'ego_teb']:
-                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                            'min_obstacle_spacing': 0.5}
-                    self.task_queue.put(task)
-        '''
-
-
-        '''
-        for scenario in ['dense']:
-            for min_obstacle_spacing in [0.5, 1.0]:
-                for seed in range(0, 20):
-                    for controller in ['ego_teb', 'ego_teb_2s', 'ego_teb_4s', 'ego_teb_10s', 'teb', 'teb_2s', 'teb_4s', 'teb_10s']:
-                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
-                        self.task_queue.put(task)
-            for min_obstacle_spacing in [0.5, 1.0]:
-                for seed in range(20, 200):
-                    for controller in ['ego_teb', 'ego_teb_2s', 'ego_teb_4s', 'ego_teb_10s', 'teb', 'teb_2s',
-                                       'teb_4s', 'teb_10s']:
-                        task = {'controller': controller, 'seed': seed, 'scenario': scenario,
-                                'robot': 'turtlebot',
-                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['dense']:
-            for min_obstacle_spacing in [.75]:
-                for seed in range(0, 100):
-                    #for controller in ['dwa', 'dwa_4s', 'dwa_10s', 'teb', 'teb_4s', 'ego_teb', 'ego_teb_4s', 'ego_teb_4s_gap', 'ego_teb_4s_strong_gap', 'ego_teb_4s_strong_wide_gap', 'teb_10s', 'ego_teb_10s', 'ego_teb_10s_gap', 'ego_teb_4s_gap_kin', 'ego_teb_10s_gap_kin' ]:
-                    for controller in ['ego_teb', 'ego_teb_4s', 'ego_teb_10s',
-                                       'ego_teb_gap','ego_teb_4s_gap', 'ego_teb_10s_gap',
-                                       'ego_teb_strong_gap','ego_teb_4s_strong_gap', 'ego_teb_10s_strong_gap',
-                                       'ego_teb_strong_wide_gap','ego_teb_4s_strong_wide_gap', 'ego_teb_10s_strong_wide_gap' ]:
-                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False, 'feasibility_check_no_poses':-1}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['dense']:
-            for min_obstacle_spacing in [.75]:
-                for seed in range(0, 200):
-                    for controller in ['teb', 'teb_2s', 'teb_4s', 'teb_10s', 'ego_teb_gap']:
-                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False}
-                        self.task_queue.put(task)
-        '''
-        '''
-        for scenario in ['dense']:
-            for min_obstacle_spacing in [.75]:
-                for seed in range(0, 200):
-                    for global_planning_freq in [1, .5, .25, .1]:
-                        for feasibility_check_no_poses in [5, 10, -1]:
-                            for controller in ['general_teb']:
-                                for costmap_converter_plugin in ['PolygonsDBSMCCH', 'PolygonsDBSConcaveHull']:
-                                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                'controller_args': {'converter': 'true', 'costmap_converter_plugin': 'costmap_converter::CostmapTo'+costmap_converter_plugin, 'global_planning_freq': global_planning_freq,
-                                                                    'feasibility_check_no_poses': feasibility_check_no_poses, 'simple_exploration': 'false'}}
-                                        self.task_queue.put(task)
-
-                            for controller in ['general_ego_teb']:
-                                for feasibility_check_no_tebs in [1, 4]:
-                                    for egocircle_early_pruning in ['false', 'true']:
-                                        for weight_gap in [0]:
-                                            task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                    'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                    'controller_args': {'weight_gap':weight_gap, 'global_planning_freq': global_planning_freq, 'egocircle_early_pruning': egocircle_early_pruning,
-                                                                        'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'simple_exploration': 'false'}}
-                                            self.task_queue.put(task)
-
-                                        for [gap_boundary_threshold, gap_boundary_ratio] in [[0.1,0.2], [0.4,0.5], [0.8,0.9]]:
-                                            for weight_gap in [1000]:
-                                                for gap_boundary_exponent in [1,2,4]:
-                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                            'controller_args': {'weight_gap':weight_gap, 'gap_boundary_exponent':gap_boundary_exponent, 'global_planning_freq': global_planning_freq,
-                                                                                'egocircle_early_pruning': egocircle_early_pruning, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
-                                                                                'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'simple_exploration': 'false'}}
-                                                    self.task_queue.put(task)
-
-                                            for weight_gap in [10000]:
-                                                for gap_boundary_exponent in [1, 2]:
-                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario,
-                                                            'robot': 'turtlebot',
-                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                            'controller_args': {'weight_gap': weight_gap, 'egocircle_early_pruning': egocircle_early_pruning,
-                                                                                'gap_boundary_exponent': gap_boundary_exponent, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
-                                                                                'global_planning_freq': global_planning_freq,
-                                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
-                                                                                'feasibility_check_no_tebs': feasibility_check_no_tebs,
-                                                                                'simple_exploration': 'false'}}
-                                                    self.task_queue.put(task)
-        '''
-
-        num_seeds=200
-        '''
-        for scenario in ['dense']:
-            for min_obstacle_spacing in [.75]:
-                for seed in range(0, num_seeds):
-                    for global_planning_freq in [1]:
-                        for feasibility_check_no_poses in [5]:
-                            for controller in ['general_teb']:
-                                for costmap_converter_plugin in ['PolygonsDBSMCCH']:
-                                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                'controller_args': {'converter': 'true', 'costmap_converter_plugin': 'costmap_converter::CostmapTo'+costmap_converter_plugin, 'global_planning_freq': global_planning_freq,
-                                                                    'feasibility_check_no_poses': feasibility_check_no_poses, 'simple_exploration': 'false'}}
-                                        self.task_queue.put(task)
-
-                            for controller in ['general_ego_teb']:
-                                for feasibility_check_no_tebs in [4]:
-                                    for egocircle_early_pruning in ['true']:
-                                        for [gap_boundary_threshold, gap_boundary_ratio] in [[0.8,0.9]]:
-                                            for weight_gap in [1000]:
-                                                for gap_boundary_exponent in [1]:
-                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                            'controller_args': {'weight_gap':weight_gap, 'gap_boundary_exponent':gap_boundary_exponent, 'global_planning_freq': global_planning_freq,
-                                                                                'egocircle_early_pruning': egocircle_early_pruning, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
-                                                                                'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'gap_exploration': 'true',  'gap_h_signature': 'true', 'simple_exploration': 'false'}}
-                                                    self.task_queue.put(task)
-
-        for min_obstacle_spacing in [1.0]:
-            for global_planning_freq in [1]:
-                for feasibility_check_no_poses in [5]:
-                    for scenario in ['full_campus_obstacle', 'full_fourth_floor_obstacle','full_sector_laser']:
-                        for seed in range(0, num_seeds):
-                            for controller in ['general_teb']:
-                                for num_obstacles in [50]:
-                                    for costmap_converter_plugin in ['PolygonsDBSMCCH']:
-                                                task = {'controller': controller, 'seed': seed,
-                                                        'scenario': scenario, 'robot': 'turtlebot',
-                                                        'min_obstacle_spacing': min_obstacle_spacing,
-                                                        'num_obstacles': num_obstacles,
-                                                        'record': False,
-                                                        'controller_args': {'converter': 'true',
-                                                                            'costmap_converter_plugin': 'costmap_converter::CostmapTo' + costmap_converter_plugin,
-                                                                            'global_planning_freq': global_planning_freq,
-                                                                            'feasibility_check_no_poses': feasibility_check_no_poses,
-                                                                            'simple_exploration': 'false'}}
-                                                self.task_queue.put(task)
-                            for controller in ['general_ego_teb']:
-                                for feasibility_check_no_tebs in [4]:
-                                    for egocircle_early_pruning in ['true']:
-                                        for [gap_boundary_threshold, gap_boundary_ratio] in [[0.1,0.2]]:
-                                            for weight_gap in [1000]:
-                                                for gap_boundary_exponent in [1]:
-                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                            'controller_args': {'weight_gap':weight_gap, 'gap_boundary_exponent':gap_boundary_exponent, 'global_planning_freq': global_planning_freq,
-                                                                                'egocircle_early_pruning': egocircle_early_pruning, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
-                                                                                'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'gap_exploration': 'true', 'gap_h_signature': 'true', 'simple_exploration': 'false'}}
-                                                    self.task_queue.put(task)
-
-
-
-        for scenario in ['dense']:
-            for min_obstacle_spacing in [.75]:
-                for seed in range(0, num_seeds):
-                    for global_planning_freq in [1]:
-                        for feasibility_check_no_poses in [5]:
-                            for controller in ['general_ego_teb']:
-                                for feasibility_check_no_tebs in [4]:
-                                    for egocircle_early_pruning in ['false']:
-                                        for [gap_boundary_threshold,
-                                             gap_boundary_ratio] in [[0.1,0.2],[0.8, 0.9]]:
-                                            for weight_gap in [1000]:
-                                                for gap_boundary_exponent in [1]:
-                                                    task = {'controller': controller,
-                                                            'seed': seed,
-                                                            'scenario': scenario,
-                                                            'robot': 'turtlebot',
-                                                            'min_obstacle_spacing': min_obstacle_spacing,
-                                                            'record': False,
-                                                            'controller_args': {
-                                                                'weight_gap': weight_gap,
-                                                                'gap_boundary_exponent': gap_boundary_exponent,
-                                                                'global_planning_freq': global_planning_freq,
-                                                                'egocircle_early_pruning': egocircle_early_pruning,
-                                                                'gap_boundary_threshold': gap_boundary_threshold,
-                                                                'gap_boundary_ratio': gap_boundary_ratio,
-                                                                'gap_exploration': 'true',
-                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
-                                                                'feasibility_check_no_tebs': feasibility_check_no_tebs,
-                                                                'gap_h_signature': 'true',
-                                                                'simple_exploration': 'false'}}
-                                                    self.task_queue.put(task)
-
-        '''
-        for min_obstacle_spacing in [0.5]:
-            for global_planning_freq in [1]:
-                for feasibility_check_no_poses in [5]:
-                    for scenario in ['dense']:
-                        for seed in range(0, 100):
-                            for controller in ['general_ego_teb']:
-                                for feasibility_check_no_tebs in [4]:
-                                    for egocircle_early_pruning in ['true']:
-                                        for [gap_boundary_threshold, gap_boundary_ratio] in [[0.8,0.9]]:
-                                            for weight_gap in [1000]:
-                                                for gap_boundary_exponent in [1]:
-                                                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
-                                                            'min_obstacle_spacing': min_obstacle_spacing, 'record': False,
-                                                            'controller_args': {'weight_gap':weight_gap, 'gap_boundary_exponent':gap_boundary_exponent, 'global_planning_freq': global_planning_freq,
-                                                                                'egocircle_early_pruning': egocircle_early_pruning, 'gap_boundary_threshold': gap_boundary_threshold, 'gap_boundary_ratio':gap_boundary_ratio,
-                                                                                'feasibility_check_no_poses': feasibility_check_no_poses, 'feasibility_check_no_tebs': feasibility_check_no_tebs, 'gap_exploration': 'true', 'gap_h_signature': 'true', 'simple_exploration': 'false'}}
-                                                    self.task_queue.put(task)
-                            for controller in ['general_teb']:
-                                for costmap_converter_plugin in ['PolygonsDBSMCCH']:
-                                    task = {'controller': controller, 'seed': seed,
-                                            'scenario': scenario, 'robot': 'turtlebot',
-                                            'min_obstacle_spacing': min_obstacle_spacing,
-                                            'record': False,
-                                            'controller_args': {'converter': 'true',
-                                                                'costmap_converter_plugin': 'costmap_converter::CostmapTo' + costmap_converter_plugin,
-                                                                'global_planning_freq': global_planning_freq,
-                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
-                                                                'simple_exploration': 'false'}}
-                                    self.task_queue.put(task)
-
-
-
-    #This list should be elsewhere, possibly in the configs package
-    def addTasks10(self):
-        controllers = ["pips_dwa", "pips_dwa_propagated"] #,"dwa", "teb"["brute_force"] #
-        barrel_arrangements = [3,5,7]
-
-        for a in range(0,500):
-            for num_barrels in barrel_arrangements:
-                for controller in controllers:
-                    for repetition in range(1):
-                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-
-    def addTasks1(self):
-        controllers = ["pips_dwa", "octo_dwa", "teb"]
-        barrel_arrangements = [3,5,7]
-
-        for a in range(100):
-            for num_barrels in barrel_arrangements:
-                for controller in controllers:
-                    for repetition in range(4):
-                        task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
-                        self.task_queue.put(task)
-
-    def addTasks3(self):
-        task = {'scenario': 'trashcans', 'num_barrels': 3, 'controller': 'octo_dwa', 'seed': 54}
-        for _ in range(5):
+        for task in tasks2:
             self.task_queue.put(task)
 
-    def singletask(self):
-        task = {'scenario': 'campus', 'robot': 'turtlebot', 'controller': None}
-        self.task_queue.put(task)
 
-    def addTasks1(self):
-        controllers = ["pips_dwa", "octo_dwa", "teb"]
-
-        for i in range(100):
-            for j in range(0,7): #[1,2,5,6]:
-                for controller in controllers:
-
-                    task = {'scenario': 'campus', 'num_barrels': 20, 'controller': controller, 'seed': 25+ i, 'target_id': j}
-
-                    self.task_queue.put(task)
 
 
 class GazeboMaster(mp.Process):
@@ -1312,7 +205,7 @@ class GazeboMaster(mp.Process):
 
         #if 'SIMULATION_RESULTS_DIR' in os.environ:
 
-
+        # Disabling all GUI elements of Gazebo decreases simulation load, but also disables cameras
         if self.gui==False:
             if 'DISPLAY' in os.environ:
                 del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
@@ -1350,7 +243,7 @@ class GazeboMaster(mp.Process):
 
                 if scenario is not None:
 
-
+                    #TODO: handle failure to launch gazebo
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile(task["robot"])) #pass in world info
                     #time.sleep(30)
 
@@ -1372,7 +265,7 @@ class GazeboMaster(mp.Process):
 
                             record = task["record"] if "record" in task else False
                             #TODO: make this a more informative type
-                            result = test_driver.run_test(goal_pose=scenario.getGoal(), record=record)
+                            result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record)
 
                         except rospy.ROSException as e:
                             result = "ROSException: " + str(e)
@@ -1424,23 +317,8 @@ class GazeboMaster(mp.Process):
         print "GazeboMaster shutdown: killing core..."
         self.core.shutdown()
         #self.core.kill()
-        #os.killpg(os.getpgid(self.core.pid), signal.SIGTERM)
+
         print "All cleaned up"
-
-
-    def start_core(self):
-
-        #env_prefix = "ROS_MASTER_URI="+ros_master_uri + " GAZEBO_MASTER_URI=" + gazebo_master_uri + " "
-
-        my_command = "roscore -p " + str(self.ros_port)
-
-        #my_env = os.environ.copy()
-        #my_env["ROS_MASTER_URI"] = self.ros_master_uri
-        #my_env["GAZEBO_MASTER_URI"] = self.gazebo_master_uri
-
-        print "Starting core..."
-        self.core = subprocess.Popen(my_command.split()) # preexec_fn=os.setsid
-        print "Core started! [" + str(self.core.pid) + "]"
 
 
     def roslaunch_core(self):
@@ -1470,6 +348,7 @@ class GazeboMaster(mp.Process):
         #Remapping stdout to /dev/null
         sys.stdout = open(os.devnull, "w")
 
+        # Set environment variables to specify controller arguments
         for key,value in controller_args.items():
             var_name = "GM_PARAM_"+ key.upper()
             value = str(value)
@@ -1499,7 +378,7 @@ class GazeboMaster(mp.Process):
 
 
         # This will wait for a roscore if necessary, so as long as we detect any failures
-        # in start_roscore, we should be fine
+        # in roslaunch_core, we should be fine
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
         #roslaunch.configure_logging(uuid) #What does this do?
         #print path
@@ -1513,6 +392,7 @@ class GazeboMaster(mp.Process):
             )
             self.gazebo_launch.start()
 
+        # Wait for gazebo simulation to be running
         try:
             msg = rospy.wait_for_message("/odom", Odometry, 30)
         except rospy.exceptions.ROSException:
@@ -1543,30 +423,22 @@ if __name__ == "__main__":
     start_time = time.time()
     master = MultiMasterCoordinator(4)
     master.start()
-    master.addTasks()
+
+    def getTasks():
+        for scenario in ['dense', 'campus', 'campus_obstacle', 'full_campus_obstacle', 'sector', 'sector_laser', 'full_sector_laser', 'sector_extra', 'fourth_floor', 'fourth_floor_obstacle', 'full_fourth_floor_obstacle', 'sparse', 'dense', 'medium', 'training_room']:
+            for seed in range(10):
+                for controller in ['teb']:
+                    task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot'}
+                    yield task
+
+    master.add_tasks(tasks=getTasks())
     
     #master.singletask()
-    master.waitToFinish()
+    master.wait_to_finish()
     #rospy.spin()
     master.shutdown()
     end_time = time.time()
     print "Total time: " + str(end_time - start_time)
 
-    '''
-    start_time = time.time()
-    master = MultiMasterCoordinator(2)
-    master.start()
-    for scenario in ['full_fourth_floor_obstacle', 'full_sector_laser', 'full_campus_obstacle']:
-        for seed in range(0, 50):
-            for controller in ['p2d', 'laser_classifier_weighted_2d_no_neg']:
-                task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'num_obstacles': 50,
-                        'min_obstacle_spacing': 0.5, 'robot': 'turtlebot', 'record': False}
-                master.task_queue.put(task)
 
-    master.waitToFinish()
-
-    master.shutdown()
-    end_time = time.time()
-    print "Total time: " + str(end_time - start_time)
-    '''
 

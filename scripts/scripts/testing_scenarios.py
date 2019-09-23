@@ -1,4 +1,4 @@
-import rospkg
+import rospkg, rospy
 from nav_scripts.gazebo_driver import GazeboDriver
 from nav_scripts.costmap_driver import CostmapDriver
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
@@ -7,86 +7,123 @@ import random
 import tf
 import math
 
-class TestingScenarios:
+'''
+
+class ImplInterface(object):
+    name="general"
+    impls = {}
+
     def __init__(self):
-        self.gazebo_driver = GazeboDriver(as_node=False)
+        name = self.name
+        if name not in ImplInterface.impls:
+            ImplInterface.impls[name] = type(self)
+
+
+class thing1(ImplInterface):
+    name="thing1"
+
+    def __init__(self):
+        super(thing1, self).__init__()
+
+class thing2(ImplInterface):
+    name="thing2"
+
+    def __init__(self):
+        super(thing2, self).__init__()
+
+class thing3(ImplInterface):
+    name="thing3"
+
+    def __init__(self):
+        super(thing3, self).__init__()
+
+if __name__ == '__main__':
+    a = thing1()
+    b = thing2()
+    c = thing3()
+    pass
+    print ImplInterface.impls
+
+
+'''
+
+
+'''
+Todo: use this kind of structure with the testing scenarios, so that each time a new one is defined, it will add itself
+to the list of available classes. That way, the scenario name is only specified in one place, and there is no need
+to manually maintain the list of available classes, or to have the long list of conditional statements to find the
+desired scenario.
+While I'm at it, I should make the structure a bit nicer as far as the inheritance goes, be a bit more consistent
+in how I do things.
+Things that are common to all scenarios (whether or not they use them)
+GazeboDriver
+world
+name
+def getGoal
+
+Commonly used things:
+Seed/random instance
+    def getStartingPose(self):
+
+'world' and 'name' never change and could be created as static class variables
+GazeboDriver could potentially be a static class variable in the TestingScenario class, though probably easier to
+just have a separate method handle assigning each created scenario a reference to the gazebo driver
+
+Get rid of all the repeated getPoseMsg implementations
+
+Make TestingScenario 'abstract', in that it is never created directly.
+Create new type that handles the 'general' case of being provided the world, etc.
+That way, all of them can just take in 'task'...
+Or even better, They shouldn't take in anything to constructor.
+They will be constructed, then gazebo driver and task will be passed to TestingScenario, which will call functions corresponding
+to an init, but literally only unique things will need to be handled...
+Or I could keep the inheritance structure...
+The main challenge is deciding what will always happen and can therefore be assumed safely, and what may not.
+For most of them, the 'world' is static. The exception will only be called if there is no match for the scenario (or it doesn't exist
+in the task at all), and 'world' must therefore exist in the task; if it doesn't, don't bother calling GeneralScenario.
+If an 'init_pose' or 'target_pose' are included in the task, they should override default behavior.
+
+'''
+
+
+
+
+class TestingScenarios:
+    impls = {}
+
+    def __init__(self):
+        TestingScenario.gazebo_driver = GazeboDriver(as_node=False)
 
     def getScenario(self, task):
-        if "scenario" in task:
+        try:
             scenario_type = task["scenario"]
-
-
-
-            if scenario_type == "trashcans":
-                return TrashCanScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "fourth_floor":
-                return FourthFloorScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "fourth_floor_obstacle":
-                return FourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "full_fourth_floor_obstacle":
-                return FullFourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "stereo_fourth_floor_obstacle":
-                return StereoFourthFloorObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "campus":
-                return CampusScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "campus_obstacle":
-                return CampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "full_campus_obstacle":
-                return FullCampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "stereo_campus_obstacle":
-                return StereoCampusObstacleScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "sector":
-                return SectorScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "sector_laser":
-                return SectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "full_sector_laser":
-                return FullSectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "stereo_sector_laser":
-                return StereoSectorLaserScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "sector_extra":
-                return SectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "full_sector_extra":
-                return FullSectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "stereo_sector_extra":
-                return StereoSectorExtraScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "sparse":
-                return SparseScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "dense":
-                return DenseScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "medium":
-                return MediumScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "corridor_zigzag":
-                return CorridorZigzagScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "corridor_zigzag_door":
-                return CorridorZigzagDoorScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "training_room":
-                return TrainingRoomScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "training_room2":
-                return TrainingRoomScenario2(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "training_room_global":
-                return TrainingRoomGlobalScenario(task=task, gazebo_driver=self.gazebo_driver)
-            elif scenario_type == "training_room2_global":
-                return TrainingRoomGlobalScenario2(task=task, gazebo_driver=self.gazebo_driver)
-            else:
-                print "Error! Unknown scenario type [" + scenario_type + "]"
+            try:
+                return TestingScenarios.impls[scenario_type](task=task)
+            except KeyError as e:
+                rospy.logerr("Error! Unknown scenario type [" + scenario_type + "]: " + str(e))
                 return None
-        elif "init_pose" in task and "goal" in task and "world" in task:
-            return TestingScenario(task["world"],task["init_pose"],task["goal"],self.gazebo_driver)
-        else:
-            print "Warning! No scenario defined!"
+                #TODO: maybe throw some kind of exception to make it clear to the caller that this case failed?
 
-            return None
+        except KeyError:
+            rospy.logerr("Error! Task does not specify scenario type [" + str(task) + "]: " + str(e))
+
+    @staticmethod
+    def registerScenario(scenario):
+        if scenario.name not in TestingScenarios.impls:
+            TestingScenarios.impls[scenario.name] = scenario
+        elif TestingScenarios.impls[scenario.name] == scenario:
+            rospy.loginfo("Ignoring repeated registration of scenario [" + scenario.name + "]")
+        else:
+            rospy.logwarn("Warning! A scenario has already been registered with the given name! [" + scenario.name + "]. Current scenario not added")
 
     @staticmethod
     def getScenarioTypes():
-        scenarios = [TrashCanScenario, SectorScenario, CampusScenario, FourthFloorObstacleScenario, CampusObstacleScenario, SectorExtraScenario, SparseScenario, DenseScenario, MediumScenario, TrainingRoomScenario]
-        return scenarios
-
+        return TestingScenarios.impls
 
     @staticmethod
     def getFieldNames():
         fieldnames = ["scenario"]
-        for scenario in TestingScenarios.getScenarioTypes():
+        for scenario in TestingScenarios.getScenarioTypes().itervalues():
             fieldnames.extend(scenario.getUniqueFieldNames())
         return fieldnames
 
@@ -96,63 +133,109 @@ def getPoseMsg(pose):
     pose_msg.position.y = pose[1]
 
     q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
-    # msg = Quaternion(*q)
-
     pose_msg.orientation = Quaternion(*q)
 
     return pose_msg
 
+
+
+#Abstract top level interface. Holds things that are static and common to all scenarios
 class TestingScenario(object):
-    def __init__(self, world, init_pose, target_pose, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
-        self.world = world
-        self.init_pose = init_pose
-        self.target_pose = target_pose
+    gazebo_driver = None
+    rospack = rospkg.RosPack()
+    nav_frame_id = "map"
+
+    def __init__(self, task):
+        pass
+
+
+#Things that are taken care of at this level: seed, random
+#TODO: possibly move most of this class to the TestingScenario class, and have this class only be for general cases that specify world, start, and end pose
+class GeneralScenario(TestingScenario):
+    name = "general"
+
+    def __init__(self, task):
+        super(GeneralScenario, self).__init__(task=task)
+
+        self.seed= task['seed'] if 'seed' in task else 0
+        self.random = random.Random()
+        self.random.seed(self.seed)
+
+        if not hasattr(self, 'world'):
+            if "world" not in task:
+                rospy.logerr("["+self.name + "] scenario requires 'world' to be specified in task!")
+            else:
+                self.world = task["world"]
+
+        #TODO: these really are only specific to this class, putting them here breaks inheritance model
+        if type(self) == GeneralScenario:
+            #TODO: throw exceptions if task does not contain necessary information for scenario
+
+
+            if "init_pose" not in task:
+                rospy.logerr("[general] scenario requires 'init_pose'!")
+            else:
+                self.init_pose = task["init_pose"]
+
+            if "target_pose" not in task:
+                rospy.logerr("[general] scenario requires 'target_pose'!")
+            else:
+                self.target_pose = task["target_pose"]
+
 
     def getGazeboLaunchFile(self, robot):
-        rospack = rospkg.RosPack()
-        path = rospack.get_path("nav_configs")
+        path = self.rospack.get_path("nav_configs")
         return path + "/launch/gazebo_" + robot + "_" + self.world + "_world.launch"
 
+    #Override this to set starting pose
     def getStartingPose(self):
-        return self.getPoseMsg(self.init_pose)
+        return self.init_pose
 
+    #TODO: if start pose specified, use that instead, ex: 'init_pose'
+    def getStartingPoseMsg(self):
+        start_pose = self.getStartingPose()
+        #TODO: possibly add to task?
+        return getPoseMsg(start_pose)
+
+    #Override this to set goal
     def getGoal(self):
+        return self.target_pose
+
+    #TODO: if goal pose specified, use that instead, ex: 'target_pose'
+    def getGoalMsg(self):
         goal = PoseStamped()
-        goal.pose = self.getPoseMsg(self.target_pose)
-        goal.header.frame_id = "map"
+        target_pose = self.getGoal()
+        goal.pose = getPoseMsg(target_pose)
+        goal.header.frame_id = self.nav_frame_id
         return goal
 
+    # Override this to place obstacles, etc
+    def setupEnvironment(self):
+        pass
+
+    #Override this to for full control over scenario setup
     def setupScenario(self):
-        print "Resetting robot..."
+        rospy.loginfo("Resetting robot...")
         # TODO: Check if reset successful; if not, wait briefly and try again,
         # eventually fail and throw error
         self.gazebo_driver.checkServicesTopics(10)
 
         self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.moveRobot(self.getStartingPoseMsg())
         self.gazebo_driver.resetOdom()
+        self.gazebo_driver.reset(self.seed)
+        self.setupEnvironment()
         self.gazebo_driver.unpause()
 
     @staticmethod
     def getUniqueFieldNames():
-        return [""]
+        return ["world", "seed", 'init_pose', 'target_pose']
 
 
-    def getPoseMsg(self, pose):
-        pose_msg = Pose()
-        pose_msg.position.x = pose[0]
-        pose_msg.position.y = pose[1]
+TestingScenarios.registerScenario(GeneralScenario)
 
-        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
-        # msg = Quaternion(*q)
-
-        pose_msg.orientation = Quaternion(*q)
-
-        return pose_msg
-
-
-class TrashCanScenario(TestingScenario):
+'''
+class TrashCanScenario(GeneralScenario):
     def __init__(self, task, gazebo_driver):
         self.gazebo_driver = gazebo_driver
 
@@ -190,28 +273,22 @@ class TrashCanScenario(TestingScenario):
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.moveBarrels(self.num_barrels)
         self.gazebo_driver.unpause()
+'''
 
 
+class CampusScenario(GeneralScenario):
+    name='campus'
+    world='campus'
+    #TODO: a more generic approach for checking parameters
+    #defaults={'seed': 0, 'num_obstacles':0, 'init_id': 0, 'min_obstacle_spacing': 0, 'target_id': None}
 
-class CampusScenario(TestingScenario):
-    def __init__(self, task, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
+    def __init__(self, task):
+        super(CampusScenario, self).__init__(task=task)
 
-        self.world = "campus"
-
-        self.seed = task["seed"] if "seed" in task else 0
-        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
-
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 0
         self.init_id = task["init_id"] if "init_id" in task else 0
-
-        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 0
-
+        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 0    #TODO: set this to a saner value, or maybe just require it?
         self.target_id = task["target_id"] if "target_id" in task else None
-
-
-        self.random = random.Random()
-        self.random.seed(self.seed)
-
 
 
         self.init_pose = Pose()
@@ -263,171 +340,126 @@ class CampusScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
-
-    def getPoseMsg(self, pose):
-        pose_msg = Pose()
-        pose_msg.position.x = pose[0]
-        pose_msg.position.y = pose[1]
-
-        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
-        # msg = Quaternion(*q)
-
-        pose_msg.orientation = Quaternion(*q)
-
-        return pose_msg
+        return ["num_obstacles", "target_id", "init_id", "min_obstacle_spacing"]
 
     def getStartingPose(self):
         pose = self.init_poses[self.init_id]
-        init_pose = self.getPoseMsg(pose=pose)
-
-        return init_pose
+        return pose
 
     def getGoal(self):
         pose = self.target_poses[self.target_id]
-        pose_msg = self.getPoseMsg(pose=pose)
-        pose_stamped = PoseStamped()
-        pose_stamped.pose = pose_msg
-        pose_stamped.header.frame_id="map"
-        return pose_stamped
+        return pose
 
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
-        self.gazebo_driver.unpause()
+    def setupEnvironment(self):
+        #TODO: make 'moveBarrels' do what is says it does, and possibly add new functions to allow for specifying the types of obstacles to place
+        self.gazebo_driver.moveBarrels(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
+
+TestingScenarios.registerScenario(CampusScenario)
+
 
 class CampusObstacleScenario(CampusScenario):
-    def __init__(self, task, gazebo_driver):
-        super(CampusObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="campus_obstacle"
+    world="campus_obstacle"
 
-        self.world = "campus_obstacle"
+    def __init__(self, task):
+        super(CampusObstacleScenario, self).__init__(task=task)
 
-        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500 #TODO: set this to a saner value, or maybe just require it?
 
-    # def getUniqueFieldNames():
-    #     return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
-
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
+    def setupEnvironment(self):
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
-        self.gazebo_driver.unpause()
+
+TestingScenarios.registerScenario(CampusObstacleScenario)
 
 
 class FullCampusObstacleScenario(CampusObstacleScenario):
-    def __init__(self, task, gazebo_driver):
-        super(FullCampusObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="full_campus_obstacle"
+    world = "full_campus_obstacle"
 
-        self.world = "full_campus_obstacle"
+    def __init__(self, task):
+        super(FullCampusObstacleScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(FullCampusObstacleScenario)
+
 
 class StereoCampusObstacleScenario(CampusObstacleScenario):
+    name = "stereo_campus_obstacle"
+    world = "stereo_campus_obstacle"
+
     def __init__(self, task, gazebo_driver):
-        super(StereoCampusObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+        super(StereoCampusObstacleScenario, self).__init__(task=task)
 
-        self.world = "stereo_campus_obstacle"
-
-
+TestingScenarios.registerScenario(StereoCampusObstacleScenario)
 
 
-class SectorScenario(TestingScenario):
-    def __init__(self, task, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
+class SectorScenario(GeneralScenario):
+    name = "sector"
+    world = "sector"
+    poses = [[-9, 9, -.78], [-9, 0, 0], [-9, -9, .78], [9, -9, 2.36], [9, 0, 3.14], [9, 9, -2.36]]# [0,-9,1.57]
 
-        self.world = "sector"
-
-        self.seed = task["seed"] if "seed" in task else 0
-
-        self.poses = [[-9,9,-.78], [-9,0,0], [-9,-9,.78], [9,-9,2.36], [9,0,3.14], [9,9,-2.36]   ] # [0,-9,1.57]
-
-
+    def __init__(self, task):
+        super(SectorScenario, self).__init__(task=task)
+        # TODO: create class dictionary of default values, do all checking/setting of values at general level. Support lambdas
         self.init_id = task["init_id"] if "init_id" in task else 0
-
         self.target_id = task["target_id"] if "target_id" in task else (self.init_id + len(self.poses)/2) % len(self.poses)
-
-
-        self.random = random.Random()
-        self.random.seed(self.seed)
-
 
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_obstacles", "seed", "target_id", "init_id"]
-
-    def getPoseMsg(self, pose):
-        pose_msg = Pose()
-        pose_msg.position.x = pose[0]
-        pose_msg.position.y = pose[1]
-
-        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
-        # msg = Quaternion(*q)
-
-        pose_msg.orientation = Quaternion(*q)
-
-        return pose_msg
+        return ["num_obstacles", "target_id", "init_id"]
 
     def getStartingPose(self):
         y = self.random.random()*(18) - 9
         pose = [-9, y, 0]
-        init_pose = self.getPoseMsg(pose=pose)
-
-        return init_pose
+        return pose
 
     def getGoal(self):
         y = self.random.random()*(18) - 9
 
         pose = [9,y,3.14]
-        init_pose = self.getPoseMsg(pose=pose)
-        pose_stamped = PoseStamped()
-        pose_stamped.pose = init_pose
-        pose_stamped.header.frame_id="map"
-        return pose_stamped
+        return pose
 
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.unpause()
+TestingScenarios.registerScenario(SectorScenario)
 
 
 class SectorLaserScenario(SectorScenario):
-    def __init__(self, task, gazebo_driver):
-        super(SectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="sector_laser"
+    world="sector_laser"
 
-        self.world = "sector_laser"
+    def __init__(self, task):
+        super(SectorLaserScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(SectorLaserScenario)
 
 
 class FullSectorLaserScenario(SectorLaserScenario):
-    def __init__(self, task, gazebo_driver):
-        super(FullSectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="full_sector_laser"
+    world="full_sector_laser"
 
-        self.world = "full_sector_laser"
+    def __init__(self, task):
+        super(FullSectorLaserScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(FullSectorLaserScenario)
+
 
 class StereoSectorLaserScenario(SectorLaserScenario):
-    def __init__(self, task, gazebo_driver):
-        super(StereoSectorLaserScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name = "stereo_sector_laser"
+    world = "stereo_sector_laser"
 
-        self.world = "stereo_sector_laser"
+    def __init__(self, task):
+        super(StereoSectorLaserScenario, self).__init__(task=task)
 
+TestingScenarios.registerScenario(StereoSectorLaserScenario)
 
 
 class SectorExtraScenario(SectorScenario):
-    def __init__(self, task, gazebo_driver):
-        super(SectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name = "sector_extra"
+    world = "sector_extra"
 
-        self.world = "sector_extra"
+    def __init__(self, task):
+        super(SectorExtraScenario, self).__init__(task=task)
 
-        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
-
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 0
         self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
 
         # Zone1 = [[35.5, 14.5], [30, 8.2]]
@@ -457,66 +489,47 @@ class SectorExtraScenario(SectorScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_obstacles", "seed", "target_id", "init_id", "min_obstacle_spacing"]
+        return ["num_obstacles", "target_id", "init_id", "min_obstacle_spacing"]
 
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
-        self.gazebo_driver.unpause()
+    def setupEnvironment(self):
+        self.gazebo_driver.moveBarrels(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
+
+TestingScenarios.registerScenario(SectorExtraScenario)
 
 
 class FullSectorExtraScenario(SectorExtraScenario):
-    def __init__(self, task, gazebo_driver):
-        super(FullSectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name = "full_sector_extra"
+    world = "full_sector_extra"
 
-        self.world = "full_sector_extra"
+    def __init__(self, task):
+        super(FullSectorExtraScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(FullSectorExtraScenario)
+
 
 class StereoSectorExtraScenario(SectorExtraScenario):
-    def __init__(self, task, gazebo_driver):
-        super(StereoSectorExtraScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name = "stereo_sector_extra"
+    world = "stereo_sector_extra"
 
-        self.world = "stereo_sector_extra"
+    def __init__(self, task):
+        super(StereoSectorExtraScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(StereoSectorExtraScenario)
 
 
+class FourthFloorScenario(GeneralScenario):
+    name= "fourth_floor"
+    world = "fourth_floor"
 
-class FourthFloorScenario(TestingScenario):
-    def __init__(self, task, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
-
-        self.world = "fourth_floor"
-
-        self.seed = task["seed"] if "seed" in task else 0
+    def __init__(self, task):
+        super(FourthFloorScenario, self).__init__(task=task)
 
         self.init_id = task["init_id"] if "init_id" in task else None
-        self.target_id = task["target_id"] if "target_id" in task else None    ##TODO: Replace these with randomly chosen ones
-        self.num_barrels = task["num_obstacles"] if "num_obstacles" in task else 0
+        self.target_id = task["target_id"] if "target_id" in task else None
 
+        #TODO: use multiple inheritance to move common things like these to common classes
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 0
         self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
-
-        self.random = random.Random()
-        self.random.seed(self.seed)
-
-        self.init_pose = Pose()
-        self.init_pose.position.x = -48
-        self.init_pose.position.y = 17
-        self.init_pose.orientation.x = 0
-        self.init_pose.orientation.y = 0
-        self.init_pose.orientation.z = 0
-        self.init_pose.orientation.w = 1
-
-        self.target_pose = PoseStamped()
-        self.target_pose.pose.position.x = 4
-        self.target_pose.pose.position.y = 16
-        self.target_pose.pose.orientation.x = 0.0
-        self.target_pose.pose.orientation.y = 0.0
-        self.target_pose.pose.orientation.z = 0.0
-        self.target_pose.pose.orientation.w = 1.0
-        self.target_pose.header.frame_id = 'map'
-
 
         self.target_poses = [[38.87,11.19,3.14],[16.05,-15.5,-1.57],[-7.72,-12.5,-1.57],[-17.38,12.87,-1.57],[-40.77,14.2,0],[-33.83,-28.41,0.785],[-2.34,13.34,-0.785],[17.44,25.05,-0.785]]
 
@@ -526,6 +539,7 @@ class FourthFloorScenario(TestingScenario):
 
         if self.target_id is None:
             init = self.target_poses[self.init_id]
+            #To reduce the average run time, only consider nearest few goal locations
             dis = []
             for pose in self.target_poses:
                 dis.append(math.sqrt((init[0]-pose[0])**2+(init[1]-pose[1])**2))
@@ -565,90 +579,67 @@ class FourthFloorScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_obstacles", "seed","min_obstacle_spacing"]
-
-    def getPoseMsg(self, pose):
-        pose_msg = Pose()
-        pose_msg.position.x = pose[0]
-        pose_msg.position.y = pose[1]
-
-        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
-
-        pose_msg.orientation = Quaternion(*q)
-
-        return pose_msg
+        return ["num_obstacles","min_obstacle_spacing","target_id","init_id"]
 
     def getStartingPose(self):
         pose = self.target_poses[self.init_id]
-        init_pose = self.getPoseMsg(pose=pose)
-
-        return init_pose
+        return pose
 
     def getGoal(self):
         pose = self.target_poses[self.target_id]
-        init_pose = self.getPoseMsg(pose=pose)
-        pose_stamped = PoseStamped()
-        pose_stamped.pose = init_pose
-        pose_stamped.header.frame_id="map"
-        return pose_stamped
+        return pose
 
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.moveBarrels(self.num_barrels, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
-        self.gazebo_driver.unpause()
+    def setupEnvironment(self):
+        self.gazebo_driver.moveBarrels(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
+
+TestingScenarios.registerScenario(FourthFloorScenario)
+
 
 class FourthFloorObstacleScenario(FourthFloorScenario):
-    def __init__(self, task, gazebo_driver):
-        super(FourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="fourth_floor_obstacle"
+    world="fourth_floor_obstacle"
 
-        self.world = "fourth_floor_obstacle"
+    def __init__(self, task):
+        super(FourthFloorObstacleScenario, self).__init__(task=task)
 
-        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
+        self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500  #TODO: replace with saner value or simply require it?
 
-    # def getUniqueFieldNames():
-    #     return ["num_obstacles", "seed", "min_obstacle_spacing"]
-
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
+    def setupEnvironment(self):
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
-        self.gazebo_driver.unpause()
+
+TestingScenarios.registerScenario(FourthFloorObstacleScenario)
 
 
 class FullFourthFloorObstacleScenario(FourthFloorObstacleScenario):
-    def __init__(self, task, gazebo_driver):
-        super(FullFourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name = "full_fourth_floor_obstacle"
+    world = "full_fourth_floor_obstacle"
 
-        self.world = "full_fourth_floor_obstacle"
+    def __init__(self, task):
+        super(FullFourthFloorObstacleScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(FullFourthFloorObstacleScenario)
+
 
 class StereoFourthFloorObstacleScenario(FourthFloorObstacleScenario):
-    def __init__(self, task, gazebo_driver):
-        super(StereoFourthFloorObstacleScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name = "stereo_fourth_floor_obstacle"
+    world = "stereo_fourth_floor_obstacle"
 
-        self.world = "stereo_fourth_floor_obstacle"
+    def __init__(self, task):
+        super(StereoFourthFloorObstacleScenario, self).__init__(task=task)
+
+TestingScenarios.registerScenario(StereoFourthFloorObstacleScenario)
 
 
+class SparseScenario(GeneralScenario):  #TODO: maybe just have one of these and just specify 'min_obstacle_spacing'
+    name="sparse"
+    world = "empty_room_20x20"
+    obstacle_types = ['pole', 'square_post']
 
-class SparseScenario(TestingScenario):
-    def __init__(self, task, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
+    def __init__(self, task):
+        super(SparseScenario, self).__init__(task=task)
 
-        self.world = "empty_room_20x20"
-
-        self.seed = task["seed"] if "seed" in task else 0
         self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 5
         self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 500
-
-
-        self.random = random.Random()
-        self.random.seed(self.seed)
 
         self.minx = [-7]
         self.miny = [-9.5]
@@ -658,61 +649,45 @@ class SparseScenario(TestingScenario):
 
     @staticmethod
     def getUniqueFieldNames():
-        return ["num_obstacles", "seed", "min_obstacle_spacing"]
-
-    def getPoseMsg(self, pose):
-        pose_msg = Pose()
-        pose_msg.position.x = pose[0]
-        pose_msg.position.y = pose[1]
-
-        q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
-        # msg = Quaternion(*q)
-
-        pose_msg.orientation = Quaternion(*q)
-
-        return pose_msg
+        return ["num_obstacles", "min_obstacle_spacing"]
 
     def getStartingPose(self):
         y = self.random.random()*(18) - 9
         pose = [-9, y, 0]
-        init_pose = self.getPoseMsg(pose=pose)
-
-        return init_pose
+        return pose
 
     def getGoal(self):
         y = self.random.random()*(18) - 9
-
         pose = [8,y,0]
-        init_pose = self.getPoseMsg(pose=pose)
-        pose_stamped = PoseStamped()
-        pose_stamped.pose = init_pose
-        pose_stamped.header.frame_id="map"
-        return pose_stamped
+        return pose
 
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
+    def setupEnvironment(self):
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny,
-                                         maxy=self.maxy, grid_spacing=self.min_obstacle_spacing, model_types=['pole','square_post'])
-        self.gazebo_driver.unpause()
+                                         maxy=self.maxy, grid_spacing=self.min_obstacle_spacing, model_types=self.obstacle_types)
 
+TestingScenarios.registerScenario(SparseScenario)
 
 
 class DenseScenario(SparseScenario):
-    def __init__(self, task, gazebo_driver):
-        super(DenseScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="dense"
+    def __init__(self, task):
+        super(DenseScenario, self).__init__(task=task)
 
         self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 1
 
+TestingScenarios.registerScenario(DenseScenario)
+
+
 class MediumScenario(SparseScenario):
-    def __init__(self, task, gazebo_driver):
-        super(MediumScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
+    name="medium"
+    def __init__(self, task):
+        super(MediumScenario, self).__init__(task=task)
 
         self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 2
 
+TestingScenarios.registerScenario(MediumScenario)
+
+'''
 class CorridorZigzagScenario(TestingScenario):
     def __init__(self, task, gazebo_driver):
         ##TODO: move common elements (gazebo driver, seed, etc) to super.
@@ -766,24 +741,14 @@ class CorridorZigzagDoorScenario(CorridorZigzagScenario):
         super(CorridorZigzagDoorScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
         self.world = "corridor_zigzag_door"
 
+'''
 
+class TrainingRoomScenario(GeneralScenario):
+    name="training_room"
+    world = "training_room"
 
-class TrainingRoomScenario(TestingScenario):
-    #costmap_driver = None
-
-    def __init__(self, task, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
-        self.seed = task["seed"] if "seed" in task else 0
-        self.world = "training_room"
-
-        self.random = random.Random()
-        self.random.seed(self.seed)
-
-        #pos = self.costmap_driver.getSafePose()
-        #pos = [pos[0], pos[1], self.random.uniform(0,2*math.pi)]
-        #self.init_pose = getPoseMsg(pose=pos)
-        #self.target_pose = getPoseMsg(pose=self.costmap_driver.getSafePose())
-
+    def __init__(self, task):
+        super(TrainingRoomScenario, self).__init__(task=task)
 
     @staticmethod
     def getUniqueFieldNames():
@@ -792,82 +757,21 @@ class TrainingRoomScenario(TestingScenario):
     def getStartingPose(self):
         pose = self.costmap_driver.getSafePose()
         pose = [pose[0], pose[1], self.random.uniform(0, 2 * math.pi)]
-        init_pose = self.getPoseMsg(pose=pose)
-
-        return init_pose
+        return pose
 
     def getGoal(self):
         pose = self.costmap_driver.getSafePose()
         pose = [pose[0], pose[1], 0]
-        pose_msg = self.getPoseMsg(pose=pose)
-        pose_stamped = PoseStamped()
-        pose_stamped.pose = pose_msg
-        pose_stamped.header.frame_id="map"
-        return pose_stamped
+        return pose
 
     def setupScenario(self):
         self.gazebo_driver.checkServicesTopics(10)
         self.costmap_driver = CostmapDriver(self.seed)
 
         self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
-        self.gazebo_driver.resetOdom()
-        self.gazebo_driver.reset(self.seed)
-        self.gazebo_driver.unpause()
-        
-class TrainingRoomScenario2(TestingScenario):
-    #costmap_driver = None
-
-    def __init__(self, task, gazebo_driver):
-        self.gazebo_driver = gazebo_driver
-        self.seed = task["seed"] if "seed" in task else 0
-        self.world = "training_room4"
-
-        self.random = random.Random()
-        self.random.seed(self.seed)
-
-        #pos = self.costmap_driver.getSafePose()
-        #pos = [pos[0], pos[1], self.random.uniform(0,2*math.pi)]
-        #self.init_pose = getPoseMsg(pose=pos)
-        #self.target_pose = getPoseMsg(pose=self.costmap_driver.getSafePose())
-
-
-    @staticmethod
-    def getUniqueFieldNames():
-        return []
-
-    def getStartingPose(self):
-        pose = self.costmap_driver.getSafePose()
-        pose = [pose[0], pose[1], self.random.uniform(0, 2 * math.pi)]
-        init_pose = self.getPoseMsg(pose=pose)
-
-        return init_pose
-
-    def getGoal(self):
-        pose = self.costmap_driver.getSafePose()
-        pose = [pose[0], pose[1], 0]
-        pose_msg = self.getPoseMsg(pose=pose)
-        pose_stamped = PoseStamped()
-        pose_stamped.pose = pose_msg
-        pose_stamped.header.frame_id="map"
-        return pose_stamped
-
-    def setupScenario(self):
-        self.gazebo_driver.checkServicesTopics(10)
-        self.costmap_driver = CostmapDriver(self.seed)
-
-        self.gazebo_driver.pause()
-        self.gazebo_driver.moveRobot(self.getStartingPose())
+        self.gazebo_driver.moveRobot(self.getStartingPoseMsg())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
         self.gazebo_driver.unpause()
 
-class TrainingRoomGlobalScenario(TrainingRoomScenario):
-    def __init__(self, task, gazebo_driver):
-        super(TrainingRoomGlobalScenario, self).__init__(task=task, gazebo_driver=gazebo_driver)
-        self.world = "training_room_global"
-
-class TrainingRoomGlobalScenario2(TrainingRoomScenario2):
-    def __init__(self, task, gazebo_driver):
-        super(TrainingRoomGlobalScenario2, self).__init__(task=task, gazebo_driver=gazebo_driver)
-        self.world = "training_room4_global"
+TestingScenarios.registerScenario(TrainingRoomScenario)
