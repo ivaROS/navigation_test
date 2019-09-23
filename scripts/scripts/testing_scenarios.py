@@ -14,6 +14,9 @@ class TestingScenarios:
     def getScenario(self, task):
         if "scenario" in task:
             scenario_type = task["scenario"]
+
+
+
             if scenario_type == "trashcans":
                 return TrashCanScenario(task=task, gazebo_driver=self.gazebo_driver)
             elif scenario_type == "fourth_floor":
@@ -70,6 +73,8 @@ class TestingScenarios:
         elif "init_pose" in task and "goal" in task and "world" in task:
             return TestingScenario(task["world"],task["init_pose"],task["goal"],self.gazebo_driver)
         else:
+            print "Warning! No scenario defined!"
+
             return None
 
     @staticmethod
