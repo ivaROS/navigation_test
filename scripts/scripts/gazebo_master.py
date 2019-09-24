@@ -60,7 +60,7 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path",'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path"]) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
     def start(self):
         self.startResultsProcessing()
@@ -161,15 +161,30 @@ class MultiMasterCoordinator:
 
 
     def add_tasks(self, tasks):
-        [tasks1, tasks2] =  itertools.tee(tasks,2)
+        warned_keys = set()
+        num_skipped = 0
 
-        for task in tasks1:
-            pass
-            #Verify task/ensure can generate each one, or at least that everything is in fieldnames
+        def good_keys(dictionary):
+            good_task = True
 
-        for task in tasks2:
-            self.task_queue.put(task)
+            for key in dictionary:
+                if isinstance(dictionary[key],dict):
+                    if not good_keys(dictionary[key]):
+                        good_task = False
+                elif key not in self.fieldnames:
+                    good_task = False
+                    if key not in warned_keys:
+                        warned_keys.add(key)
+                        print >> sys.stderr, "Key [" + key + "] is not in fieldnames! Skipping all tasks that include it"
+            return good_task
 
+        for task in tasks:
+            if good_keys(task):
+                self.task_queue.put(task)
+            else:
+                num_skipped +=1
+
+        print "Finished adding tasks. Skipped [" + str(num_skipped) + "] tasks."
 
 
 
@@ -430,6 +445,46 @@ if __name__ == "__main__":
                 for controller in ['teb']:
                     task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot'}
                     yield task
+
+        for min_obstacle_spacing in [0.5]:
+            for global_planning_freq in [1]:
+                for feasibility_check_no_poses in [5]:
+                    for scenario in ['dense']:
+                        for seed in range(0, 100):
+                            for controller in ['general_ego_teb']:
+                                for feasibility_check_no_tebs in [4]:
+                                    for egocircle_early_pruning in ['true']:
+                                        for [gap_boundary_threshold, gap_boundary_ratio] in [[0.8, 0.9]]:
+                                            for weight_gap in [1000]:
+                                                for gap_boundary_exponent in [1]:
+                                                    task = {'controller': controller, 'seed': seed,
+                                                            'scenario': scenario, 'robot': 'turtlebot',
+                                                            'min_obstacle_spacing': min_obstacle_spacing,
+                                                            'record': False,
+                                                            'controller_args': {'weight_gap': weight_gap,
+                                                                                'gap_boundary_exponent': gap_boundary_exponent,
+                                                                                'global_planning_freq': global_planning_freq,
+                                                                                'egocircle_early_pruning': egocircle_early_pruning,
+                                                                                'gap_boundary_threshold': gap_boundary_threshold,
+                                                                                'gap_boundary_ratio': gap_boundary_ratio,
+                                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
+                                                                                'feasibility_check_no_tebs': feasibility_check_no_tebs,
+                                                                                'gap_exploration': 'true',
+                                                                                'gap_h_signature': 'true',
+                                                                                'simple_exploration': 'false'}}
+                                                    yield task
+                            for controller in ['general_teb']:
+                                for costmap_converter_plugin in ['PolygonsDBSMCCH']:
+                                    task = {'controller': controller, 'seed': seed,
+                                            'scenario': scenario, 'robot': 'turtlebot',
+                                            'min_obstacle_spacing': min_obstacle_spacing,
+                                            'record': False,
+                                            'controller_args': {'converter': 'true',
+                                                                'costmap_converter_plugin': 'costmap_converter::CostmapTo' + costmap_converter_plugin,
+                                                                'global_planning_freq': global_planning_freq,
+                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
+                                                                'simple_exploration': 'false'}}
+                                    yield task
 
     master.add_tasks(tasks=getTasks())
     
