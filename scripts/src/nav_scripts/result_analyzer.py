@@ -110,16 +110,16 @@ class ResultAnalyzer:
         return results
     '''
 
-    def getCases(self, has=None, hasnot=None):
-        return filter(self.results, whitelist=has, blacklist=hasnot)
+    def getCases(self, whitelist=None, blacklist=None):
+        return filter(self.results, whitelist=whitelist, blacklist=blacklist)
 
-    def getCases2(self, has=None, hasnot=None):
-        return self.getCases(has=has, hasnot=hasnot)
+    def getCases2(self, whitelist=None, blacklist=None):
+        return self.getCases(whitelist=whitelist, blacklist=blacklist)
 
     def getFailCases(self, controller):
         has = {'controller': controller}
         hasnot = {'result': 'SUCCEEDED'}
-        results = self.getCases(has=has, hasnot=hasnot)
+        results = self.getCases(whitelist=has, blacklist=hasnot)
 
 
 
@@ -242,14 +242,15 @@ class ResultAnalyzer:
                         print("| "),
                 print("|")
 
-    def generateGenericTable(self, independent, dependent):
+    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None):
         #if type(x) is not str and isinstance(x, collections.Sequence)
 
         statistics = {}
         key_values = {}
         path_times = {}
         path_lengths = {}
-        for entry in self.results:
+        results = self.getCases(whitelist=whitelist, blacklist=blacklist)
+        for entry in results:
             condition = {key: entry[key] for key in independent + [dependent]}
             conditionset = frozenset(condition.items())
 
