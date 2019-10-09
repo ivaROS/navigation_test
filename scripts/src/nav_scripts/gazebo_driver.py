@@ -21,6 +21,10 @@ from gazebo_msgs.srv import DeleteModel
 import numpy as np
 
 from gazebo_ros import gazebo_interface
+#from gazebo_msgs.msg import *
+from gazebo_msgs.srv import SpawnModel
+
+
 import std_srvs.srv as std_srvs
   
 import std_msgs.msg as std_msgs
@@ -225,7 +229,37 @@ class GazeboDriver():
           name = "barrel{}".format(i)
           pose = self.poses[i]
           self.setPose(name, pose)
-      
+
+
+  # Note: using a persistent connection does not have a significant impact on spawning speed
+  def spawn_sdf_model_client(self, model_name, model_xml, robot_namespace, initial_pose, reference_frame,
+                             gazebo_namespace):
+    def init_service_client():
+      rospy.loginfo("Waiting for service %s/spawn_sdf_model" % gazebo_namespace)
+      rospy.wait_for_service(gazebo_namespace + '/spawn_sdf_model')
+      self.spawn_sdf_model = rospy.ServiceProxy(gazebo_namespace + '/spawn_sdf_model', SpawnModel, persistent=True)
+
+    def call_service():
+      rospy.loginfo("Calling service %s/spawn_sdf_model" % gazebo_namespace)
+      resp = self.spawn_sdf_model(model_name, model_xml, robot_namespace, initial_pose, reference_frame)
+      rospy.loginfo("Spawn status: %s" % resp.status_message)
+      return resp.success
+
+    if self.spawn_sdf_model is None:
+      init_service_client()
+
+    for attempt in range(3):
+      try:
+        rospy.loginfo("custom spawn model function")
+        return call_service()
+      except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
+        print("Reinitializing service client...")
+        init_service_client()
+
+
+
+
   #Adapted from pips_test: gazebo_driver.py
   def spawn_barrel(self, model_name, initial_pose):
     # Must be unique in the gazebo world - failure otherwise
@@ -499,6 +533,7 @@ class GazeboDriver():
 
     #rospy.loginfo("Waiting for service...")
     #rospy.wait_for_service(self.get_model_state_service_name)
+    #Note: Setting this one persistent decreases time by about 40%
     self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
     #rospy.loginfo("Service found...")
 
@@ -520,6 +555,7 @@ class GazeboDriver():
     self.deleteModelService = rospy.ServiceProxy(self.delete_model_service_name, DeleteModel)
     #rospy.loginfo("Service found...")
 
+    self.spawn_sdf_model = None
     
     #self.stateSub = rospy.Subscriber(self.model_state_topic_name, ModelStates, self.statesCallback, queue_size=self.queue_size)
 
