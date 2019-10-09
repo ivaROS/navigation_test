@@ -1,0 +1,13 @@
+<launch>
+  <arg name="num_inferred_paths" default="$(optenv GM_PARAM_NUM_INFERRED_PATHS 5)"/>
+  
+  <include file="$(find nav_scripts)/launch/turtlebot_informed_pips_dwa_general.launch">
+      <arg name="approach_method" value="2"/>
+      <arg name="num_paths" value="0"/>
+      <arg name="num_inferred_paths" value="$(arg num_inferred_paths)"/>
+      <arg name="model_filepath" value="$(find dl_models)/temp_downloads/multiclass_buffer.pb"/>
+      <arg name="run_predictive_service" value="true"/>
+      <arg name="enable_cc" value="true"/>
+  </include>
+</launch>
+

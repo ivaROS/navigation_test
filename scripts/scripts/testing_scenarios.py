@@ -460,7 +460,7 @@ class SectorExtraScenario(SectorScenario):
         super(SectorExtraScenario, self).__init__(task=task)
 
         self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 0
-        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
+        self.min_spacing = task["in_obstacle_"] if "min_obstacle_spacing" in task else None
 
         # Zone1 = [[35.5, 14.5], [30, 8.2]]
         # Zone2 = [[25, -10], [19.6, -13.9]]
