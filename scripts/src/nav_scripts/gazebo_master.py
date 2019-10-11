@@ -16,7 +16,7 @@ import itertools
 import socket
 import contextlib
 
-from testing_scenarios import TestingScenarios
+from nav_scripts.testing_scenarios import TestingScenarios
 
 from nav_msgs.msg import Odometry
 import rospy
