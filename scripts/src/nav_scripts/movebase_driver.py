@@ -32,6 +32,12 @@ class ResultRecorder:
     def __init__(self):
         from laser_classifier_ros.msg import GlobalSample
         self.lock = threading.Lock()
+
+        bagpath = "~/simulation_data/" + str(datetime.datetime.now()) + ".bag"
+        self.bagfilepath = os.path.expanduser(bagpath)
+        print "bag file = " + self.bagfilepath + "\n"
+        self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
+
         #self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
         self.sample_sub = rospy.Subscriber("/move_base/DWAPlannerROS/global_sample", GlobalSample, self.sampleCB, queue_size=4)
         self.scan_sub = rospy.Subscriber("point_scan", LaserScan, self.scanCB, queue_size=1)
@@ -39,10 +45,6 @@ class ResultRecorder:
         self.scan = None
         self.feedback = None
 
-        bagpath = "~/simulation_data/" + str(datetime.datetime.now()) + ".bag"
-        self.bagfilepath = os.path.expanduser(bagpath)
-        print "bag file = " + self.bagfilepath + "\n"
-        self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
 
     def record(self, twist, scan, feedback):
         self.lock.acquire()
