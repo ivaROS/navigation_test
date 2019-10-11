@@ -29,7 +29,7 @@ To further populate the world with random obstacles:
 ```sh
 $ python2 scripts/scripts/run_single_task.py
 ```
-Specify minimum obstacle spacing in the same [file](scripts/scripts/run_single_task.py#L4)
+Specify minimum obstacle spacing in the same [file](https://github.gatech.edu/ivabots/navigation_test/blob/30b9e3e077933746acd37840f4851b87399bc411/scripts/scripts/run_single_task.py#L11)
 
 
 ## Running the Tests
@@ -49,7 +49,7 @@ NavBench provides the option of launching multiple Gazebo simulations to help ex
 1. If you change the ``gui`` argument in launch file to true, revert it back to ``false`` otherwise the CPU load will 
 1. Navigate to ```scripts/scripts```
 2. Specify test output logging directory in function ```processResults``` in the [gazebo_master.py](scripts/scripts/gazebo_master.py#L104)
-3. Specify the number of Multimaster in the [constructor](scripts/scripts/gazebo_master.py#L1544) of master object. 
+3. Specify the number of Multimaster in the [constructor](scripts/scripts/gazebo_master.py#L1565) of master object. 
 4. Execute the following command
 ```bash
 $ python2 gazebo_master.py
