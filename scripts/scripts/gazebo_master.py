@@ -1248,6 +1248,27 @@ class MultiMasterCoordinator:
                         task = {'scenario': 'trashcans', 'num_barrels': num_barrels, 'controller': controller, 'seed': a}
                         self.task_queue.put(task)
 
+    def addDemoTask(self):
+        task = {'controller': "general_ego_teb",
+                'seed': 1,
+                'scenario': 'dense',
+                'robot': 'turtlebot',
+                'min_obstacle_spacing': 0.5,
+                'record': False,
+                'controller_args': {'weight_gap':1000, 
+                                    'gap_boundary_exponent':1,
+                                    'global_planning_freq': 1,
+                                    'egocircle_early_pruning': 'true',
+                                    'gap_boundary_threshold': 0.8,
+                                    'gap_boundary_ratio': 0.9,
+                                    'feasibility_check_no_poses': 5,
+                                    'feasibility_check_no_tebs': 4,
+                                    'gap_exploration': 'true',
+                                    'gap_h_signature': 'true',
+                                    'simple_exploration': 'false'}
+                }
+                self.task_queue.put(task)
+
     def addTasks1(self):
         controllers = ["pips_dwa", "octo_dwa", "teb"]
         barrel_arrangements = [3,5,7]
