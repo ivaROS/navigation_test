@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from gazebo_master import MultiMasterCoordinator
 import time
 

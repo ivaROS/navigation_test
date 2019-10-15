@@ -165,7 +165,7 @@ class MultiMasterCoordinator:
 
     # This list should be elsewhere, possibly in the configs package
     def addTasks(self):
-        for min_obstacle_spacing in [0.5]:
+        for min_obstacle_spacing in [0.75]:
             for global_planning_freq in [1]:
                 for feasibility_check_no_poses in [5]:
                     for scenario in ['dense']:
@@ -196,7 +196,7 @@ class MultiMasterCoordinator:
                 'seed': 0,
                 'scenario': 'dense',
                 'robot': 'turtlebot',
-                'min_obstacle_spacing': 0.5,
+                'min_obstacle_spacing': 0.75,
                 'record': False,
                 'controller_args': {'converter': 'true',
                                     'costmap_converter_plugin': 'costmap_converter::CostmapTo' + 'PolygonsDBSMCCH',
@@ -466,7 +466,7 @@ class GazeboMaster(mp.Process):
 if __name__ == "__main__":
 
     start_time = time.time()
-    master = MultiMasterCoordinator(4)
+    master = MultiMasterCoordinator(1)
     master.start()
     master.addTasks()
     

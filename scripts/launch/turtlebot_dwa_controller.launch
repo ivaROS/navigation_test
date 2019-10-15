@@ -4,7 +4,7 @@
 
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
-  <node name="egocircle_node" pkg="egocircle" type="ego_circle"/>
+  <!-- <node name="egocircle_node" pkg="egocircle" type="ego_circle"/> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
