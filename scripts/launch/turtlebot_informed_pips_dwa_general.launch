@@ -74,7 +74,6 @@
       <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
       
-      <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
       
       <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
@@ -94,6 +93,7 @@
 
       <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
       <param name="controller_frequency" value="$(arg controller_freq)"/>
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
       <param name="approach_method" value="$(arg approach_method)"/>
       <param name="num_paths" value = "$(arg num_paths)"/>
       <param name="num_inferred_paths" value = "$(arg num_inferred_paths)"/>
