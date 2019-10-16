@@ -1,0 +1,39 @@
+<launch>
+  <arg name="use_recovery_behaviors" default="false"/>
+
+  <arg name="converter" default="true"/>
+  
+  <arg name="simple_exploration" default="false"/>
+  
+  <arg name="global_planning_freq" default="0.0"/>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true">
+      <rosparam file="$(find pips_racecar)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find pips_racecar)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find pips_racecar)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find pips_racecar)/config/global_costmap_params.yaml" command="load"/>
+
+
+      
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="TebLocalPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+
+      <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+      <rosparam file="$(find pips_racecar)/config/teb_local_planner_params.yaml" command="load"/>
+ 
+      <rosparam file="$(find nav_configs)/config/teb_costmap_converter_params.yaml" command="load" if="$(arg converter)"/> 
+
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+      <remap from="cmd_vel" to="raw_cmd"/>
+  </node>
+
+
+  <node name="ackermann_converter" pkg="teb_local_planner" type="cmd_vel_to_ackermann_drive.py">
+    <param name="twist_cmd_topic" value="raw_cmd"/>
+    <param name="ackermann_cmd_topic" value="/vesc/high_level/ackermann_cmd_mux/input/nav_0"/>
+  </node>
+
+</launch>

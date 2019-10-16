@@ -103,9 +103,9 @@ class GeneralScenario(TestingScenario):
                 self.target_pose = task["target_pose"]
 
 
-    def getGazeboLaunchFile(self, robot):
+    def getGazeboLaunchFile(self):
         path = self.rospack.get_path("nav_configs")
-        return path + "/launch/gazebo_" + robot + "_" + self.world + "_world.launch"
+        return path + "/launch/gazebo_" + self.world + "_world.launch"
 
     #Override this to set starting pose
     def getStartingPose(self):
@@ -279,7 +279,7 @@ TestingScenarios.registerScenario(CampusScenario)
 
 class CampusObstacleScenario(CampusScenario):
     name="campus_obstacle"
-    world="campus_obstacle"
+    world="campus"
 
     def __init__(self, task):
         super(CampusObstacleScenario, self).__init__(task=task)
@@ -294,7 +294,7 @@ TestingScenarios.registerScenario(CampusObstacleScenario)
 
 class FullCampusObstacleScenario(CampusObstacleScenario):
     name="full_campus_obstacle"
-    world = "full_campus_obstacle"
+    world = "campus"
 
     def __init__(self, task):
         super(FullCampusObstacleScenario, self).__init__(task=task)
