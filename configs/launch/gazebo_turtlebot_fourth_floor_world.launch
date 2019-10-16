@@ -101,6 +101,6 @@
 
   <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/fourth_floor_gazebo.yaml" required="true"/>
 
-  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
+  <node name="map_odom_publisher" pkg="gazebo_fake_localization" type="gazebo_fake_localization" required="true"/>
 
 </launch>
