@@ -499,7 +499,7 @@ class GazeboMaster(mp.Process):
 if __name__ == "__main__":
 
     start_time = time.time()
-    master = MultiMasterCoordinator(1)
+    master = MultiMasterCoordinator(2)
     master.start()
 
 
