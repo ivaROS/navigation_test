@@ -5,9 +5,9 @@ from testing_scenarios import TestingScenarios
 import rospy
 
 
-seed = 5602
+seed = 71
 
-num_barrels = 50
+num_barrels = 500
 min_obstacle_spacing = 1
 
 starting_pose = [-9,0,0]
@@ -62,6 +62,6 @@ end_time = time.time()
 print str(end_time-start_time)
 
 
-#result = test_driver.run_test(goal_pose=scenario.getGoalMsg())
+result = test_driver.run_test(goal_pose=scenario.getGoalMsg())
 
 #print(result)

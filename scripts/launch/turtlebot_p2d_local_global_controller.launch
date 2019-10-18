@@ -1,4 +1,5 @@
 <launch>
+  <arg name="viz" default="false"/>
   <arg name="service_name" default="/run_inference"/>
   <arg name="scan_topic" default="/point_scan"/>
   <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
@@ -33,11 +34,18 @@
   
   <node name="inference_service_provider" pkg="p2d_ros" type="inference_service_node.py"/>
   
-  <node name="twist_viz" pkg="pips_visualization" type="twist_viz.py" >
-    <remap from="twist" to="/cmd_vel_mux/input/navi"/>
-    <remap from="path_out" to="viz/twist"/>
-    <param name="sim_time" value="5"/>
-  </node>
+  <group if="$(arg viz)">
+    <node name="goal_viz" pkg="p2d_ros" type="goal_pub.py"/>
+    
+    <node name="twist_viz" pkg="pips_visualization" type="twist_viz.py" >
+      <remap from="twist" to="/cmd_vel_mux/input/navi"/>
+      <remap from="path_out" to="viz/twist"/>
+      <param name="sim_time" value="5"/>
+    </node>
+  
+  </group>
+  
+
   
 
 </launch>

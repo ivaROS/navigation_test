@@ -1,4 +1,5 @@
 <launch>
+  <arg name="viz" default="false"/>
   <arg name="cmd_topic" default="cmd_vel_mux/input/navi"/>
   <arg name="model_path" default='/home/justin/simulation_data/tensorflow_root/keras/laser-goal-cmd-v10-global_general/2/checkpoints/optimized_model.pb' />
   
@@ -9,6 +10,17 @@
   </node>
 
   <node name="egocircle" pkg="egocircle" type="ego_circle"/>
+  
+  <group if="$(arg viz)">
+    <node name="goal_viz" pkg="p2d_ros" type="goal_pub.py"/>
+      
+    <node name="twist_viz" pkg="pips_visualization" type="twist_viz.py" >
+      <remap from="twist" to="$(arg cmd_topic)"/>
+      <remap from="path_out" to="viz/twist"/>
+      <param name="sim_time" value="5"/>
+    </node>
+  
+  </group>
   
 </launch>
     
