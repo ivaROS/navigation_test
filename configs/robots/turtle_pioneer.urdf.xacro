@@ -473,4 +473,12 @@
   
   <xacro:include filename="$(find nav_configs)/urdf/pioneer_realsense.xacro" />
   
+  <gazebo>
+    <plugin name='gps_sensor' filename='libhector_gazebo_ros_gps.so'>
+      <updateRate>1</updateRate>
+      <bodyName>top_plate</bodyName>
+      <frameId>top_plate</frameId>
+    </plugin>
+  </gazebo>
+  
 </robot>

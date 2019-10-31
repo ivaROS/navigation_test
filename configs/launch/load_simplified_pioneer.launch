@@ -1,0 +1,7 @@
+<launch>
+  <arg name="robot_model" default="'$(find nav_configs)/robots/pioneer3at.urdf.xacro'"/>
+
+
+      <arg name="urdf_file2" default="$(find xacro)/xacro.py $(arg robot_model) --inorder details:=false" />
+      <param name="simplified_pioneer_description" command="$(arg urdf_file2)" />
+ </launch>
