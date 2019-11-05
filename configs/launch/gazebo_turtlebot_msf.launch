@@ -14,9 +14,15 @@
 	    <remap from="msf_core/imu_state_input" to="imu"/> <!--"mobile_base/sensors/imu_data" /> -->
       <remap from="msf_updates/pose_with_covariance_input" to="odom_pose"/>
 
-     <!-- <rosparam file="$(find nav_configs)/config/msf_turtlebot_gps.yaml"/> -->
+      <rosparam file="$(find nav_configs)/config/msf_turtlebot_gps.yaml"/>
     </node>
     
-   <node name="state_base_link_tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 state base_footprint 50"/> 
+    <node name="state_base_link_tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 state base_footprint 50"/> 
+   
+    <node name="odom_throttler" pkg="topic_tools" type="throttle" args="messages odom 25 throttled_odom"/>
+   
+    <node name="odom_to_pose" pkg="msf_updates" type="odom_to_pose.py">
+      <remap from="odom" to="throttled_odom"/>
+    </node>
 </launch>
 
