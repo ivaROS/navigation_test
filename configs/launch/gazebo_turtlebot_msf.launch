@@ -3,7 +3,7 @@
     <arg name="debug_args" default="" unless="$(arg debug)"/>
     <arg name="debug_args" default="xterm -e gdb -ex run --args" if="$(arg debug)"/>
     
-    <node launch-prefix="$(arg debug_args)" name="msf_position_filter" pkg="msf_updates" type="position_sensor" clear_params="true" output="screen">
+    <node launch-prefix="$(arg debug_args)" name="msf_position_pose_filter" pkg="msf_updates" type="position_pose_sensor" clear_params="true" output="screen">
       <!--<remap from="msf_core/hl_state_input" to="/auk/fcu/ekf_state_out" /> -->
       <!--<remap from="msf_core/correction" to="/auk/fcu/ekf_state_in"/> -->
 
@@ -14,7 +14,7 @@
 	    <remap from="msf_core/imu_state_input" to="imu"/> <!--"mobile_base/sensors/imu_data" /> -->
       <remap from="msf_updates/pose_with_covariance_input" to="odom_pose"/>
 
-      <rosparam file="$(find nav_configs)/config/msf_turtlebot_gps.yaml"/>
+     <!-- <rosparam file="$(find nav_configs)/config/msf_turtlebot_gps.yaml"/> -->
     </node>
     
    <node name="state_base_link_tf" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 state base_footprint 50"/> 
