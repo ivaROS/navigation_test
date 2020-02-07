@@ -12,7 +12,7 @@
 
   <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)"/>
   
-  <arg name="global_planning_freq" default="0.0"/>
+  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
   
   <arg name="debug" default="false"/>
 

@@ -47,7 +47,7 @@
 
   <!--END turtlebot_gazebo turtlebot_world.launch -->
   
-  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true" launch-prefix="xterm -e gdb -ex run --args">
+  <node name="map_odom_publisher" pkg="gazebo_fake_localization" type="gazebo_fake_localization" required="true" launch-prefix="">
     <param name="odom_frame_id" value="odom"/>
   </node>
   

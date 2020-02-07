@@ -50,8 +50,8 @@
           </geometry>
           <material>
             <ambient>1.0 1.0 1.0 1.0</ambient>
-  	    <diffuse>0.8 0.8 0.8 1.0</diffuse>
-  	    <specular>0.01 0.01 0.01 1.000000</specular>
+  	        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+  	        <specular>0.01 0.01 0.01 1.000000</specular>
           </material>
         </visual>
         <self_collide>0</self_collide>
