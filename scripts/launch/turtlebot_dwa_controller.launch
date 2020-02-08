@@ -22,6 +22,9 @@
       
       <!--<param name="controller_frequency" value="10.0" />-->
       <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+      <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
   </node>
 
 

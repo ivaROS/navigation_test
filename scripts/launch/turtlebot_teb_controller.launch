@@ -37,6 +37,9 @@
       
       <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
 
+      <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>-->
+
       <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
       <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
       
