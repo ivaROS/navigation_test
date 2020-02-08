@@ -1,8 +1,9 @@
 <launch>
   <arg name="viz" default="false"/>
   <arg name="cmd_topic" default="cmd_vel_mux/input/navi"/>
-  <arg name="model_path" default='/home/justin/simulation_data/tensorflow_root/keras/laser-goal-cmd-v10-global_general/2/checkpoints/optimized_model.pb' />
-  
+  <arg name="model_path" default="$(find dl_models)/downloads/laser-goal-cmd-v10-global_general-2.pb"/>
+  <!--<arg name="model_path" default='/home/justin/simulation_data/tensorflow_root/keras/laser-goal-cmd-v10-global_general/2/checkpoints/optimized_model.pb' />-->
+
   <node name="laser_controller" pkg="p2d_ros" type="laser_controller.py" output="log">
     <param name="model_path" value="$(arg model_path)"/>
     <remap from="goal" to="move_base_simple/goal"/>

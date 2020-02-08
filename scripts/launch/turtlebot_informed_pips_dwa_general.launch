@@ -6,7 +6,7 @@
   <arg name="run_predictive_service"/>
   <arg name="enable_cc"/>
   <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
-  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 0)"/>
+  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
 
   <arg name="debug" default="false"/>
   
@@ -47,6 +47,7 @@
     <arg name="image_out"       value="$(arg decimated_image)"/>
     <arg name="info_out"        value="$(arg decimated_info)"/>
     <arg name="decimation"      value="$(arg decimation)"/>
+    <arg name="interpolate_cam_info" value="false"/>
   </include>
   
   <!--
@@ -64,36 +65,36 @@
   
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg launch_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
-      
       <!-- Temporary, to be replaced with depth template -->
-      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/> 
-
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
 
-      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
-      <rosparam file="$(find nav_configs)/config/navfn_global_planner_params.yaml" command="load"/>
-      
-      
-      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
-      
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+
+      <param name="controller_frequency" value="$(arg controller_freq)"/>
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+
+      <!-- Approach-specific parameters/remappings/etc -->
+      <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
+
       <rosparam file="$(find nav_configs)/config/custom_recovery_params.yaml" command="load" if="$(arg use_recovery_behaviors)"/>
       <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
-      
+
       <!-- <rosparam file="$(find informed_pips_dwa)/param/pips_dwa_local_planner_params.yaml" command="load"/> -->
 
       <!--<remap from="/move_base/PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
-      
+
       <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
       <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg egocylindrical_image)" />
       <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg egocylindrical_info)" />
       <remap from="$(arg pips_namespace)/odom" to="/odom"/>
       <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
 
-      <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
-      <param name="controller_frequency" value="$(arg controller_freq)"/>
-      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
       <param name="approach_method" value="$(arg approach_method)"/>
       <param name="num_paths" value = "$(arg num_paths)"/>
       <param name="num_inferred_paths" value = "$(arg num_inferred_paths)"/>

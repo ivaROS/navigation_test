@@ -62,7 +62,7 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
     def start(self):
         self.startResultsProcessing()
@@ -502,54 +502,41 @@ if __name__ == "__main__":
     master = MultiMasterCoordinator(2)
     master.start()
 
-
-    def getTasks3():
-        for [scenario, min_obstacle_spacing] in [['campus',1]]:
-            for seed in range(10):
-                for robot in ['turtlebot', 'racecar']:
-                    task = {'controller': 'teb', 'seed': seed, 'scenario': scenario, 'robot': robot,
-                            'min_obstacle_spacing': min_obstacle_spacing, 'world_args':{'gazebo_gui':'true'}}
-                    yield task
-
     def getTasks():
-        for [scenario, min_obstacle_spacing] in [['medium', 2], ['full_sector_laser',0], ['full_campus_obstacle',1], ['full_fourth_floor_obstacle',1]]:
-            for seed in range(100):
-                for global_planning_freq in [0,1]:
-                    for num_paths in [1,5]:
+        controller_freq = 5
+        for [scenario, min_obstacle_spacing] in [['dense', 1], ['sector_laser',1], ['sector_extra',1], ['campus_obstacle',1], ['fourth_floor_obstacle',1]]:
+            for seed in range(20):
+                for global_planning_freq in [1]:
+                    for controller in ['dwa', 'teb', 'ego_teb', 'p2d', 'p2d_local_global']:
+                        task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
+                                'min_obstacle_spacing': min_obstacle_spacing,
+                                'controller_args': {'global_planning_freq': global_planning_freq,
+                                                    'controller_freq': controller_freq}}
+
+                        if scenario == 'sector_extra':
+                            task['num_obstacles']=50
+
+                        yield task
+
+                    for num_paths in [5]:
                         for controller in ['informed_pips_dwa_multiclass', 'informed_pips_dwa_rl']:
                             task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing,
-                                    'controller_args': {'global_planning_freq': global_planning_freq, 'num_inferred_paths': num_paths}}
+                                    'controller_args': {'global_planning_freq': global_planning_freq, 'controller_freq': controller_freq, 'num_inferred_paths': num_paths}}
                             yield task
-
                         for controller in ['informed_pips_dwa_bruteforce']:
                             task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing,
-                                    'controller_args': {'global_planning_freq': global_planning_freq, 'num_paths': num_paths}}
+                                    'controller_args': {'global_planning_freq': global_planning_freq, 'controller_freq': controller_freq, 'num_paths': num_paths}}
                             yield task
 
                     for controller in ['informed_pips_dwa_to_goal',  'informed_pips_dwa_regression_goal']:
-                        for enable_cc in ['true', 'false']:
+                        for enable_cc in ['true']:
                             task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing,
-                                    'controller_args': {'enable_cc': enable_cc, 'global_planning_freq': global_planning_freq}}
-                            yield task
-
-    def getTasks2():
-        for [scenario, min_obstacle_spacing] in [['full_sector_laser',0], ['full_campus_obstacle',1], ['full_fourth_floor_obstacle',1]]:
-            for seed in range(1):
-                for global_planning_freq in [0]:
-                    for num_paths in [1]:
-                        for controller in ['informed_pips_dwa_multiclass']:
-                            task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing,
-                                    'controller_args': {'global_planning_freq': global_planning_freq, 'num_inferred_paths': num_paths}}
-                            yield task
-
-                        for controller in ['informed_pips_dwa_bruteforce']:
-                            task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot', 'min_obstacle_spacing': min_obstacle_spacing,
-                                    'controller_args': {'global_planning_freq': global_planning_freq, 'num_paths': num_paths}}
+                                    'controller_args': {'enable_cc': enable_cc, 'global_planning_freq': global_planning_freq, 'controller_freq': controller_freq, }}
                             yield task
 
 
 
-    master.add_tasks(tasks=getTasks3())
+    master.add_tasks(tasks=getTasks())
     
     #master.singletask()
     master.wait_to_finish()

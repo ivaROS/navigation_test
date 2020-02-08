@@ -5,7 +5,7 @@
       <arg name="approach_method" value="4"/>
       <arg name="num_paths" value = "0"/>
       <arg name="num_inferred_paths" value = "1"/>
-      <arg name="model_filepath" value="$(find dl_models)/temp_downloads/goal_weighted_regression.pb"/>
+      <arg name="model_filepath" value="$(find dl_models)/downloads/goal_weighted_regression.pb"/>
       <arg name="run_predictive_service" value="true"/>
       <arg name="enable_cc" value="$(arg enable_cc)"/>
   </include>

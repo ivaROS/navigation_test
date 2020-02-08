@@ -344,7 +344,7 @@ TestingScenarios.registerScenario(SectorScenario)
 
 class SectorLaserScenario(SectorScenario):
     name="sector_laser"
-    world="sector_laser"
+    world="sector"
 
     def __init__(self, task):
         super(SectorLaserScenario, self).__init__(task=task)
@@ -354,7 +354,7 @@ TestingScenarios.registerScenario(SectorLaserScenario)
 
 class FullSectorLaserScenario(SectorLaserScenario):
     name="full_sector_laser"
-    world="full_sector_laser"
+    world="sector"
 
     def __init__(self, task):
         super(FullSectorLaserScenario, self).__init__(task=task)
@@ -374,13 +374,13 @@ TestingScenarios.registerScenario(StereoSectorLaserScenario)
 
 class SectorExtraScenario(SectorScenario):
     name = "sector_extra"
-    world = "sector_extra"
+    world = "sector"
 
     def __init__(self, task):
         super(SectorExtraScenario, self).__init__(task=task)
 
         self.num_obstacles = task["num_obstacles"] if "num_obstacles" in task else 0
-        self.min_spacing = task["in_obstacle_"] if "min_obstacle_spacing" in task else None
+        self.min_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else None
 
         # Zone1 = [[35.5, 14.5], [30, 8.2]]
         # Zone2 = [[25, -10], [19.6, -13.9]]
@@ -419,7 +419,7 @@ TestingScenarios.registerScenario(SectorExtraScenario)
 
 class FullSectorExtraScenario(SectorExtraScenario):
     name = "full_sector_extra"
-    world = "full_sector_extra"
+    world = "sector_extra"
 
     def __init__(self, task):
         super(FullSectorExtraScenario, self).__init__(task=task)
@@ -517,7 +517,7 @@ TestingScenarios.registerScenario(FourthFloorScenario)
 
 class FourthFloorObstacleScenario(FourthFloorScenario):
     name="fourth_floor_obstacle"
-    world="fourth_floor_obstacle"
+    world="fourth_floor"
 
     def __init__(self, task):
         super(FourthFloorObstacleScenario, self).__init__(task=task)
@@ -532,7 +532,7 @@ TestingScenarios.registerScenario(FourthFloorObstacleScenario)
 
 class FullFourthFloorObstacleScenario(FourthFloorObstacleScenario):
     name = "full_fourth_floor_obstacle"
-    world = "full_fourth_floor_obstacle"
+    world = "fourth_floor"
 
     def __init__(self, task):
         super(FullFourthFloorObstacleScenario, self).__init__(task=task)
