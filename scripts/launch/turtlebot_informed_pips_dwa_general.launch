@@ -5,6 +5,9 @@
   <arg name="model_filepath"/>
   <arg name="run_predictive_service"/>
   <arg name="enable_cc"/>
+  
+  <arg name="datastats_filepath" default="$(find dl_models)/downloads/depth-image-stats.bag"/>
+  
   <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
   <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
 
@@ -58,7 +61,7 @@
   </include>
   
   <node name="predictive_service_provider" pkg="depth_learning" type="predictive_service.py" output="screen" if="$(arg run_predictive_service)">
-    <param name="~datastats_filepath" value="/media/justin/data/justin/bag_files/depth_learning/training.bag"/>
+    <param name="~datastats_filepath" value="$(arg datastats_filepath)"/>
     <param name="~model_filepath" value="$(arg model_filepath)"/>
     <remap from="image" to="$(arg decimated_image)"/>
   </node>
