@@ -337,6 +337,9 @@ class GazeboMaster(mp.Process):
         if self.gazebo_launch is not None:
             self.gazebo_launch.shutdown()
 
+        if self.robot_launch is not None:
+            self.robot_launch.shutdown()
+
         if self.controller_launch is not None:
             self.controller_launch.shutdown()
 
@@ -441,6 +444,7 @@ class GazeboMaster(mp.Process):
 
         if self.gazebo_launch is not None:
             self.gazebo_launch.shutdown()
+            self.current_robot = None   # Ensures a new robot will be spawned
 
         self.current_world = world
 
