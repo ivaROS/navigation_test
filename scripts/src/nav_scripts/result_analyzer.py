@@ -308,23 +308,41 @@ class ResultAnalyzer:
 
                 dependent_value="SUCCEEDED"
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
-                if lookupkey in statistics:
-                    if shared_safe_keys is None:
-                        shared_safe_keys = path_times[lookupkey].keys()
 
-                    times =[path_times[lookupkey][k] for k in shared_safe_keys]
-                    times = np.array(sum(times, []))
+                if lookupkey in statistics:
+
+                    # Print average path length and time over all successful cases
+                    times = path_times[lookupkey]
+                    times = np.array(sum(times.values(), []))
                     path_time = np.mean(times) / 1e9
 
-                    path_length =[path_lengths[lookupkey][k] for k in shared_safe_keys]
-                    path_length = np.array(sum(path_length, []))
+                    path_length = path_lengths[lookupkey]
+                    path_length = np.array(sum(path_length.values(), []))
                     path_length = np.mean(path_length)
 
                     print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
                         path_time) + "s"),
 
+                    # Now print the averages of shared successful cases
+                    if len(shared_safe_keys) > 0:
+                        times =[path_times[lookupkey][k] for k in shared_safe_keys]
+                        times = np.array(sum(times, []))
+                        path_time = np.mean(times) / 1e9
+
+                        path_length =[path_lengths[lookupkey][k] for k in shared_safe_keys]
+                        path_length = np.array(sum(path_length, []))
+                        path_length = np.mean(path_length)
+
+                        print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
+                            path_time) + "s"),
+                    else:
+                        print("|"),
+
                 else:
                     print("| "),
+
+
+
                 print("|")
 
 
@@ -354,11 +372,11 @@ class ResultAnalyzer:
                     for result in key_values[dependent]:
                         print(" | " + str(result)),
                         
-                    print(" | " + "path length | path time"),
+                    print(" | " + "path length | path time | common length | common time"),
 
                     print("|")
 
-                    for i in range(len(key_values[dependent]) + 3):
+                    for i in range(len(key_values[dependent]) + 5):
                         print("| -------"),
 
                     print("|")
