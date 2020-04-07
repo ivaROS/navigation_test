@@ -62,7 +62,7 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
     def start(self):
         self.startResultsProcessing()
@@ -509,7 +509,7 @@ if __name__ == "__main__":
     def getTasks():
         controller_freq = 5
         for [scenario, min_obstacle_spacing] in [['dense', 1], ['sector_laser',1], ['sector_extra',1], ['campus_obstacle',1], ['fourth_floor_obstacle',1]]:
-            for seed in range(20):
+            for seed in range(1,20):
                 for global_planning_freq in [1]:
                     for controller in ['dwa', 'teb', 'ego_teb', 'p2d', 'p2d_local_global']:
                         task = {'controller': controller, 'seed': seed, 'scenario': scenario, 'robot': 'turtlebot',
