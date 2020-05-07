@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import test_driver
-from testing_scenarios import TestingScenarios
+from nav_scripts.movebase_driver import run_test
+from nav_scripts.testing_scenarios import TestingScenarios
 import rospy
 
 
@@ -63,6 +63,6 @@ end_time = time.time()
 print str(end_time-start_time)
 
 
-result = test_driver.run_test(goal_pose=scenario.getGoalMsg())
+result = run_test(goal_pose=scenario.getGoalMsg())
 
 #print(result)
