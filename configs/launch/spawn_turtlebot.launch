@@ -43,6 +43,7 @@
       <remap from="scan" to="/scan"/>
       <param name="floor_dist" value=".25"/>
       <param name="overhead_dist" value=".15"/>
+      <param name="hole_thresh" value="0.1"/>
     </node>
 
   <!--END turtlebot_gazebo turtlebot_world.launch -->
