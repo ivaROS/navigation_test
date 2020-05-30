@@ -165,31 +165,19 @@ class MultiMasterCoordinator:
 
     # This list should be elsewhere, possibly in the configs package
     def addTasks(self):
-        for min_obstacle_spacing in [0.75]:
-            for global_planning_freq in [1]:
-                for feasibility_check_no_poses in [5]:
-                    for scenario in ['dense']:
-                        for seed in range(0, 100):
-                            for controller in ['dwa']:
-                                task = {'controller': controller,
-                                        "seed" : seed,
-                                        'scenario' : scenario,
-                                        'robot' : "turtlebot",
-                                        'min_obstacle_spacing' : min_obstacle_spacing}
-                                self.task_queue.put(task)
-
-                            for controller in ['general_teb']:
-                                for costmap_converter_plugin in ['PolygonsDBSMCCH']:
-                                    task = {'controller': controller, 'seed': seed,
-                                            'scenario': scenario, 'robot': 'turtlebot',
-                                            'min_obstacle_spacing': min_obstacle_spacing,
-                                            'record': False,
-                                            'controller_args': {'converter': 'true',
-                                                                'costmap_converter_plugin': 'costmap_converter::CostmapTo' + costmap_converter_plugin,
-                                                                'global_planning_freq': global_planning_freq,
-                                                                'feasibility_check_no_poses': feasibility_check_no_poses,
-                                                                'simple_exploration': 'false'}}
-                                    self.task_queue.put(task)
+        feasibility_check_no_poses = 5
+        global_planning_freq = 1
+        costmap_converter_plugin = 'PolygonsDBSMCCH'
+        
+        for [scenario, min_obstacle_spacing] in [['dense', 1], ['dense' ,0.75], ['dense', 0.5], ['campus_obstacle' ,1], ['fourth_floor_obstacle' ,1]]:
+            for seed in range(0, 10):
+                for controller in ['dwa', 'teb', 'ego_teb']:
+                    task = {'controller': controller,
+                            "seed" : seed,
+                            'scenario' : scenario,
+                            'robot' : "turtlebot",
+                            'min_obstacle_spacing' : min_obstacle_spacing}
+                    self.task_queue.put(task)
 
     def addDemoTask(self):
         task = {'controller': 'general_teb',
@@ -464,15 +452,12 @@ class GazeboMaster(mp.Process):
 
 
 if __name__ == "__main__":
-
+    num_instances = 1
     start_time = time.time()
-    master = MultiMasterCoordinator(1)
+    master = MultiMasterCoordinator(num_instances)
     master.start()
     master.addTasks()
-    
-    #master.singletask()
     master.waitToFinish()
-    #rospy.spin()
     master.shutdown()
     end_time = time.time()
     print "Total time: " + str(end_time - start_time)
