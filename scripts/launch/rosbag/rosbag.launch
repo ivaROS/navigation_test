@@ -1,0 +1,9 @@
+<launch>
+
+  <rosparam>
+    use_sim_time : true
+  </rosparam>
+
+  <node pkg="rosbag" type="play" name="player" output="log" args="[full path to]demo_rosbag_2020-05-30-17-05-50.bag"/>
+
+</launch>

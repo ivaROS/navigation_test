@@ -22,3 +22,16 @@ $ roslaunch nav_configs gazebo_turtlebot_campus_obstacle_world.launch
 $ roslaunch nav_configs gazebo_turtlebot_fourth_floor_obstacle_world.launch
 ```
 
+## Timing Demo
+1. Download sample rosbag of prerecorded data from:
+'''
+https://drive.google.com/file/d/10glIc6hyeFE1OTMfC8wrL3jjvh4lklRz/view?usp=sharing
+'''
+
+2. Replace `[full path to]demo_rosbag_2020-05-30-17-05-50.bag` in `nav_scripts/scripts/launch/rosbag/rosbag.launch` with the full path to the downloaded rosbag
+
+3. Run timing demo
+```
+rosrun nav_scripts timing_demo.py
+```
+
