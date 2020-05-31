@@ -103,6 +103,6 @@
 
   <node name="map_to_odom" pkg="tf" type="static_transform_publisher" unless="$(arg manual)"
       args="2 3 0 3.14 0 0 map odom 10" required="true" /> 
-  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true" if="$(arg manual)"/>
+  <node name="map_odom_publisher" pkg="gazebo_fake_localization" type="gazebo_fake_localization" required="true" if="$(arg manual)"/>
 
 </launch>

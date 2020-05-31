@@ -109,6 +109,6 @@
   
   <include file="$(find nav_configs)/launch/inflated_ground_truth_publisher.launch"/>
 
-  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
+  <node name="map_odom_publisher" pkg="gazebo_fake_localization" type="gazebo_fake_localization" required="true"/>
 
 </launch>
