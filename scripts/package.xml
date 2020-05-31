@@ -2,7 +2,7 @@
 <package>
   <name>nav_scripts</name>
   <version>0.0.0</version>
-  <description>The pips_test package</description>
+  <description>Contains scripts and controller configurations for navigation testing</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
