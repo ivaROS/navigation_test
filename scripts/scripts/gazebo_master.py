@@ -180,17 +180,11 @@ class MultiMasterCoordinator:
                     self.task_queue.put(task)
 
     def addDemoTask(self):
-        task = {'controller': 'general_teb',
+        task = {'controller': 'teb',
                 'seed': 0,
                 'scenario': 'dense',
                 'robot': 'turtlebot',
-                'min_obstacle_spacing': 0.75,
-                'record': False,
-                'controller_args': {'converter': 'true',
-                                    'costmap_converter_plugin': 'costmap_converter::CostmapTo' + 'PolygonsDBSMCCH',
-                                    'global_planning_freq': 1,
-                                    'feasibility_check_no_poses': 5,
-                                    'simple_exploration': 'false'}}
+                'min_obstacle_spacing': 0.75}
         self.task_queue.put(task)
 
 class GazeboMaster(mp.Process):
@@ -452,7 +446,7 @@ class GazeboMaster(mp.Process):
 
 
 if __name__ == "__main__":
-    num_instances = 1
+    num_instances = 3
     start_time = time.time()
     master = MultiMasterCoordinator(num_instances)
     master.start()
