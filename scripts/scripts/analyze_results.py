@@ -9,4 +9,4 @@ if __name__ == "__main__":
     analyzer = ResultAnalyzer()
     filenames = ['~/simulation_data/results_2019-10-15 18:14:25.927053']
     analyzer.readFiles(filenames=filenames, whitelist={})
-    analyzer.generateGenericTable(independent=['scenario','controller'], dependent='result')
+    analyzer.generateGenericTable(independent=['scenario','min_obstacle_spacing','controller'], dependent='result')

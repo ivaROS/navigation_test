@@ -165,12 +165,8 @@ class MultiMasterCoordinator:
 
     # This list should be elsewhere, possibly in the configs package
     def addTasks(self):
-        feasibility_check_no_poses = 5
-        global_planning_freq = 1
-        costmap_converter_plugin = 'PolygonsDBSMCCH'
-        
         for [scenario, min_obstacle_spacing] in [['dense', 1], ['dense' ,0.75], ['dense', 0.5], ['campus_obstacle' ,1], ['fourth_floor_obstacle' ,1]]:
-            for seed in range(0, 10):
+            for seed in range(0,200):
                 for controller in ['dwa', 'teb', 'ego_teb']:
                     task = {'controller': controller,
                             "seed" : seed,
