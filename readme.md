@@ -22,3 +22,6 @@ $ roslaunch nav_configs gazebo_turtlebot_campus_obstacle_world.launch
 $ roslaunch nav_configs gazebo_turtlebot_fourth_floor_obstacle_world.launch
 ```
 
+## Timing Demo
+__this section should probably be moved elsewhere__ timing demo can be called with `python timing\_demo.py` under nav_scripts package. RosBag Path must be given to `nav\_scripts/scripts/launch/rosbag/rosbag.launch`
+
