@@ -48,7 +48,7 @@
   <run_depend>move_base</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>turtlebot_bringup</run_depend>
-
+  <run_depend>turtlebot_gazebo</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

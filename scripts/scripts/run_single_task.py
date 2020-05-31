@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import test_driver
+import nav_scripts.movebase_driver as test_driver
 from testing_scenarios import TestingScenarios
 import rospy
 

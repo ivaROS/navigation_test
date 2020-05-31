@@ -165,7 +165,7 @@ class MultiMasterCoordinator:
 
     # This list should be elsewhere, possibly in the configs package
     def addTasks(self):
-        for [scenario, min_obstacle_spacing] in [['dense', 1], ['dense' ,0.75], ['dense', 0.5], ['campus_obstacle' ,1], ['fourth_floor_obstacle' ,1]]:
+        for [scenario, min_obstacle_spacing] in [['dense', 1], ['dense' ,0.75], ['dense', 0.5], ['full_campus_obstacle' ,1], ['full_fourth_floor_obstacle' ,1]]:
             for seed in range(0,200):
                 for controller in ['dwa', 'teb', 'ego_teb']:
                     task = {'controller': controller,

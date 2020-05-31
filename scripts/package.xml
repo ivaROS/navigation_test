@@ -56,7 +56,10 @@
   <run_depend>tf2_ros</run_depend>
   <run_depend>dwa_local_planner</run_depend>
   <run_depend>teb_local_planner</run_depend>
+  <run_depend>turtlebot_navigation</run_depend>
   <run_depend>nav_configs</run_depend>
+  <run_depend>full_depthimage_to_laserscan</run_depend>
+  
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
