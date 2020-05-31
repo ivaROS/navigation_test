@@ -34,7 +34,7 @@ def get_rosbag_duration(bag_file_dir):
     bag.close()
     return duration
 
-def run_test(rosbag_launch_dir = 'launch/rosbag', tests = ["scalability"], logging_location = "log_data", test_host_pkg = 'nav_scripts'):
+def run_test(rosbag_launch_dir = 'launch/rosbag', tests = ["scalability"], logging_location = "log_data", test_host_pkg = 'nav_scripts', ros_log_location = None):
 
     # Getting log export location
     pkg_dir = rospkg.RosPack().get_path(test_host_pkg)
@@ -79,7 +79,7 @@ def run_test(rosbag_launch_dir = 'launch/rosbag', tests = ["scalability"], loggi
                 rospy.sleep(1)
 
                 # Finish up
-                print("All {} run for {} ended, moving files".format(testtype, launch_file_name))
+                print("All {} run for {} ended".format(testtype, launch_file_name))
                 timestamp = str(datetime.datetime.now()).replace(' ', '-').replace(':', '-').replace('.', '-').replace('/', '-')
 
                 outputpath = os.path.join(data_location)
@@ -90,17 +90,23 @@ def run_test(rosbag_launch_dir = 'launch/rosbag', tests = ["scalability"], loggi
                     os.makedirs(outputpath)
                 for x in list_of_log_directorys:
                     file_name = str(x)
-                    move(os.path.join(os.path.expanduser('~'), '.ros/log', x), outputpath)
+                    if ros_log_location is None:
+                        ros_log_location = os.path.join(os.path.expanduser('~'), '.ros/log')
+                    return os.path.join(ros_log_location, x)
                 list_of_log_directorys = list()
 
-def parse_results(result_path = 'demo', test_host_pkg = 'nav_scripts'):
-    log_path = os.path.join(os.path.dirname(rospkg.RosPack().get_path(test_host_pkg)), result_path)
-    files = os.listdir(log_path)
-    files = [os.path.join(log_path, x) for x in files]
-    # Latest file
-    result = max(files, key = os.path.getctime)
+def parse_results(result_path = 'demo', test_host_pkg = 'nav_scripts', log_file_path = None):
 
-    target_file = None
+    if log_file_path is None:
+        log_path = os.path.join(os.path.dirname(rospkg.RosPack().get_path(test_host_pkg)), result_path)
+        files = os.listdir(log_path)
+        files = [os.path.join(log_path, x) for x in files]
+        # Latest file
+        result = max(files, key = os.path.getctime)
+        target_file = None
+    else:
+        result = log_file_path
+
     for log_file in os.listdir(result):
         file_check = log_file.split('-')
         if (file_check[0] == 'move_base'):
@@ -113,12 +119,6 @@ def parse_results(result_path = 'demo', test_host_pkg = 'nav_scripts'):
     result_record = {    
         "updateAllTEBs" : [0, 0],
         "exploreEquivalence" : [0, 0],
-        "buildGraph" : [0, 0],
-        "optimizeGraph" : [0, 0],
-        "buildGraph" : [0, 0],
-        "optimizeGraph" : [0, 0],
-        "buildGraph" : [0, 0],
-        "optimizeGraph" : [0, 0],
         "buildGraph" : [0, 0],
         "optimizeGraph" : [0, 0],
         "computeCurrentCost" : [0, 0],
@@ -139,8 +139,11 @@ def parse_results(result_path = 'demo', test_host_pkg = 'nav_scripts'):
         record_value = check1[-1][1:-7]
         result_record[record_key][0] += 1
         result_record[record_key][1] += float(record_value)
-    print(" Category \t\t # of Calls \t\t ave time")
+    print("--------------------------------------------")
+    print("\033[1m Category \t\t # of Calls \t\t ave time \033[0m")
     for k in result_record:
         v = result_record[k]
-        print("\033[1m {:<20} {:^20} {:>10}ms \033[0m".format(k, v[0], v[1] / v[0]))
-        
+        if v[0] > 0:
+            print("\033[1m {:<20} {:^20} {:>10}ms \033[0m".format(k, v[0], v[1] / v[0]))
+        else: 
+            print("\033[1m {:<20} registered 0 function calls, log files not in .ros/log?, pass your ros log directory to run_test ros_log_location argument such as \"/home/this_user/.ros/log\" \033[0m".format(k))
