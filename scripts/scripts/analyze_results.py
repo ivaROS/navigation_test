@@ -38,14 +38,15 @@ if __name__ == "__main__":
 
     #analyzer.generateGenericTable(independent=['scenario', 'robot', 'controller'], dependent='result')
 
-    analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
+    #analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
 
     analyzer.clear()
     filenames = ['/home/justin/simulation_data/results_2019-09-06 05:04:56.753298'] #p2d and classifier, nothing altered
-    analyzer.readFiles(filenames=filenames, whitelist={})
-    analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
+    #analyzer.readFiles(filenames=filenames, whitelist={})
+    #analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
 
-
+    analyzer.readFiles(filenames=['/home/justin/simulation_data/results_2020-05-27 01:25:54.203382'])
+    analyzer.generateGenericTable(independent=['controller', 'scenario','min_obstacle_spacing'], dependent='result')
 
     # analyzer.generateSingleTable()
 

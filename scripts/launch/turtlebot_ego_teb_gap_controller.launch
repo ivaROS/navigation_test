@@ -12,9 +12,9 @@
 
   <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)"/>
   
-  <arg name="global_planning_freq" default="1.0"/>
-  <arg name="feasibility_check_no_tebs" default="4"/>
-  
+  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
+  <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
+
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
@@ -23,7 +23,7 @@
   <!-- xterm -e gdb -ex run - -args -->
   
   
-  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/>
+  <!--<env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
@@ -31,16 +31,23 @@
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
       <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
 
-
-      
       <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="TebLocalPlannerROS"/>
       <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
-      
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+
       <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
 
+      <param name="controller_frequency" value="$(arg controller_freq)" />
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+
+
+      <!-- Approach-specific parameters/remappings/etc -->
       <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+
       <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
-      
+      <rosparam file="$(find nav_configs)/config/teb_costmap_converter_params.yaml" command="load" if="$(arg converter)"/>
 
       <param name="TebLocalPlannerROS/include_costmap_obstacles" value="false" if="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/include_egocircle_obstacles" value="$(arg egocircle)"/>
@@ -48,19 +55,16 @@
       <param name="TebLocalPlannerROS/gap_exploration" value="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/egocircle_feasibility" value="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/simple_exploration" value="$(arg simple_exploration)"/>
-      <param name="TebLocalPlannerROS/weight_gap" value="1000"/>
+      <param name="TebLocalPlannerROS/weight_gap" value="1"/>
+      <param name="TebLocalPlannerROS/gap_boundary_threshold" value="0"/>
       <param name="TebLocalPlannerROS/gap_boundary_exponent" value="2" unless="$(arg egocircle)"/>
-      <param name="TebLocalPlannerROS/feasibility_check_no_tebs" value="$(arg feasibility_check_no_tebs)" if="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/feasibility_check_no_tebs" value="1" if="$(arg egocircle)"/>
       <param name="TebLocalPlannerROS/gap_theta_start" value="3.15"/>
-
       
-      <rosparam file="$(find nav_configs)/config/teb_costmap_converter_params.yaml" command="load" if="$(arg converter)"/> 
-
-      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
-
+      <param name="TebLocalPlannerROS/max_global_plan_lookahead_dist" value="0"/>
+      
       <!-- Disable the local costmap observation sources if they will not be used -->
       <param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>
-      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
   </node>
 
 

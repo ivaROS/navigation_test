@@ -102,7 +102,7 @@ class GeneralScenario(TestingScenario):
             else:
                 self.target_pose = task["target_pose"]
 
-
+    #Override this in scenarios using worlds not included within navigation_test
     def getGazeboLaunchFile(self):
         path = self.rospack.get_path("nav_configs")
         return path + "/launch/gazebo_" + self.world + "_world.launch"

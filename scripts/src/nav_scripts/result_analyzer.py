@@ -30,6 +30,8 @@ def filter(results, whitelist=None, blacklist=None, defaults=None):
     filtered_results = []
     convertToStrings(whitelist)
     convertToStrings(blacklist)
+    convertToStrings(defaults)
+
     for entry in results:
         stillgood = True
         if whitelist is not None:
@@ -49,6 +51,21 @@ def filter(results, whitelist=None, blacklist=None, defaults=None):
         if stillgood:
             filtered_results.append(entry)
     return filtered_results
+
+def replace(results, replacements=None, replacements2=None):
+    if replacements is not None:
+        for entry in results:
+            for key, value in replacements.items():
+                if key in entry:
+                    if type(value) is dict:
+                        if entry[key] in value:
+                            entry[key] = value[entry[key]]
+                    else:
+                        entry[value] = entry.pop(key)
+    elif replacements2 is not None:
+        for keyname in results:
+            if keyname in replacements2:
+                results[keyname] = replacements2[keyname]
 
 def readFile(filename):
     expanded_filename = os.path.expanduser(filename)
@@ -71,23 +88,27 @@ def getPrunedList(results, keys):
 
 class ResultAnalyzer:
 
-    def readFile(self, filename, whitelist = None, blacklist = None, defaults=None):
+    def readFile(self, filename, whitelist = None, blacklist = None, defaults=None, replacements=None):
         result_list = readFile(filename)
         filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist, defaults=defaults)
+        replace(results=filtered_list, replacements=replacements)
         self.results += filtered_list
 
-    def readFiles(self, filenames, whitelist=None, blacklist = None, defaults=None):
+    def readFiles(self, filenames, whitelist=None, blacklist = None, defaults=None, replacements=None):
         if isinstance(filenames, str):
           filenames = [filenames]
           
         for filename in filenames:
-            self.readFile(filename, whitelist=whitelist, blacklist=blacklist, defaults=defaults)
+            self.readFile(filename, whitelist=whitelist, blacklist=blacklist, defaults=defaults, replacements=None)
 
     def clear(self):
         self.__init__()
 
     def getPrunedList(self, keys):
         return getPrunedList(self.results, keys=keys)
+
+    def replace(self, replacements=None):
+        replace(results=self.results, replacements=replacements)
 
     '''
     def getCases(self, has=None, hasnot=None):
@@ -242,8 +263,13 @@ class ResultAnalyzer:
                         print("| "),
                 print("|")
 
-    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None):
+    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None, replacements=None):
         #if type(x) is not str and isinstance(x, collections.Sequence)
+        remapped_keynames = {"SUCCEEDED":"SUCCEEDED", "time":"time", "seed":"seed", "path_length":"path_length", "common length":"common length", "common_time":"common time"}
+        replace(results=remapped_keynames, replacements2=replacements)
+
+        seed_keyname=remapped_keynames["seed"]
+        success_keyname=remapped_keynames["SUCCEEDED"]
 
         statistics = {}
         key_values = {}
@@ -263,14 +289,14 @@ class ResultAnalyzer:
             else:
                 statistics[conditionset] = statistics[conditionset] + 1
 
-            if entry['seed'] not in path_times[conditionset]:
-                path_times[conditionset][entry['seed']] = []
+            if entry[seed_keyname] not in path_times[conditionset]:
+                path_times[conditionset][entry[seed_keyname]] = []
 
-            if entry['seed'] not in path_lengths[conditionset]:
-                path_lengths[conditionset][entry['seed']] = []
+            if entry[seed_keyname] not in path_lengths[conditionset]:
+                path_lengths[conditionset][entry[seed_keyname]] = []
 
-            path_times[conditionset][entry['seed']] += [int(entry["time"])]
-            path_lengths[conditionset][entry['seed']] += [float(entry["path_length"])]
+            path_times[conditionset][entry[seed_keyname]] += [int(entry["time"])]
+            path_lengths[conditionset][entry[seed_keyname]] += [float(entry["path_length"])]
 
             for key, value in condition.items():
                 if not key in key_values:
@@ -306,7 +332,7 @@ class ResultAnalyzer:
                     else:
                         print("| "),
 
-                dependent_value="SUCCEEDED"
+                dependent_value= success_keyname
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
 
                 if lookupkey in statistics:
@@ -324,8 +350,8 @@ class ResultAnalyzer:
                         path_time) + "s"),
 
                     # Now print the averages of shared successful cases
-                    if len(shared_safe_keys) > 0:
-                        times =[path_times[lookupkey][k] for k in shared_safe_keys]
+                    if shared_safe_keys is not None and len(shared_safe_keys) > 0:
+                        times = [path_times[lookupkey][k] for k in shared_safe_keys]
                         times = np.array(sum(times, []))
                         path_time = np.mean(times) / 1e9
 
@@ -352,18 +378,18 @@ class ResultAnalyzer:
 
                 if depth == max_depth-1:
 
-                    dependent_value = "SUCCEEDED"
-                    if 'controller' in key_values:
-                        for controller in key_values['controller']:
-                            lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value, 'controller': controller}.items())
+                    dependent_value = success_keyname
+                    if condition_name in key_values:
+                        for condition_value in key_values[condition_name]:
+                            lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value, condition_name: condition_value}.items())
 
                             if lookupkey in path_times:
-                                controller_safe_keys = path_times[lookupkey]
-                                controller_safe_keys = controller_safe_keys.keys()
+                                condition_safe_keys = path_times[lookupkey]
+                                condition_safe_keys = condition_safe_keys.keys()
                                 if safe_keys is None:
-                                    safe_keys = set(controller_safe_keys)
+                                    safe_keys = set(condition_safe_keys)
                                 else:
-                                    safe_keys = safe_keys.intersection(controller_safe_keys)
+                                    safe_keys = safe_keys.intersection(condition_safe_keys)
                             else:
                                 pass
 
@@ -383,19 +409,26 @@ class ResultAnalyzer:
 
                 else:
                     print("")
-                    print(condition_name + ":")
+                    print(condition_name + ":"),
 
+                singlevalue = len(key_values[condition_name]) == 1
                 for condition_value in sorted(key_values[condition_name]):
-                    if depth == max_depth-1:
-                      print("| " + str(condition_value)),
-                    else:
-                        print("")
-                        print(condition_value + ":")
-
                     cond_dict = copy.deepcopy(shared_conditions_dict)
                     cond_dict[condition_name]=condition_value
 
-                    processLayer(cond_dict, depth+1, safe_keys)
+                    res_list = self.getCases(whitelist=cond_dict)
+                    if len(res_list) > 0:
+
+                        if depth == max_depth-1:
+                          print("| " + str(condition_value)),
+                        else:
+                            if singlevalue:
+                                print(" " + str(condition_value))
+                            else:
+                                print("\n")
+                                print(condition_value + ":")
+
+                        processLayer(cond_dict, depth+1, safe_keys)
 
 
         processLayer()

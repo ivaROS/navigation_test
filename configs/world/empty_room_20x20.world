@@ -78,6 +78,13 @@
       <elevation>0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
+    <plugin name='gazebo_occupancy_map' filename='libgazebo_2Dmap_plugin.so'>
+      <map_resolution>0.05</map_resolution>
+      <map_topic>generated_map</map_topic>
+      <map_height>0.01</map_height>
+      <map_size_x>50</map_size_x>
+      <map_size_y>50</map_size_y>
+    </plugin>
     <model name='NamedLocations'>
       <static>true</static>
       <link name='DefaultStart'>

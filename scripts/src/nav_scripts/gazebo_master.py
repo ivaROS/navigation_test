@@ -17,6 +17,7 @@ import socket
 import contextlib
 
 from nav_scripts.testing_scenarios import TestingScenarios
+from nav_scripts.controller_launcher import ControllerLauncher
 
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock as ClockMsg
@@ -38,18 +39,18 @@ def port_in_use(port):
 
 
 class MultiMasterCoordinator:
-    def __init__(self, num_masters=1):
+    def __init__(self, num_masters=1, save_results = True):
         signal.signal(signal.SIGINT, self.signal_shutdown)
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.children_shutdown = mp.Value(c_bool, False)
         self.soft_shutdown = mp.Value(c_bool, False)
 
         self.should_shutdown = False
-
+        self.started = False
 
         self.num_masters = num_masters
 
-        self.save_results = True
+        self.save_results = save_results
         self.task_queue_capacity = 2000 #2*self.num_masters
         self.task_queue = mp.JoinableQueue(maxsize=self.task_queue_capacity)
         self.result_queue_capacity = 2000 #*self.num_masters
@@ -62,9 +63,11 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+
 
     def start(self):
+        self.started=True
         self.startResultsProcessing()
         self.startProcesses()
 
@@ -161,8 +164,18 @@ class MultiMasterCoordinator:
         self.result_queue.join()
         print "All results processed!"
 
-
     def add_tasks(self, tasks):
+        if(not self.started):
+            self.add_task_fieldnames(tasks=tasks)
+            print "Adding tasks asynchronously in separate thread..."
+            self.task_thread = threading.Thread(target=self.add_tasks_impl,args=[tasks])
+            self.task_thread.daemon=True
+            self.task_thread.start()
+        else:
+            print "Adding tasks..."
+            self.add_tasks_impl(tasks=tasks)
+
+    def add_tasks_impl(self, tasks):
         warned_keys = set()
         num_skipped = 0
 
@@ -188,11 +201,33 @@ class MultiMasterCoordinator:
 
         print "Finished adding tasks. Skipped [" + str(num_skipped) + "] tasks."
 
+    # tasks must be iterable and finite length
+    def add_task_fieldnames(self, tasks):
+        if self.started:
+            print >> sys.stderr, "Warning! You cannot add task fieldnames once the MultiMasterCoordinator has been started! No fieldnames will be added!"
+            return
+
+        added_keys = set()
+
+        def add_keys(dictionary):
+            for key in dictionary:
+                if isinstance(dictionary[key], dict):
+                    add_keys(dictionary[key])
+                elif key not in self.fieldnames:
+                    if key not in added_keys:
+                        added_keys.add(key)
+
+        for task in tasks:
+            add_keys(task)
+
+        print "Finished adding missing task fieldnames:" + str(added_keys)
 
 
 class GazeboMaster(mp.Process):
     def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
         super(GazeboMaster, self).__init__()
+        self.rospack = rospkg.RosPack()
+
         self.daemon = False
 
         self.task_queue = task_queue
@@ -224,7 +259,7 @@ class GazeboMaster(mp.Process):
 
         #if 'SIMULATION_RESULTS_DIR' in os.environ:
 
-        # Disabling all GUI elements of Gazebo decreases simulation load, but also disables cameras
+        # Disabling all GUI elements of Gazebo decreases simulation load, but also disables cameras. However, it is not currently clear if worlds without cameras benefit
         if self.gui==False:
             if 'DISPLAY' in os.environ:
                 del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
@@ -366,12 +401,13 @@ class GazeboMaster(mp.Process):
         if controller_args is None:
             controller_args = {}
 
+
         if os.path.isfile(controller_name):
             controller_path = controller_name
+        elif ControllerLauncher.contains(controller_name):
+            controller_path = ControllerLauncher.getPath(name=controller_name)
         else:
-            rospack = rospkg.RosPack()
-            path = rospack.get_path("nav_scripts")
-
+            path = self.rospack.get_path("nav_scripts")
             controller_path = path + "/launch/" + robot + "_" + controller_name + "_controller.launch"
 
         # We'll assume Gazebo is launched are ready to go
@@ -410,8 +446,10 @@ class GazeboMaster(mp.Process):
 
         self.current_robot = robot
 
-        rospack = rospkg.RosPack()
-        path = rospack.get_path("nav_configs")
+        if os.path.isfile(robot):
+            robot_path = robot
+        else:
+            robot_path = self.rospack.get_path("nav_configs") + "/launch/spawn_" + robot + ".launch"
 
         # This will wait for a roscore if necessary, so as long as we detect any failures
         # in roslaunch_core, we should be fine
@@ -420,7 +458,7 @@ class GazeboMaster(mp.Process):
         #print path
 
         self.robot_launch = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[path + "/launch/spawn_" + robot + ".launch"],
+            run_id=uuid, roslaunch_files=[robot_path],
             is_core=False, port=self.ros_port
         )
         self.robot_launch.start()

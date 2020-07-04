@@ -2,7 +2,7 @@
 import rospy
 import actionlib
 from move_base_msgs.msg import *
-from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
+from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, PoseArray
 from pprint import pprint
 import tf
 from actionlib_msgs.msg import GoalStatus
@@ -11,7 +11,7 @@ from kobuki_msgs.msg import BumperEvent
 import tf2_ros
 import math
 import std_srvs.srv as std_srvs
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import LaserScan, Image
 import rosbag
 import datetime
 import os
@@ -28,7 +28,7 @@ class BumperChecker:
         if data.state == BumperEvent.PRESSED:
             self.collided = True
 
-class ResultRecorder:
+class ResultRecorder(object):
     def __init__(self):
         from laser_classifier_ros.msg import GlobalSample
         self.lock = threading.Lock()
@@ -39,21 +39,40 @@ class ResultRecorder:
         self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
 
         #self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
-        self.sample_sub = rospy.Subscriber("/move_base/DWAPlannerROS/global_sample", GlobalSample, self.sampleCB, queue_size=4)
+        self.sample_sub = rospy.Subscriber("/move_base/TebLocalPlannerROS/teb_poses", PoseArray, self.sampleCB, queue_size=4)
         self.scan_sub = rospy.Subscriber("point_scan", LaserScan, self.scanCB, queue_size=1)
+        self.rgb_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.imageCB, queue_size=1)
+        self.odom_sub = rospy.Subscriber("/odom", Odometry, self.odomCB, queue_size=1)
+
 
         self.scan = None
         self.feedback = None
+        self.odom = None
+        self.rgb_image = None
+        self.last_sample = None
+        self.sample_period = rospy.Duration(1)
 
 
-    def record(self, twist, scan, feedback):
+    def record(self, odom, scan, rgb_image, feedback, trajectory):
         self.lock.acquire()
-        start_t = time.time()
-        self.bagfile.write("scan", scan, scan.header.stamp)
-        self.bagfile.write("cmd", twist, scan.header.stamp)
-        self.bagfile.write("feedback", feedback, scan.header.stamp)
+        if odom is None or scan is None or rgb_image is None or feedback is None or trajectory is None:
+            return
+
+        current_time = rospy.Time.now()
+
+        if True: #self.last_sample is None or current_time - self.last_sample > self.sample_period:
+
+            start_t = time.time()
+            self.bagfile.write("scan", scan, scan.header.stamp)
+            self.bagfile.write("odom", odom, scan.header.stamp)
+            self.bagfile.write('rgb_image', rgb_image, scan.header.stamp)
+            self.bagfile.write("feedback", feedback, scan.header.stamp)
+            self.bagfile.write("trajectory", trajectory, scan.header.stamp)
+            self.last_sample = current_time
+
+            rospy.logdebug("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
+
         self.lock.release()
-        rospy.logdebug("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
 
 
     def twistCB(self, data):
@@ -63,13 +82,9 @@ class ResultRecorder:
             self.record(data, self.scan, self.feedback)
 
     def sampleCB(self, data):
-        rospy.logdebug("Command received!")
+        rospy.logdebug("Trajectory received!")
 
-        self.lock.acquire()
-        if(self.scan is not None):
-            data.scan = self.scan
-            self.bagfile.write("global_sample", data, self.scan.header.stamp)
-        self.lock.release()
+        self.record(self.odom, self.scan, self.rgb_image, self.feedback, data)
 
     def scanCB(self, data):
         rospy.logdebug("Scan received!")
@@ -79,6 +94,13 @@ class ResultRecorder:
         self.lock.release()
         rospy.logdebug("Scan updated!")
 
+    def imageCB(self, data):
+        rospy.logdebug("RGB image received!")
+
+        self.lock.acquire()
+        self.rgb_image = data
+        self.lock.release()
+        rospy.logdebug("RGB image updated!")
 
     def setGoal(self, data):
         rospy.logdebug("Goal received!")
@@ -97,6 +119,13 @@ class ResultRecorder:
         self.lock.release()
         rospy.logdebug("Pose recorded!")
 
+    def odomCB(self, data):
+        rospy.logdebug("Odom received!")
+
+        self.lock.acquire()
+        self.odom = data
+        self.lock.release()
+        rospy.logdebug("Odom recorded!")
 
     def done(self):
         rospy.logdebug("'Done' Commanded!")
@@ -105,6 +134,8 @@ class ResultRecorder:
         #self.vel_sub.unregister()
         self.scan_sub.unregister()
         self.sample_sub.unregister()
+        self.rgb_sub.unregister()
+        self.odom_sub.unregister()
         self.bagfile.close()
         self.lock.release()
         rospy.logdebug("'Done' accomplished!")
@@ -248,7 +279,7 @@ def run_test(goal_pose, record=False):
     odom_checker = OdomChecker()
     odom_accumulator = OdomAccumulator()
 
-    record = False
+    #record = False
 
     if record:
         result_recorder = ResultRecorder()

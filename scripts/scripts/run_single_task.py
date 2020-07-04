@@ -38,11 +38,13 @@ task = {'seed':seed, 'scenario':'full_sector_laser', 'min_obstacle_spacing':min_
 
 task = {'seed':seed, 'scenario':'full_campus_obstacle', 'min_obstacle_spacing':min_obstacle_spacing, 'num_obstacles':num_barrels}
 task = {'seed':seed, 'scenario':'full_fourth_floor_obstacle', 'num_obstacles':50, 'min_obstacle_spacing':min_obstacle_spacing}
-task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+task= {'scenario': 'dense', 'controller':'teb_multigoal', 'seed':0, 'robot':'turtlebot', 'min_obstacle_spacing':1}
 
+seed=74
 task = {'seed':seed, 'scenario':'full_campus_obstacle', 'min_obstacle_spacing':min_obstacle_spacing, 'num_obstacles':num_barrels}
 
-task= {'scenario': 'dense', 'controller':'teb', 'seed':seed, 'robot':'turtlebot', 'min_obstacle_spacing':0.75}
+#task= {'scenario': 'dense', 'controller':'teb', 'seed':7, 'robot':'turtlebot', 'min_obstacle_spacing':1.0}
+task = {'seed':3, 'scenario':'fourth_floor_obstacle', 'min_obstacle_spacing':min_obstacle_spacing}
 
 rospy.init_node('test_driver', anonymous=True)
 
@@ -62,7 +64,6 @@ end_time = time.time()
 
 print str(end_time-start_time)
 
-
-result = run_test(goal_pose=scenario.getGoalMsg())
+result = run_test(goal_pose=scenario.getGoalMsg(), record=False)
 
 #print(result)
