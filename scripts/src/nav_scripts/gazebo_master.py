@@ -302,7 +302,8 @@ class GazeboMaster(mp.Process):
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
 
                     if "robot" in task and task['robot'] is not None:
-                        self.roslaunch_robot(task["robot"])
+                        robot_args = task["robot_args"] if "robot_args" in task else None
+                        self.roslaunch_robot(task["robot"], robot_args=robot_args)
 
                         if task["controller"] is None:
                             result = "nothing"
@@ -434,7 +435,7 @@ class GazeboMaster(mp.Process):
 
         sys.stdout = sys.__stdout__
 
-    def roslaunch_robot(self, robot):
+    def roslaunch_robot(self, robot, robot_args=None):
         if robot == self.current_robot:
             if not self.robot_launch._shutting_down:
                 return
@@ -446,6 +447,9 @@ class GazeboMaster(mp.Process):
 
         self.current_robot = robot
 
+        if robot_args is None:
+            robot_args = {}
+
         if os.path.isfile(robot):
             robot_path = robot
         else:
@@ -456,6 +460,12 @@ class GazeboMaster(mp.Process):
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
         #roslaunch.configure_logging(uuid) #What does this do?
         #print path
+
+        for key,value in robot_args.items():
+            var_name = "GM_PARAM_"+ key.upper()
+            value = str(value)
+            os.environ[var_name] = value
+            print("Setting environment variable [" + var_name + "] to '" + value + "'")
 
         self.robot_launch = roslaunch.parent.ROSLaunchParent(
             run_id=uuid, roslaunch_files=[robot_path],
