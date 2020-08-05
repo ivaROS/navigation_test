@@ -18,7 +18,7 @@
   
   <arg name="global_potential_weight" default="$(optenv GM_PARAM_GLOBAL_POTENTIAL_WEIGHT 1)"/>
   
-  <arg name="max_number_classes" default="$(optenv GM_PARAM_MAX_NUMBER_CLASSES 100)"/>
+  <arg name="max_number_classes" default="$(optenv GM_PARAM_MAX_NUMBER_CLASSES 5)"/>
   
   <arg name="debug" default="false"/>
 
@@ -31,7 +31,7 @@
   
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_multigoal_testing)/cfg/rosconsole.conf"/>
 
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="false" launch-prefix="$(arg debug_prefix)">
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
       <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>

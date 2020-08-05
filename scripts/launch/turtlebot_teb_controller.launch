@@ -10,7 +10,10 @@
   
   <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
 
-  <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)"/>
+  <arg name="ec_radius" default="$(optenv GM_PARAM_EC_RADIUS 3)"/>
+  <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)">
+    <param name="max_depth" value="$(arg ec_radius)"/>
+  </node>
   
   <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
   <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
