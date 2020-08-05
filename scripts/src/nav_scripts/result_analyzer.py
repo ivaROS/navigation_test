@@ -99,7 +99,7 @@ class ResultAnalyzer:
           filenames = [filenames]
           
         for filename in filenames:
-            self.readFile(filename, whitelist=whitelist, blacklist=blacklist, defaults=defaults, replacements=None)
+            self.readFile(filename, whitelist=whitelist, blacklist=blacklist, defaults=defaults, replacements=replacements)
 
     def clear(self):
         self.__init__()
@@ -263,13 +263,21 @@ class ResultAnalyzer:
                         print("| "),
                 print("|")
 
-    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None, replacements=None):
+    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None, replacements=None, order=None):
         #if type(x) is not str and isinstance(x, collections.Sequence)
-        remapped_keynames = {"SUCCEEDED":"SUCCEEDED", "time":"time", "seed":"seed", "path_length":"path_length", "common length":"common length", "common_time":"common time"}
-        replace(results=remapped_keynames, replacements2=replacements)
+        #remapped_keynames = {"SUCCEEDED":"SUCCEEDED", "path time":"path time", "seed":"seed", "path_length":"path_length", "common length":"common length", "common time":"common time"}
+        #replace(results=remapped_keynames, replacements2=replacements)
 
-        seed_keyname=remapped_keynames["seed"]
-        success_keyname=remapped_keynames["SUCCEEDED"]
+        def remap(term):
+            return replacements[term] if term in replacements else term
+
+        seed_keyname="seed"
+        success_keyname="SUCCEEDED"
+        path_length_keyname=remap("path length")
+        path_time_keyname=remap("path time")
+        common_length_keyname=remap("common length")
+        common_time_keyname=remap("common time")
+
 
         statistics = {}
         key_values = {}
@@ -306,6 +314,14 @@ class ResultAnalyzer:
         max_depth = len(independent)
 
         def processLayer(shared_conditions_dict={}, depth=0, shared_safe_keys=None):
+            def sort(key_values, condition_name):
+                if order is not None and condition_name in order:
+                    if set(key_values[condition_name]) == set(order[condition_name]):
+                        return order[condition_name]
+                    else:
+                        print("Error! order requested but does not contain all necessary keys")
+                return sorted(key_values[condition_name])
+
             if depth == max_depth:
 
                 lookup_keys = []
@@ -316,7 +332,7 @@ class ResultAnalyzer:
                         total += statistics[key]
 
                 #print("| " + str(controller)),
-                for dependent_value in key_values[dependent]:
+                for dependent_value in sort(key_values, dependent):
                     lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
                     if lookupkey in statistics:
                         num = statistics[lookupkey]
@@ -373,8 +389,11 @@ class ResultAnalyzer:
 
 
             else:
+
                 condition_name = independent[depth]
                 safe_keys = None
+
+                remapped_condition_name = remap(condition_name)
 
                 if depth == max_depth-1:
 
@@ -394,11 +413,11 @@ class ResultAnalyzer:
                                 pass
 
                     print("")
-                    print("| " + condition_name),
-                    for result in key_values[dependent]:
-                        print(" | " + str(result)),
+                    print("| " + remapped_condition_name),
+                    for result in sort(key_values, dependent):
+                        print(" | " + remap(str(result))),
                         
-                    print(" | " + "path length | path time | common length | common time"),
+                    print(" | " + path_length_keyname + " | " + path_time_keyname + " | " + common_length_keyname + " | " + common_time_keyname), # "path length | path time | common length | common time"),
 
                     print("|")
 
@@ -409,24 +428,25 @@ class ResultAnalyzer:
 
                 else:
                     print("")
-                    print(condition_name + ":"),
+                    print(remapped_condition_name + ":"),
 
                 singlevalue = len(key_values[condition_name]) == 1
-                for condition_value in sorted(key_values[condition_name]):
+                for condition_value in sort(key_values, condition_name):
                     cond_dict = copy.deepcopy(shared_conditions_dict)
                     cond_dict[condition_name]=condition_value
 
+                    remapped_condition_value = remap(condition_value)
                     res_list = self.getCases(whitelist=cond_dict)
                     if len(res_list) > 0:
 
                         if depth == max_depth-1:
-                          print("| " + str(condition_value)),
+                          print("| " + str(remapped_condition_value)),
                         else:
                             if singlevalue:
-                                print(" " + str(condition_value))
+                                print(" " + str(remapped_condition_value))
                             else:
                                 print("\n")
-                                print(condition_value + ":")
+                                print(remapped_condition_value + ":")
 
                         processLayer(cond_dict, depth+1, safe_keys)
 
