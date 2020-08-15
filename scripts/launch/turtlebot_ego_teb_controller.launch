@@ -1,11 +1,20 @@
 <launch>
   <arg name="debug" default="false"/>
   <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
+  <arg name="cost_factor" default="$(optenv GM_PARAM_COST_FACTOR 3)"/>
+  <arg name="selection_obst_cost_scale" default="$(optenv GM_SELECTION_OBST_COST_SCALE 100)"/>
+  <arg name="enable_standard_costs" default="$(optenv GM_ENABLE_STANDARD_COSTS true)"/>
+  <arg name="selection_alternative_time_cost" default="$(optenv GM_SELECTION_ALTERNATIVE_TIME_COST false)"/>
   
   <include file="$(find nav_scripts)/launch/turtlebot_teb_controller.launch">
     <arg name="egocircle" value="true"/>
     <arg name="debug" value="$(arg debug)"/>
     <arg name="global_planning_freq" value="$(arg global_planning_freq)"/>
+    <arg name="selection_obst_cost_scale" value="$(arg selection_obst_cost_scale)"/>
+    <arg name="enable_standard_costs" value="$(arg enable_standard_costs)"/>
+    <arg name="selection_alternative_time_cost" value="$(arg selection_alternative_time_cost)"/>
   </include>
+  <param name="/move_base/GlobalPlanner/cost_factor" value="$(arg cost_factor)"/>
+
 </launch>
   

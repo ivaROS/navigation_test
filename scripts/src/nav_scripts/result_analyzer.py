@@ -23,6 +23,12 @@ def convertToStrings(dict):
                 if isinstance(value, list):
                     for i in range(len(value)):
                         value[i] = str(value[i])
+                elif isinstance(value, set):
+                    temp = []
+                    while len(value) > 0:
+                        temp.append(str(value.pop()))
+                    for v in temp:
+                        value.add(v)
                 else:
                     dict[key] = str(value)
 
@@ -46,7 +52,7 @@ def filter(results, whitelist=None, blacklist=None, defaults=None):
                     break
         if defaults is not None:
             for key, value in defaults.items():
-                if key not in entry:
+                if key not in entry or not entry[key]: #if the key wasn't included in the result fields or if the field was left blank for this entry
                     entry[key] = value
         if stillgood:
             filtered_results.append(entry)
@@ -85,6 +91,58 @@ def getPrunedList(results, keys):
     return [{k: entry[k] for k in keys if k in entry} for entry in results]
 
 
+
+def CalculateAgreement(results):
+    result_keyname = "result"
+    seed_keyname = "seed"
+
+    statistics = {}
+    result_counts = {}
+
+    for entry in results:
+        seed = entry[seed_keyname]
+        if seed not in statistics:
+            seed_results = {}
+            statistics[seed] = seed_results
+        else:
+            seed_results = statistics[seed]
+
+        result = entry[result_keyname]
+        if result not in seed_results:
+            seed_results[result] = 1
+        else:
+            seed_results[result] += 1
+
+        if result not in result_counts:
+            result_counts[result] = 1
+        else:
+            result_counts[result] += 1
+
+    #TODO: Add verification of equal number of combined results for each seed
+    num_runs = None
+    for seed in statistics:
+        seed_results = statistics[seed]
+        seed_num_runs = sum(seed_results.values())
+
+        if num_runs is None:
+            num_runs = seed_num_runs
+            print("Number of runs=" + str(num_runs))
+        else:
+            if seed_num_runs != num_runs:
+                print("Error! Seed [" + seed + "] contains (" + str(seed_num_runs) + "), not " + str(num_runs))
+                return None
+
+    num_seeds = len(statistics)
+
+    def agr(i):
+        return (1.0/(num_runs*(num_runs-1))) * sum(n*(n-1) for n in statistics[i].values())
+
+    observed_agreement = (1.0/num_seeds) * sum(agr(i) for i in statistics)
+    expected_agreement = ((1.0/(num_seeds*num_runs))**2) * sum(n**2 for n in result_counts.values())
+
+    agreement_coefficient = (observed_agreement - expected_agreement)/(1-expected_agreement)
+
+    return agreement_coefficient
 
 class ResultAnalyzer:
 
@@ -320,7 +378,14 @@ class ResultAnalyzer:
                         return order[condition_name]
                     else:
                         print("Error! order requested but does not contain all necessary keys")
-                return sorted(key_values[condition_name])
+
+                try:
+                    #If values are all numbers, then make sure to sort numerically
+                    sorted_numerically = [x for (_, x) in sorted([(float(x), x) for x in key_values[condition_name]], key=lambda pair: pair[0])]
+                    return sorted_numerically
+                except ValueError:
+                    #Otherwise, sort alphabetically
+                    return sorted(key_values[condition_name])
 
             if depth == max_depth:
 
@@ -452,6 +517,15 @@ class ResultAnalyzer:
 
 
         processLayer()
+
+    def CalculateAgreement(self, whitelist=None, blacklist=None):
+        results = self.getCases(whitelist=whitelist, blacklist=blacklist)
+        agreement_coefficient = CalculateAgreement(results=results)
+        if agreement_coefficient is None:
+            print('Error, unable to calculate agreement of results!')
+        else:
+            print("Agreement Coefficient = " + str(agreement_coefficient))
+
 
     def generateSingleTable(self):
         statistics = {}

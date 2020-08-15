@@ -18,6 +18,10 @@
   <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
   <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
 
+  <arg name="selection_obst_cost_scale" default="$(optenv GM_SELECTION_OBST_COST_SCALE 100)"/>
+  <arg name="enable_standard_costs" default="$(optenv GM_ENABLE_STANDARD_COSTS true)"/>
+  <arg name="selection_alternative_time_cost" default="$(optenv GM_SELECTION_ALTERNATIVE_TIME_COST false)"/>
+  
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
@@ -64,7 +68,10 @@
       <param name="TebLocalPlannerROS/gap_theta_start" value="3.15"/>
       
       <param name="TebLocalPlannerROS/max_global_plan_lookahead_dist" value="0"/>
-      
+      <param name="TebLocalPlannerROS/selection_obst_cost_scale" value="$(arg selection_obst_cost_scale)"/>
+      <param name="TebLocalPlannerROS/enable_standard_costs" value="$(arg enable_standard_costs)"/>
+      <param name="TebLocalPlannerROS/selection_alternative_time_cost" value="$(arg selection_alternative_time_cost)"/>
+             
       <!-- Disable the local costmap observation sources if they will not be used -->
       <param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>
   </node>
