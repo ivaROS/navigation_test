@@ -517,6 +517,7 @@ class ResultAnalyzer:
 
 
         processLayer()
+        print("")
 
     def CalculateAgreement(self, whitelist=None, blacklist=None):
         results = self.getCases(whitelist=whitelist, blacklist=blacklist)
