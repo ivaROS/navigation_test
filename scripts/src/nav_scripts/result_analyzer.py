@@ -138,11 +138,11 @@ def CalculateAgreement(results):
         return (1.0/(num_runs*(num_runs-1))) * sum(n*(n-1) for n in statistics[i].values())
 
     observed_agreement = (1.0/num_seeds) * sum(agr(i) for i in statistics)
-    expected_agreement = ((1.0/(num_seeds*num_runs))**2) * sum(n**2 for n in result_counts.values())
+    #expected_agreement = ((1.0/(num_seeds*num_runs))**2) * sum(n**2 for n in result_counts.values())
 
-    agreement_coefficient = (observed_agreement - expected_agreement)/(1-expected_agreement)
+    #agreement_coefficient = (observed_agreement - expected_agreement)/(1-expected_agreement)
 
-    return agreement_coefficient
+    return observed_agreement
 
 class ResultAnalyzer:
 
