@@ -92,8 +92,7 @@ def getPrunedList(results, keys):
 
 
 
-def CalculateAgreement(results):
-    result_keyname = "result"
+def CalculateAgreement(results, result_keyname = "result"):
     seed_keyname = "seed"
 
     statistics = {}
@@ -126,12 +125,16 @@ def CalculateAgreement(results):
 
         if num_runs is None:
             num_runs = seed_num_runs
-            print("Number of runs=" + str(num_runs))
+            #print("Number of runs=" + str(num_runs))
         else:
             if seed_num_runs != num_runs:
-                print("Error! Seed [" + seed + "] contains (" + str(seed_num_runs) + "), not " + str(num_runs))
+                #print("Error! Seed [" + seed + "] contains (" + str(seed_num_runs) + "), not " + str(num_runs))
+                #raise AssertionError("Error! Seed [" + seed + "] contains (" + str(seed_num_runs) + "), not " + str(num_runs))
                 return None
 
+    if num_runs == 1:
+        return None
+        
     num_seeds = len(statistics)
 
     def agr(i):
@@ -321,7 +324,7 @@ class ResultAnalyzer:
                         print("| "),
                 print("|")
 
-    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None, replacements=None, order=None):
+    def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None, replacements=None, order=None, check_agreement=False):
         #if type(x) is not str and isinstance(x, collections.Sequence)
         #remapped_keynames = {"SUCCEEDED":"SUCCEEDED", "path time":"path time", "seed":"seed", "path_length":"path_length", "common length":"common length", "common time":"common time"}
         #replace(results=remapped_keynames, replacements2=replacements)
@@ -335,12 +338,14 @@ class ResultAnalyzer:
         path_time_keyname=remap("path time")
         common_length_keyname=remap("common length")
         common_time_keyname=remap("common time")
-
+        agreement_keyname=remap("agreement")
 
         statistics = {}
         key_values = {}
         path_times = {}
         path_lengths = {}
+        condition_lists = {}
+
         results = self.getCases(whitelist=whitelist, blacklist=blacklist)
         for entry in results:
             condition = {key: entry[key] for key in independent + [dependent]}
@@ -369,6 +374,13 @@ class ResultAnalyzer:
                     key_values[key] = set()
                 key_values[key].add(value)
 
+            independent_condition = {key: entry[key] for key in independent}
+            independent_conditionset = frozenset(independent_condition.items())
+            if independent_conditionset not in condition_lists:
+                condition_lists[independent_conditionset] = []
+            condition_lists[independent_conditionset].append(entry)
+
+
         max_depth = len(independent)
 
         def processLayer(shared_conditions_dict={}, depth=0, shared_safe_keys=None):
@@ -388,6 +400,9 @@ class ResultAnalyzer:
                     return sorted(key_values[condition_name])
 
             if depth == max_depth:
+                independent_key = frozenset(shared_conditions_dict.items())
+                r = condition_lists[independent_key]
+                agr = CalculateAgreement(results=r, result_keyname='result')
 
                 lookup_keys = []
                 total=0
@@ -412,6 +427,8 @@ class ResultAnalyzer:
                             num) + ") "),
                     else:
                         print("| "),
+
+                print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
 
                 dependent_value= success_keyname
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
@@ -481,12 +498,13 @@ class ResultAnalyzer:
                     print("| " + remapped_condition_name),
                     for result in sort(key_values, dependent):
                         print(" | " + remap(str(result))),
-                        
-                    print(" | " + path_length_keyname + " | " + path_time_keyname + " | " + common_length_keyname + " | " + common_time_keyname), # "path length | path time | common length | common time"),
+
+                    print("| " + agreement_keyname),
+                    print(" | " + path_length_keyname + " | " + path_time_keyname + " | " + common_length_keyname + " | " + common_time_keyname),
 
                     print("|")
 
-                    for i in range(len(key_values[dependent]) + 5):
+                    for i in range(len(key_values[dependent]) + 6):
                         print("| -------"),
 
                     print("|")
@@ -521,11 +539,16 @@ class ResultAnalyzer:
 
     def CalculateAgreement(self, whitelist=None, blacklist=None):
         results = self.getCases(whitelist=whitelist, blacklist=blacklist)
-        agreement_coefficient = CalculateAgreement(results=results)
+        agreement_coefficient = CalculateAgreement(results=results, result_keyname="result")
         if agreement_coefficient is None:
             print('Error, unable to calculate agreement of results!')
         else:
-            print("Agreement Coefficient = " + str(agreement_coefficient))
+            print("Full Agreement Coefficient = " + str(agreement_coefficient))
+            keyname = 'pass_or_fail'
+            for entry in results:
+                entry[keyname] = 'pass' if entry['result']=='SUCCEEDED' else 'fail'
+            agreement_coefficient = CalculateAgreement(results=results, result_keyname=keyname)
+            print("Pass/Fail Agreement Coefficient = " + str(agreement_coefficient))
 
 
     def generateSingleTable(self):
