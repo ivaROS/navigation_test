@@ -434,14 +434,17 @@ class ResultAnalyzer:
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
 
                 if lookupkey in statistics:
+                
+                    def reduce_list(lists):
+                        return np.array([sum(nested_list)/float(len(nested_list)) for nested_list in lists])
 
                     # Print average path length and time over all successful cases
                     times = path_times[lookupkey]
-                    times = np.array(sum(times.values(), []))
+                    times = reduce_list(times.values())
                     path_time = np.mean(times) / 1e9
 
                     path_length = path_lengths[lookupkey]
-                    path_length = np.array(sum(path_length.values(), []))
+                    path_length = reduce_list(path_length.values())
                     path_length = np.mean(path_length)
 
                     print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
@@ -450,11 +453,11 @@ class ResultAnalyzer:
                     # Now print the averages of shared successful cases
                     if shared_safe_keys is not None and len(shared_safe_keys) > 0:
                         times = [path_times[lookupkey][k] for k in shared_safe_keys]
-                        times = np.array(sum(times, []))
+                        times = reduce_list(times)
                         path_time = np.mean(times) / 1e9
 
-                        path_length =[path_lengths[lookupkey][k] for k in shared_safe_keys]
-                        path_length = np.array(sum(path_length, []))
+                        path_length = [path_lengths[lookupkey][k] for k in shared_safe_keys]
+                        path_length = reduce_list(path_length)
                         path_length = np.mean(path_length)
 
                         print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
