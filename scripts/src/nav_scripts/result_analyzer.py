@@ -82,9 +82,19 @@ def readFile(filename):
         result_list = []
         fieldnames = datareader.fieldnames
         for entry in datareader:
-            result_list.append(entry)
+            should_warn=True
+            for k,v in entry.items():
+                if k != v:
+                    should_warn = False
+                    break
+
+            if should_warn:
+                print("Warning! File [" + expanded_filename + "] appears to have extra fieldnames!")
+            else:
+                result_list.append(entry)
             
         return result_list
+
 
 
 def getPrunedList(results, keys):
@@ -197,6 +207,9 @@ class ResultAnalyzer:
 
     def getCases2(self, whitelist=None, blacklist=None):
         return self.getCases(whitelist=whitelist, blacklist=blacklist)
+
+    def addDefaults(self, defaults):
+        self.results = filter(self.results, defaults=defaults)
 
     def getFailCases(self, controller):
         has = {'controller': controller}
@@ -400,10 +413,7 @@ class ResultAnalyzer:
                     return sorted(key_values[condition_name])
 
             if depth == max_depth:
-                independent_key = frozenset(shared_conditions_dict.items())
-                r = condition_lists[independent_key]
-                agr = CalculateAgreement(results=r, result_keyname='result')
-
+                
                 lookup_keys = []
                 total=0
                 for dependent_value in key_values[dependent]: #TODO: use all permutations of multiple dependents
@@ -428,7 +438,11 @@ class ResultAnalyzer:
                     else:
                         print("| "),
 
-                print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
+                if check_agreement:
+                    independent_key = frozenset(shared_conditions_dict.items())
+                    r = condition_lists[independent_key]
+                    agr = CalculateAgreement(results=r, result_keyname='result')
+                    print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
 
                 dependent_value= success_keyname
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
@@ -447,8 +461,8 @@ class ResultAnalyzer:
                     path_length = reduce_list(path_length.values())
                     path_length = np.mean(path_length)
 
-                    print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
-                        path_time) + "s"),
+                    print("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
+                        path_time) + ""),
 
                     # Now print the averages of shared successful cases
                     if shared_safe_keys is not None and len(shared_safe_keys) > 0:
@@ -460,8 +474,8 @@ class ResultAnalyzer:
                         path_length = reduce_list(path_length)
                         path_length = np.mean(path_length)
 
-                        print("| " + "{0:.2f}".format(path_length) + "m |" + "{0:.2f}".format(
-                            path_time) + "s"),
+                        print("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
+                            path_time) + ""),
                     else:
                         print("|"),
 
@@ -502,12 +516,14 @@ class ResultAnalyzer:
                     for result in sort(key_values, dependent):
                         print(" | " + remap(str(result))),
 
-                    print("| " + agreement_keyname),
+                    if check_agreement:
+                        print("| " + agreement_keyname),
+                        
                     print(" | " + path_length_keyname + " | " + path_time_keyname + " | " + common_length_keyname + " | " + common_time_keyname),
 
                     print("|")
 
-                    for i in range(len(key_values[dependent]) + 6):
+                    for i in range(len(key_values[dependent]) + (6 if check_agreement else 5)):
                         print("| -------"),
 
                     print("|")
