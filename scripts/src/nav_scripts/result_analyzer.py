@@ -5,6 +5,16 @@ import numpy as np
 import copy
 import os
 
+
+#standardize numeric representation, removing all trailing 0's from decimals and removing decimal point if nothing after it
+def formatString(value):
+    try:
+        num = float(value)
+    except ValueError:
+        return str(value)
+    else:
+        return ('%f' % num).rstrip('0').rstrip('.') #Copied from https://stackoverflow.com/a/2440786
+
 def isMatch(entry, key, value):
     if key not in entry:
         return False
@@ -22,15 +32,17 @@ def convertToStrings(dict):
             if not isinstance(value, basestring):
                 if isinstance(value, list):
                     for i in range(len(value)):
-                        value[i] = str(value[i])
+                        value[i] = formatString(value[i])
                 elif isinstance(value, set):
                     temp = []
                     while len(value) > 0:
-                        temp.append(str(value.pop()))
+                        temp.append(formatString(value.pop()))
                     for v in temp:
                         value.add(v)
                 else:
-                    dict[key] = str(value)
+                    dict[key] = formatString(value)
+            else:
+                dict[key] = formatString(value)
 
 def filter(results, whitelist=None, blacklist=None, defaults=None):
     filtered_results = []
@@ -39,18 +51,22 @@ def filter(results, whitelist=None, blacklist=None, defaults=None):
     convertToStrings(defaults)
 
     for entry in results:
+        # First, apply consistent formatting to any numeric values
+        for key,value in entry.items():
+            entry[key] = formatString(value)
+
         stillgood = True
         if whitelist is not None:
             for key, value in whitelist.items():
                 if not isMatch(entry, key, value):
                     stillgood = False
                     break
-        if blacklist is not None:
+        if stillgood and blacklist is not None:
             for key, value in blacklist.items():
                 if isMatch(entry, key, value):
                     stillgood = False
                     break
-        if defaults is not None:
+        if stillgood and defaults is not None:
             for key, value in defaults.items():
                 if key not in entry or not entry[key]: #if the key wasn't included in the result fields or if the field was left blank for this entry
                     entry[key] = value
@@ -360,6 +376,11 @@ class ResultAnalyzer:
         condition_lists = {}
 
         results = self.getCases(whitelist=whitelist, blacklist=blacklist)
+
+        if len(results) == 0:
+            print("Error! No results to analyze. Please check your filtering conditions")
+            return
+
         for entry in results:
             condition = {key: entry[key] for key in independent + [dependent]}
             conditionset = frozenset(condition.items())
