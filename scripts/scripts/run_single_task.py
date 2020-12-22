@@ -48,7 +48,11 @@ task= {'scenario': 'dense', 'controller':'teb', 'seed':7, 'robot':'turtlebot', '
 
 task= {'scenario': 'dense', 'controller':'teb', 'seed':32, 'robot':'turtlebot', 'min_obstacle_spacing':0.75}
 
-task= {'scenario': 'dense', 'controller':'teb', 'seed':0, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+task= {'scenario': 'dense', 'controller':'teb', 'seed':56, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+
+#task = {'seed':74, 'scenario':'full_campus_obstacle', 'min_obstacle_spacing':min_obstacle_spacing, 'num_obstacles':num_barrels}
+task= {'scenario': 'dense', 'controller':'teb', 'seed':56, 'robot':'turtlebot', 'min_obstacle_spacing':0.625}
+
 
 rospy.init_node('test_driver', anonymous=True)
 

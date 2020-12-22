@@ -1,0 +1,54 @@
+<launch>
+  <arg name="use_recovery_behaviors" default="true"/>
+  
+  <arg name="egocircle" default="true"/>
+  
+  <!-- <arg name="converter" default="false" if="$(arg egocircle)"/> -->
+  <!-- <arg name="converter" default="true" unless="$(arg egocircle)"/> -->
+  
+  <!-- <arg name="simple_exploration" default="false"/> -->
+  
+  <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
+
+  <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)"/>
+  
+  <arg name="global_planning_freq" default="1.0"/>
+  
+  <arg name="debug" default="false"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/>
+  <!-- valgrind - -tool=callgrind -->
+  
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
+
+  <!-- xterm -e gdb -ex run - -args -->
+  
+  
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_potential_gap_rosconsole.conf"/>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+
+
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="PotentialGapPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+
+      <param name="base_local_planner" value="potential_gap/PotentialGapPlanner" />
+      <rosparam file="$(find nav_configs)/config/potentialgap_local_planner_params.yaml" command="load"/>
+
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+      <!-- Disable the local costmap observation sources if they will not be used -->
+      <param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+  </node>
+
+  <!--<node pkg="robot_pose_publisher" type="robot_pose_publisher" name="robot_pose_publisher"/>-->
+
+
+</launch>

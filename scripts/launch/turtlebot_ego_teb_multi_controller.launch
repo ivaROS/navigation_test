@@ -25,10 +25,13 @@
   
   <arg name="cost_factor" default="$(optenv GM_PARAM_COST_FACTOR 0.01)"/>
   
-  <arg name="selection_obst_cost_scale" default="$(optenv GM_SELECTION_OBST_COST_SCALE 100)"/>
+  <arg name="selection_obst_cost_scale" default="$(optenv GM_SELECTION_OBST_COST_SCALE 0)"/>
   <arg name="enable_standard_costs" default="$(optenv GM_ENABLE_STANDARD_COSTS false)"/>
   <arg name="selection_alternative_time_cost" default="$(optenv GM_SELECTION_ALTERNATIVE_TIME_COST true)"/>
-  
+  <arg name="add_initial_plan" default="$(optenv GM_ADD_INITIAL_PLAN false)"/>
+  <arg name="gradient_descent_exploration" default="$(optenv GM_GRADIENT_DESCENT_EXPLORATION false)"/>
+  <arg name="gradient_descent_max_iterations" default="$(optenv GM_GRADIENT_DESCENT_MAX_ITERATIONS -1)"/>
+  <arg name="switching_blocking_period" default="$(optenv GM_SWITCHING_BLOCKING_PERIOD 1)"/>
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
@@ -70,15 +73,19 @@
       <param name="TebLocalPlannerROS/gap_theta_start" value="3.15"/>
       <param name="TebLocalPlannerROS/use_global_potentials" value="true"/>
       <param name="TebLocalPlannerROS/max_global_plan_lookahead_dist" value="0"/>
-      <param name="TebLocalPlannerROS/selection_prefer_initial_plan" value="1.0"/>
+      <param name="TebLocalPlannerROS/selection_prefer_initial_plan" value="0.95"/>
       <param name="TebLocalPlannerROS/detour_threshold" value="-1.0"/>
-      <param name="TebLocalPlannerROS/switching_blocking_period" value="1"/>
+      <param name="TebLocalPlannerROS/switching_blocking_period" value="$(arg switching_blocking_period)"/>
       <param name="TebLocalPlannerROS/force_reinit_new_goal_dist" value="1.0"/>
       <param name="TebLocalPlannerROS/max_number_classes" value="$(arg max_number_classes)"/>
       <param name="TebLocalPlannerROS/selection_alternative_time_cost" value="$(arg selection_alternative_time_cost)"/>
       <param name="TebLocalPlannerROS/enable_standard_costs" value="$(arg enable_standard_costs)"/>
       <param name="TebLocalPlannerROS/selection_obst_cost_scale" value="$(arg selection_obst_cost_scale)"/>
-      
+      <param name="TebLocalPlannerROS/add_initial_plan" value="$(arg add_initial_plan)"/>
+
+      <param name="TebLocalPlannerROS/gradient_descent_exploration" value="$(arg gradient_descent_exploration)"/>
+      <param name="TebLocalPlannerROS/gradient_descent_max_iterations" value="$(arg gradient_descent_max_iterations)"/>
+
       <param name="base_global_planner" value="global_planner_plus/GlobalPlannerPlus"/>
       
       <rosparam file="$(find nav_configs)/config/teb_costmap_converter_params.yaml" command="load" if="$(arg converter)"/> 

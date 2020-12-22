@@ -6,14 +6,19 @@ import copy
 import os
 
 
-#standardize numeric representation, removing all trailing 0's from decimals and removing decimal point if nothing after it
+#standardize value formatting:
+# Bools: 'True' and 'False'
+# Numbers: remove all trailing 0's from decimals and remove decimal point if nothing after it
 def formatString(value):
-    try:
-        num = float(value)
-    except ValueError:
+    if isinstance(value, bool):
         return str(value)
     else:
-        return ('%f' % num).rstrip('0').rstrip('.') #Copied from https://stackoverflow.com/a/2440786
+        try:
+            num = float(value)
+        except ValueError:
+            return str(value)
+        else:
+            return ('%f' % num).rstrip('0').rstrip('.') #Copied from https://stackoverflow.com/a/2440786
 
 def isMatch(entry, key, value):
     if key not in entry:
