@@ -32,6 +32,17 @@
   <arg name="gradient_descent_exploration" default="$(optenv GM_GRADIENT_DESCENT_EXPLORATION false)"/>
   <arg name="gradient_descent_max_iterations" default="$(optenv GM_GRADIENT_DESCENT_MAX_ITERATIONS -1)"/>
   <arg name="switching_blocking_period" default="$(optenv GM_SWITCHING_BLOCKING_PERIOD 1)"/>
+
+
+  <arg name="gap_merge_scale" default="$(optenv GM_PARAM_GAP_MERGE_SCALE 1.0)"/>
+  <arg name="gap_merge_offset" default="$(optenv GM_PARAM_GAP_MERGE_OFFSET 0.3)"/>
+  <arg name="gap_merge_max_size" default="$(optenv GM_PARAM_GAP_MERGE_MAX_SIZE 0.8)"/>
+  <arg name="gap_merge_min_radius" default="$(optenv GM_PARAM_GAP_MERGE_MIN_RADIUS 0.4)"/>
+  <arg name="enable_radial_gap_conversion" default="$(optenv GM_PARAM_ENABLE_RADIAL_GAP_CONVERSION false)"/>
+  <arg name="gap_conversion_rotation_angle" default="$(eval optenv('GM_PARAM_GAP_CONVERSION_ROTATION_ANGLE pi/4'))"/>
+
+
+
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
@@ -41,7 +52,7 @@
   <!-- xterm -e gdb -ex run - -args -->
   
   
-  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_multigoal_testing)/cfg/rosconsole.conf"/>
+  <!--<env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_multigoal_testing)/cfg/rosconsole.conf"/>-->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
       <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
@@ -101,6 +112,15 @@
 
     <param name="/move_base/GlobalPlannerPlus/cost_factor" value="$(arg cost_factor)"/>
 
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_scale" value="$(arg gap_merge_scale)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_offset" value="$(arg gap_merge_offset)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_max_size" value="$(arg gap_merge_max_size)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_min_radius" value="$(arg gap_merge_min_radius)"/>
+  <param name="/move_base/TebLocalPlannerROS/enable_radial_gap_conversion" value="$(arg enable_radial_gap_conversion)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_conversion_rotation_angle" value="$(arg gap_conversion_rotation_angle)"/>
 
+    <param name="/move_base/base_frame_id" value="base_footprint"/>
+    <param name="/move_base/fixed_frame_id" value="map"/>
+    <param name="/move_base/odom_frame_id" value="odom"/>
 
 </launch>

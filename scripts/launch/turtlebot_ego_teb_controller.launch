@@ -7,6 +7,15 @@
   <arg name="selection_alternative_time_cost" default="$(optenv GM_SELECTION_ALTERNATIVE_TIME_COST false)"/>
   <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
 
+  <arg name="gap_merge_scale" default="$(optenv GM_PARAM_GAP_MERGE_SCALE 1.0)"/>
+  <arg name="gap_merge_offset" default="$(optenv GM_PARAM_GAP_MERGE_OFFSET 0.3)"/>
+  <arg name="gap_merge_max_size" default="$(optenv GM_PARAM_GAP_MERGE_MAX_SIZE 0.8)"/>
+  <arg name="gap_merge_min_radius" default="$(optenv GM_PARAM_GAP_MERGE_MIN_RADIUS 0.4)"/>
+  <arg name="enable_radial_gap_conversion" default="$(optenv GM_PARAM_ENABLE_RADIAL_GAP_CONVERSION false)"/>
+  <arg name="gap_conversion_rotation_angle" default="$(eval optenv('GM_PARAM_GAP_CONVERSION_ROTATION_ANGLE pi/4'))"/>
+
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_multigoal_testing)/cfg/rosconsole.conf"/>
+
   <include file="$(find nav_scripts)/launch/turtlebot_teb_controller.launch">
     <arg name="egocircle" value="true"/>
     <arg name="debug" value="$(arg debug)"/>
@@ -17,6 +26,12 @@
     <arg name="controller_freq" value="$(arg controller_freq)"/>
   </include>
   <param name="/move_base/GlobalPlanner/cost_factor" value="$(arg cost_factor)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_scale" value="$(arg gap_merge_scale)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_offset" value="$(arg gap_merge_offset)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_max_size" value="$(arg gap_merge_max_size)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_min_radius" value="$(arg gap_merge_min_radius)"/>
+  <param name="/move_base/TebLocalPlannerROS/enable_radial_gap_conversion" value="$(arg enable_radial_gap_conversion)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_conversion_rotation_angle" value="$(arg gap_conversion_rotation_angle)"/>
 
 </launch>
   

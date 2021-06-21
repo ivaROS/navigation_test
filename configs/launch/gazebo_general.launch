@@ -1,6 +1,8 @@
 <launch>
   <arg name="world_file" default="$(optenv GM_PARAM_GAZEBO_WORLD_FILE)"/>
   <arg name="map_file" default="$(optenv GM_PARAM_GAZEBO_MAP_FILE)"/>
+  <arg name="world_frame_id" default="map"/>
+
   <!--<arg name="publish_ground_truth_map" default="$(optenv GM_PARAM_PUBLISH_GROUND_TRUTH_MAP)"/> -->
   <arg name="ground_truth_map_file" default="$(optenv GM_PARAM_GAZEBO_GROUND_TRUTH_MAP_FILE)"/>
   <arg name="gui" default="$(optenv GM_PARAM_GAZEBO_GUI true)"/>
@@ -53,10 +55,13 @@
     <!--END gazebo_ros empty_world.launch-->
 
 
-  <node name="map" pkg="map_server" type="map_server" args="$(arg map_file)" required="true" unless="$(eval map_file=='')"/>
+  <node name="map" pkg="map_server" type="map_server" args="$(arg map_file)" required="true" unless="$(eval map_file=='')">
+    <param name="frame_id" value="$(arg world_frame_id)"/>
+  </node>
 
   <node name="groundtruth_map" pkg="map_server" type="map_server" args="$(arg ground_truth_map_file)" required="true" if="$(eval ground_truth_map_file!='')">
     <remap from="map" to="groundtruth/map"/>
+    <param name="frame_id" value="$(arg world_frame_id)"/>
   </node>
 
 </launch>
