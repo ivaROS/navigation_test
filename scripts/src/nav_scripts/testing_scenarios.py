@@ -81,6 +81,9 @@ class GeneralScenario(TestingScenario):
         self.random = random.Random()
         self.random.seed(self.seed)
 
+        self.init_pose_msg = None
+        self.target_pose_msg = None
+
         if not hasattr(self, 'world'):
             if "world" not in task:
                 rospy.logerr("["+self.name + "] scenario requires 'world' to be specified in task!")
@@ -113,9 +116,11 @@ class GeneralScenario(TestingScenario):
 
     #TODO: if start pose specified, use that instead, ex: 'init_pose'
     def getStartingPoseMsg(self):
-        start_pose = self.getStartingPose()
+        if self.init_pose_msg is None:
+            start_pose = self.getStartingPose()
         #TODO: possibly add to task?
-        return getPoseMsg(start_pose)
+            self.init_pose_msg = getPoseMsg(start_pose)
+        return self.init_pose_msg
 
     #Override this to set goal
     def getGoal(self):
@@ -123,11 +128,13 @@ class GeneralScenario(TestingScenario):
 
     #TODO: if goal pose specified, use that instead, ex: 'target_pose'
     def getGoalMsg(self):
-        goal = PoseStamped()
-        target_pose = self.getGoal()
-        goal.pose = getPoseMsg(target_pose)
-        goal.header.frame_id = self.nav_frame_id
-        return goal
+        if self.target_pose_msg is None:
+            goal = PoseStamped()
+            target_pose = self.getGoal()
+            goal.pose = getPoseMsg(target_pose)
+            goal.header.frame_id = self.nav_frame_id
+            self.target_pose_msg = goal
+        return self.target_pose_msg
 
     # Override this to place obstacles, etc
     def setupEnvironment(self):

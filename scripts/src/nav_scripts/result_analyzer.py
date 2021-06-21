@@ -148,12 +148,20 @@ def CalculateAgreement(results, result_keyname = "result"):
         else:
             result_counts[result] += 1
 
+
     #TODO: Add verification of equal number of combined results for each seed
-    num_runs = None
+
+    seeds_with_x_runs = {}
     for seed in statistics:
         seed_results = statistics[seed]
         seed_num_runs = sum(seed_results.values())
 
+        if seed_num_runs not in seeds_with_x_runs:
+            seeds_with_x_runs[seed_num_runs] = [seed]
+        else:
+            seeds_with_x_runs[seed_num_runs].append(seed)
+
+        '''
         if num_runs is None:
             num_runs = seed_num_runs
             #print("Number of runs=" + str(num_runs))
@@ -162,21 +170,30 @@ def CalculateAgreement(results, result_keyname = "result"):
                 #print("Error! Seed [" + seed + "] contains (" + str(seed_num_runs) + "), not " + str(num_runs))
                 #raise AssertionError("Error! Seed [" + seed + "] contains (" + str(seed_num_runs) + "), not " + str(num_runs))
                 return None
+        '''
 
+    #num_runs = max((len(seeds_with_x_runs[v]) for v in seeds_with_x_runs.keys()))
+
+    [num_runs, selected_seeds] = max(seeds_with_x_runs.items(), key=lambda (num_runs, seeds): len(seeds))
     if num_runs == 1:
-        return None
-        
-    num_seeds = len(statistics)
+        return None, None
+
+    #selected_seeds = seeds_with_x_runs[num_runs]
+
+    num_seeds = len(selected_seeds)
+    #print "Num seeds used: " + str(num_seeds)
 
     def agr(i):
         return (1.0/(num_runs*(num_runs-1))) * sum(n*(n-1) for n in statistics[i].values())
 
-    observed_agreement = (1.0/num_seeds) * sum(agr(i) for i in statistics)
+    observed_agreement = (1.0/num_seeds) * sum(agr(i) for i in selected_seeds)
     #expected_agreement = ((1.0/(num_seeds*num_runs))**2) * sum(n**2 for n in result_counts.values())
 
     #agreement_coefficient = (observed_agreement - expected_agreement)/(1-expected_agreement)
 
-    return observed_agreement
+    note = '(' + str(num_seeds) + '/' + str(len(statistics.keys())) + ')'
+
+    return (observed_agreement, note)
 
 class ResultAnalyzer:
 
@@ -467,8 +484,10 @@ class ResultAnalyzer:
                 if check_agreement:
                     independent_key = frozenset(shared_conditions_dict.items())
                     r = condition_lists[independent_key]
-                    agr = CalculateAgreement(results=r, result_keyname='result')
-                    print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
+                    agr, note = CalculateAgreement(results=r, result_keyname='result')
+                    agreement_details = False
+                    print("| " + (("{0:.3f}".format(agr) + (note if agreement_details else '')) if agr is not None else "N/A")),
+                    #print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
 
                 dependent_value= success_keyname
                 lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
