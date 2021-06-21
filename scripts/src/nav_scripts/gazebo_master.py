@@ -61,7 +61,7 @@ class MultiMasterCoordinator:
 
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
-        self.fieldnames.extend(["pid","result","time","path_length","robot"])
+        self.fieldnames.extend(["pid","result","time","path_length","robot","total_rotation"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
         self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
@@ -242,6 +242,7 @@ class GazeboMaster(mp.Process):
         self.current_robot = None
         self.gazebo_driver = None
         self.current_world = None
+        self.current_world_args = None
         self.kill_flag = kill_flag
         self.soft_kill_flag = soft_kill_flag
         self.is_shutdown = False
@@ -485,7 +486,7 @@ class GazeboMaster(mp.Process):
 
 
     def roslaunch_gazebo(self, world, world_args=None):
-        if world == self.current_world:
+        if world == self.current_world and world_args == self.current_world_args:
             if not self.gazebo_launch._shutting_down:
                 return
             else:
@@ -496,6 +497,7 @@ class GazeboMaster(mp.Process):
             self.current_robot = None   # Ensures a new robot will be spawned
 
         self.current_world = world
+        self.current_world_args = world_args
 
 
         # This will wait for a roscore if necessary, so as long as we detect any failures

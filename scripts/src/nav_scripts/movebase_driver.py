@@ -5,6 +5,7 @@ from move_base_msgs.msg import *
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, PoseArray
 from pprint import pprint
 import tf
+import tf.transformations
 from actionlib_msgs.msg import GoalStatus
 from nav_msgs.msg import Odometry
 from kobuki_msgs.msg import BumperEvent
@@ -18,6 +19,8 @@ import os
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseActionFeedback
 import threading
 import time
+import angles
+from std_msgs.msg import Int16 as Int16msg
 
 class BumperChecker:
     def __init__(self):
@@ -27,6 +30,41 @@ class BumperChecker:
     def bumperCB(self,data):
         if data.state == BumperEvent.PRESSED:
             self.collided = True
+
+def quaternionToYaw(q):
+    euler = tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+    roll = euler[0]
+    pitch = euler[1]
+    yaw = euler[2]
+
+    return yaw
+
+def poseToString(pose):
+    if pose is None:
+        return "NONE"
+
+    yaw = quaternionToYaw(pose.orientation)
+
+    return str(pose.position.x) + ":" + str(pose.position.y) + ":" + str(yaw)
+
+class TrajTypeRecorder(object):
+    def __init__(self):
+        self.traj_results = {"axial":0, "radial":0, "none":0}
+        self.traj_type_sub = rospy.Subscriber("/traj_gap_type", Int16msg, self.callback, queue_size=5)
+
+    def callback(self, msg):
+        gap_type = msg.data
+        if gap_type == -1:
+            self.traj_results["none"] +=1
+        elif gap_type == 1:
+            self.traj_results["axial"] +=1
+        elif gap_type == 2:
+            self.traj_results["radial"] +=1
+        else:
+            rospy.logerr("Unknown traj result: " + str(gap_type))
+
+    def get_results(self):
+        return {"num_traj_type_none": self.traj_results["none"], "num_traj_type_radial": self.traj_results["radial"], "num_traj_type_axial": self.traj_results["axial"]}
 
 class ResultRecorder(object):
     def __init__(self):
@@ -190,9 +228,11 @@ class OdomChecker:
 
 class OdomAccumulator:
     def __init__(self):
+        #Note: it might be more efficient to use the simple action client's callback rather than this separate subscriber
         self.feedback_subscriber = rospy.Subscriber("move_base/feedback", MoveBaseActionFeedback, self.feedbackCB, queue_size=5)
         self.path_length = 0
         self.prev_msg = None
+        self.accum_rotation = 0
 
     def feedbackCB(self, feedback):
         if self.prev_msg is not None:
@@ -205,11 +245,19 @@ class OdomAccumulator:
             displacement = math.sqrt(deltaX*deltaX + deltaY*deltaY)
             self.path_length += displacement
 
+            prev_yaw = quaternionToYaw(self.prev_msg.feedback.base_position.pose.orientation)
+            curr_yaw = quaternionToYaw(feedback.feedback.base_position.pose.orientation)
+
+            delta_yaw = angles.shortest_angular_distance(curr_yaw, prev_yaw)
+            self.accum_rotation += math.fabs(delta_yaw)
 
         self.prev_msg = feedback
 
     def getPathLength(self):
         return self.path_length
+
+    def getTotalRotation(self):
+        return self.accum_rotation
 
 
 def run_testImpl(pose):
@@ -278,6 +326,7 @@ def run_test(goal_pose, record=False):
     bumper_checker = BumperChecker()
     odom_checker = OdomChecker()
     odom_accumulator = OdomAccumulator()
+    traj_recorder = TrajTypeRecorder()
 
     #record = False
 
@@ -294,13 +343,22 @@ def run_test(goal_pose, record=False):
     goal.target_pose = goal_pose
     goal.target_pose.header.stamp = rospy.Time.now()
 
+    end_pose = None
+    def set_cur_pose(data):
+        end_pose = data.feedback.base_position.pose
+
+        if record:
+            result_recorder.feedback_cb(data)
+
+
+
     if record:
         result_recorder.setGoal(goal)
 
     # Send the goal!
     print "sending goal"
     if record:
-        client.send_goal(goal, feedback_cb= result_recorder.feedback_cb)
+        client.send_goal(goal, feedback_cb=set_cur_pose)
     else:
         client.send_goal(goal)
 
@@ -339,6 +397,7 @@ def run_test(goal_pose, record=False):
         result_recorder.done()
 
     path_length = str(odom_accumulator.getPathLength())
+    total_rotation = str(odom_accumulator.getTotalRotation())
 
     if result is None:
         #client.wait_for_result(rospy.Duration(45))
@@ -367,10 +426,14 @@ def run_test(goal_pose, record=False):
         else:
             result = "UNKNOWN"
 
+    res = {'result': result, 'time': task_time, 'path_length': path_length, 'end_pose': poseToString(end_pose), 'total_rotation': total_rotation}
+
+    res.update(traj_recorder.get_results())
+
     if record:
-        return {'result': result, 'time': task_time, 'path_length': path_length, 'bag_file_path': result_recorder.bagfilepath}
-    else:
-        return {'result': result, 'time': task_time, 'path_length': path_length}
+        res.update({'bag_file_path': result_recorder.bagfilepath})
+
+    return res
 
 if __name__ == "__main__":
     try:
