@@ -306,6 +306,7 @@ class GazeboMaster(mp.Process):
                     if "robot" in task and task['robot'] is not None:
                         robot_args = task["robot_args"] if "robot_args" in task else None
                         self.roslaunch_robot(task["robot"], robot_args=robot_args)
+                        task.update(robot_args)
 
                         if task["controller"] is None:
                             result = "nothing"

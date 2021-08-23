@@ -31,23 +31,26 @@ def isMatch(entry, key, value):
             return False
     return True
 
-def convertToStrings(dict):
-    if dict is not None:
-        for key, value in dict.items():
-            if not isinstance(value, basestring):
-                if isinstance(value, list):
-                    for i in range(len(value)):
-                        value[i] = formatString(value[i])
-                elif isinstance(value, set):
-                    temp = []
-                    while len(value) > 0:
-                        temp.append(formatString(value.pop()))
-                    for v in temp:
-                        value.add(v)
-                else:
-                    dict[key] = formatString(value)
-            else:
-                dict[key] = formatString(value)
+
+def convertToStrings(input):
+    if input is not None and not isinstance(input, basestring):
+        if isinstance(input, list):
+            for i in range(len(input)):
+                input[i] = convertToStrings(input[i])
+        elif isinstance(input, set):
+            temp = []
+            while len(input) > 0:
+                temp.append(convertToStrings(input.pop()))
+            for v in temp:
+                input.add(v)
+        elif isinstance(input, dict):
+            for key, value in input.items():
+                key = convertToStrings(key)
+                input[key] = convertToStrings(value)
+        else:
+            input = formatString(input)
+    return input
+
 
 def filter(results, whitelist=None, blacklist=None, defaults=None):
     filtered_results = []
@@ -200,6 +203,7 @@ class ResultAnalyzer:
     def readFile(self, filename, whitelist = None, blacklist = None, defaults=None, replacements=None):
         result_list = readFile(filename)
         filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist, defaults=defaults)
+        convertToStrings(replacements)
         replace(results=filtered_list, replacements=replacements)
         self.results += filtered_list
 
@@ -379,6 +383,8 @@ class ResultAnalyzer:
         #if type(x) is not str and isinstance(x, collections.Sequence)
         #remapped_keynames = {"SUCCEEDED":"SUCCEEDED", "path time":"path time", "seed":"seed", "path_length":"path_length", "common length":"common length", "common time":"common time"}
         #replace(results=remapped_keynames, replacements2=replacements)
+
+        order = convertToStrings(order)
 
         def remap(term):
             return replacements[term] if term in replacements else term
