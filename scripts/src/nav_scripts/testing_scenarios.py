@@ -32,9 +32,9 @@ class TestingScenarios:
         if scenario.name not in TestingScenarios.impls:
             TestingScenarios.impls[scenario.name] = scenario
         elif TestingScenarios.impls[scenario.name] == scenario:
-            rospy.loginfo("Ignoring repeated registration of scenario [" + scenario.name + "]")
+            rospy.logwarn("Ignoring repeated registration of scenario [" + scenario.name + "]")
         else:
-            rospy.logwarn("Warning! A scenario has already been registered with the given name! [" + scenario.name + "]. Current scenario not added")
+            rospy.logerr("Error! A scenario has already been registered with the given name! [" + scenario.name + "]. Current scenario not added")
 
     @staticmethod
     def getScenarioTypes():
@@ -51,8 +51,11 @@ def getPoseMsg(pose):
     pose_msg = Pose()
     pose_msg.position.x = pose[0]
     pose_msg.position.y = pose[1]
+    if len(pose) == 4:
+        pose_msg.position.z = pose[2]
 
-    q = tf.transformations.quaternion_from_euler(0, 0, pose[2])
+    yaw_ind = 3 if len(pose)==4 else 2
+    q = tf.transformations.quaternion_from_euler(0, 0, pose[yaw_ind])
     pose_msg.orientation = Quaternion(*q)
 
     return pose_msg
