@@ -299,7 +299,9 @@ def reset_costmaps():
     service = rospy.ServiceProxy("move_base/clear_costmaps", std_srvs.Empty)
     service()
 
-def run_test(goal_pose, record=False):
+def run_test(goal_pose, record=False, timeout=None):
+    if timeout is None:
+        timeout = 300
     # Get a node handle and start the move_base action server
     # init_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1)
 
@@ -385,7 +387,7 @@ def run_test(goal_pose, record=False):
         elif odom_checker.not_moving:
             keep_waiting = False
             result = "STUCK"
-        elif (rospy.Time.now() - start_time > rospy.Duration(300)):
+        elif (rospy.Time.now() - start_time > rospy.Duration(timeout)):
             keep_waiting = False
             result = "TIMED_OUT"
         else:

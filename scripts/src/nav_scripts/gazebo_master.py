@@ -63,7 +63,7 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot","total_rotation"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight', 'timeout']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
 
     def start(self):
@@ -304,7 +304,7 @@ class GazeboMaster(mp.Process):
                     if world_args is not None:
                         task.update(world_args)
                     if "robot" in task and task['robot'] is not None:
-                        robot_args = task["robot_args"] if "robot_args" in task else None
+                        robot_args = task["robot_args"] if "robot_args" in task else {}
                         self.roslaunch_robot(task["robot"], robot_args=robot_args)
                         task.update(robot_args)
 
@@ -325,8 +325,9 @@ class GazeboMaster(mp.Process):
                                 #master = rosgraph.Master('/mynode')
 
                                 record = task["record"] if "record" in task else False
+                                timeout = task["timeout"] if "timeout" in task else None
                                 #TODO: make this a more informative type
-                                result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record)
+                                result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record, timeout=timeout)
 
                             except rospy.ROSException as e:
                                 result = "ROSException: " + str(e)
@@ -476,9 +477,12 @@ class GazeboMaster(mp.Process):
         )
         self.robot_launch.start()
 
+        odom_topic = "/odom"
+        if 'odom_topic' in robot_args:
+            odom_topic = robot_args['odom_topic']
         # Wait for gazebo simulation to be running
         try:
-            msg = rospy.wait_for_message("/odom", Odometry, 30)
+            msg = rospy.wait_for_message(odom_topic, Odometry, 30)
         except rospy.exceptions.ROSException:
             print "Error! /odom not received!"
             return False
