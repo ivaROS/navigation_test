@@ -26,6 +26,8 @@ import rospy
 import csv
 import datetime
 
+from roslaunch.node_args import _rospack
+
 
 def port_in_use(port):
     with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
@@ -63,7 +65,7 @@ class MultiMasterCoordinator:
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot","total_rotation"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight', 'timeout']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight', 'timeout', 'bash_source_file']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
 
     def start(self):
@@ -227,6 +229,7 @@ class GazeboMaster(mp.Process):
     def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
         super(GazeboMaster, self).__init__()
         self.rospack = rospkg.RosPack()
+        self.rospack_caches = {}
 
         self.daemon = False
 
@@ -406,16 +409,80 @@ class GazeboMaster(mp.Process):
         if controller_args is None:
             controller_args = {}
 
+        old_environ = None
+        old_rospack = None
 
+        global _rospack
+
+        def clear_roslaunch_rospack_cache():
+            ''' roslaunch.node_args.create_local_process_args() caches a RosPack instance, so we clear it here
+                to ensure that the correct environment is used. create_local_process_args() accepts an 'env'
+                argument, but there is no way to pass it in without modifying roslaunch.nodeprocess.py
+            '''
+
+            _rospack = None
+
+        # From https://stackoverflow.com/a/7198338
+        def source_workspace2(bash_file):
+            import os, subprocess as sp, json
+            old_environ = os.environ
+
+            source = 'source ' + bash_file
+            dump = '/usr/bin/python -c "import os, json;print json.dumps(dict(os.environ))"'
+            pipe = sp.Popen(['/bin/bash', '-c', '%s && %s' % (source, dump)], stdout=sp.PIPE)
+            env = json.loads(pipe.stdout.read())
+            os.environ = env
+
+        # Alternative (untested) approach, from https://stackoverflow.com/a/3505826
+        def source_workspace(bash_file):
+            import os
+            import pprint
+            import shlex
+            import subprocess
+
+            command = shlex.split("env -i bash -c 'source" + bash_file + " && env'")
+            proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+            for line in proc.stdout:
+                (key, _, value) = line.partition("=")
+                os.environ[key] = value
+            proc.communicate()
+
+            pprint.pprint(dict(os.environ))
+
+        bash_source_file = None
+
+        controller_path = None
         if os.path.isfile(controller_name):
             controller_path = controller_name
         elif ControllerLauncher.contains(controller_name):
             controller_path = ControllerLauncher.getPath(name=controller_name)
-        else:
-            path = self.rospack.get_path("nav_scripts")
+            bash_source_file = ControllerLauncher.getEnvironment(name=controller_name)
+            #TODO: Include bash source file info with controller?
+
+        #bash_source_file = controller_args['bash_source_file'] if 'bash_source_file' in controller_args else None
+        if 'bash_source_file' in controller_args:
+            arg_bash_file = controller_args['bash_source_file']
+            if arg_bash_file is not None and arg_bash_file != bash_source_file:
+                print("Warning, environment provided in controller args will overwrite the environment provided by controller config")
+                bash_source_file = arg_bash_file
+
+        if bash_source_file is not None:
+            source_workspace2(bash_file = bash_source_file)
+
+        if bash_source_file not in self.rospack_caches:
+            self.rospack_caches[bash_source_file] = rospkg.RosPack()
+
+        rospack = self.rospack_caches[bash_source_file]
+
+        #Save old
+        old_rospack = _rospack
+        _rospack = rospack
+
+        if controller_path is None:
+            path = rospack.get_path("nav_scripts")
             controller_path = path + "/launch/" + robot + "_" + controller_name + "_controller.launch"
 
-        # We'll assume Gazebo is launched are ready to go
+        # We'll assume Gazebo is launched and ready to go
 
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
         #roslaunch.configure_logging(uuid)
@@ -431,11 +498,20 @@ class GazeboMaster(mp.Process):
             os.environ[var_name] = value
             print("Setting environment variable [" + var_name + "] to '" + value + "'")
 
+        clear_roslaunch_rospack_cache()
+
         self.controller_launch = roslaunch.parent.ROSLaunchParent(
             run_id=uuid, roslaunch_files=[controller_path],
             is_core=False, port=self.ros_port #, roslaunch_strs=controller_args
         )
         self.controller_launch.start()
+
+        #Restore usual environment
+        if old_environ is not None:
+            os.environ = old_environ
+            #clear_roslaunch_rospack_cache()
+
+        _rospack = old_rospack
 
         sys.stdout = sys.__stdout__
 

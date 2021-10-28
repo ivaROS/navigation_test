@@ -1,6 +1,13 @@
 import rospkg, rospy
 import math
 
+class ControllerConfig(object):
+
+    def __init__(self, name, filepath, environment=None):
+        self.name=name
+        self.filepath = filepath
+        self.environment = environment
+
 #TODO: Move all controller launch logic as well as controller-specific data into this class
 class ControllerLauncher:
     impls = {}
@@ -71,11 +78,12 @@ class ControllerLauncher:
             rospy.logerr("Error! Task does not specify controller type [" + str(task) + "]: " + str(e))
 
     #TODO: add robot type as optional parameter
+    #TODO: allow passing in package name and relative path of controller launch file, then get full path using rospack for the specified environment
     @staticmethod
-    def registerController(name, filepath):
+    def registerController(name, filepath, environment=None):
         if name not in ControllerLauncher.impls:
-            ControllerLauncher.impls[name] = filepath
-        elif ControllerLauncher.impls[name] == filepath:
+            ControllerLauncher.impls[name] = ControllerConfig(name=name, filepath=filepath, environment=environment)
+        elif ControllerLauncher.impls[name].filepath == filepath:
             rospy.loginfo("Ignoring repeated registration of controller [" + name + "]")
         else:
             rospy.logwarn("Warning! A controller has already been registered with the given name! [" + name + "] but a different path. Old path was [" + str(ControllerLauncher.impls[name]) + "], while new path is [" + str(filepath) + "] The new path will be ignored")
@@ -90,7 +98,11 @@ class ControllerLauncher:
 
     @staticmethod
     def getPath(name):
-        return ControllerLauncher.impls[name]
+        return ControllerLauncher.impls[name].filepath
+
+    @staticmethod
+    def getEnvironment(name):
+        return ControllerLauncher.impls[name].environment
 
     @staticmethod
     def getFieldNames():
