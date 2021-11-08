@@ -50,15 +50,39 @@ task= {'scenario': 'dense', 'controller':'teb', 'seed':32, 'robot':'turtlebot', 
 
 task= {'scenario': 'dense', 'controller':'teb', 'seed':56, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
 
-#task = {'seed':74, 'scenario':'full_campus_obstacle', 'min_obstacle_spacing':min_obstacle_spacing, 'num_obstacles':num_barrels}
+task = {'seed':74, 'scenario':'full_campus_obstacle', 'min_obstacle_spacing':min_obstacle_spacing, 'num_obstacles':num_barrels}
 task= {'scenario': 'dense', 'controller':'teb', 'seed':56, 'robot':'turtlebot', 'min_obstacle_spacing':0.625}
 
+task= {'scenario': 'dense', 'controller':'teb', 'seed':10, 'robot':'turtlebot', 'min_obstacle_spacing':0.625}
+
+task= {'scenario': 'sector_extra', 'controller':'teb', 'seed':10, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':50}
+
+task= {'scenario': 'fourth_floor_obstacle', 'controller':'teb', 'seed':59, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}
+task= {'scenario': 'fourth_floor_obstacle', 'controller':'teb', 'seed':7, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}
+
+task= {'scenario': 'campus_obstacle', 'controller':'teb', 'seed':28, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}   #91, 14
+task= {'scenario': 'campus_obstacle', 'controller':'teb', 'seed':73, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}   #51
+task= {'scenario': 'campus_obstacle', 'controller':'teb', 'seed':63, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}   #9
+task= {'scenario': 'campus_obstacle', 'controller':'ego_teb_multi', 'seed':87, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}   #9
+
+task= {'scenario': 'dense', 'controller':'ego_teb', 'seed':35, 'robot':'turtlebot', 'min_obstacle_spacing':0.625}
+task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':81, 'robot':'turtlebot', 'min_obstacle_spacing':0.625}
+
+task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':91, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':0, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+
+
+task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':0, 'robot':'turtlebot', 'min_obstacle_spacing':1}
+
+task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':5, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+
+task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':68, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
 
 rospy.init_node('test_driver', anonymous=True)
 
 #test_driver.reset_costmaps()
 
-#rospy.Rate(1).sleep()
+rospy.Rate(1).sleep()
 
 scenarios = TestingScenarios()
 scenario = scenarios.getScenario(task)
@@ -71,7 +95,7 @@ scenario.setupScenario()
 end_time = time.time()
 
 print str(end_time-start_time)
-
+#print scenario.getGoalMsg()
 result = run_test(goal_pose=scenario.getGoalMsg(), record=False)
 
-#print(result)
+print(result)

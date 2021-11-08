@@ -37,7 +37,7 @@
   <arg name="urdf_file" default="$(find xacro)/xacro '$(find turtlebot_trajectory_testing)/urdf/cylinder_model.urdf' --inorder" />
   <param name="$(arg param)" command="$(arg urdf_file)" />
 
-  -1<env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_trajectory_nav)/data/teb_multigoal_limit_logging.conf"/>
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_trajectory_nav)/data/teb_multigoal_limit_logging.conf"/>
 
   <node pkg="teb_trajectory_nav" type="teb_behavior_test_node" respawn="false" name="teb_global_planner" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
     <rosparam file="$(find teb_trajectory_nav)/param/teb_params.yaml" command="load" ns="teb_trajectory_source"/>

@@ -409,8 +409,7 @@ class GazeboMaster(mp.Process):
         if controller_args is None:
             controller_args = {}
 
-        old_environ = None
-        old_rospack = None
+        old_environ = os.environ
 
         global _rospack
 
@@ -425,7 +424,6 @@ class GazeboMaster(mp.Process):
         # From https://stackoverflow.com/a/7198338
         def source_workspace2(bash_file):
             import os, subprocess as sp, json
-            old_environ = os.environ
 
             source = 'source ' + bash_file
             dump = '/usr/bin/python -c "import os, json;print json.dumps(dict(os.environ))"'
@@ -457,7 +455,6 @@ class GazeboMaster(mp.Process):
         elif ControllerLauncher.contains(controller_name):
             controller_path = ControllerLauncher.getPath(name=controller_name)
             bash_source_file = ControllerLauncher.getEnvironment(name=controller_name)
-            #TODO: Include bash source file info with controller?
 
         #bash_source_file = controller_args['bash_source_file'] if 'bash_source_file' in controller_args else None
         if 'bash_source_file' in controller_args:
@@ -467,7 +464,11 @@ class GazeboMaster(mp.Process):
                 bash_source_file = arg_bash_file
 
         if bash_source_file is not None:
-            source_workspace2(bash_file = bash_source_file)
+            if os.path.isfile(bash_source_file):
+                source_workspace2(bash_file = bash_source_file)
+            else:
+                print("Error! Attempting to source file [" + str(bash_source_file) + "], but the file does not exist!")
+                return False
 
         if bash_source_file not in self.rospack_caches:
             self.rospack_caches[bash_source_file] = rospkg.RosPack()
@@ -481,6 +482,10 @@ class GazeboMaster(mp.Process):
         if controller_path is None:
             path = rospack.get_path("nav_scripts")
             controller_path = path + "/launch/" + robot + "_" + controller_name + "_controller.launch"
+
+        if not os.path.isfile(controller_path):
+            print("Error! Attempting to load controller from path [" + str(controller_path) + "], but the file does not exist!")
+            return False
 
         # We'll assume Gazebo is launched and ready to go
 
@@ -498,7 +503,7 @@ class GazeboMaster(mp.Process):
             os.environ[var_name] = value
             print("Setting environment variable [" + var_name + "] to '" + value + "'")
 
-        clear_roslaunch_rospack_cache()
+        #clear_roslaunch_rospack_cache()
 
         self.controller_launch = roslaunch.parent.ROSLaunchParent(
             run_id=uuid, roslaunch_files=[controller_path],
