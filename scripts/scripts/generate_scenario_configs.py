@@ -62,7 +62,6 @@ class ScenarioExporter(object):
         with open(output_path, "w") as config_file:
             string = format_pose_msg(pose_msg=start_pose) + "\n" + format_pose_msg(pose_msg=goal_pose.pose) + "\n"
             config_file.write(string)
-            pass
 
         #start_str = StringIO()
         #start_pose.serialize(buff=start_str)
@@ -108,7 +107,6 @@ class ScenarioExporter(object):
             rospy.logerr("Model type [" + str(model_type) + "] is unknown! Known types are: ")  # TODO: print list of types; maybe model_filenames.iter()?
             return False
 
-        #model_xml = load_model_xml(self.model_path + model_filenames[model_type])
         model_tree = etree.parse(source=self.scenario.gazebo_driver.model_path + self.model_filenames[model_type])
         model = model_tree.getroot()
         if model is not None:
@@ -122,41 +120,10 @@ class ScenarioExporter(object):
                 self.world.append(model)
 
 
-    def add_model2(self, name_in, pose_in, scale_in, mesh_num_in, models_type):
-        link_el = etree.Element('link', name=name_in)
-
-        pose_el = etree.Element('pose')
-        pose_el.text = ''.join(str(e) + ' ' for e in pose_in)
-        link_el.append(pose_el)
-
-        visual_el = etree.Element('visual', name='visual')
-        geometry_el = etree.Element('geometry')
-        mesh_el = etree.Element('mesh')
-        uri_el = etree.Element('uri')
-        uri_el.text = 'file://' + models_type + '/Tree' + str(mesh_num_in) + '.dae'
-        mesh_el.append(uri_el)
-        scale_el = etree.Element('scale')
-        scale_el.text = str(scale_in) + ' ' + str(scale_in) + ' ' + str(scale_in)
-        mesh_el.append(scale_el)
-        geometry_el.append(mesh_el)
-        visual_el.append(geometry_el)
-        link_el.append(visual_el)
-
-        collision_el = etree.Element('collision', name='collision')
-        collision_el.append(copy.deepcopy(geometry_el))
-        contacts_el = etree.Element('max_contacts')
-        contacts_el.text = '0'
-        collision_el.append(contacts_el)
-        link_el.append(collision_el)
-
-        self.root.find('model').append(link_el)
-
-#def getXML(base_world, obstacles, start_pose, goal_pose):
 
 
 rospy.init_node('test_driver', anonymous=True)
 
-#scenarios = TestingScenarios()
 task= {'scenario': 'dense', 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
 
 
