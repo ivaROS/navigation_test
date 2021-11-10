@@ -301,6 +301,22 @@ class GazeboDriver():
     #time.sleep(.1)
     return success
 
+  def spawn_sdf_file(self, model_name, model_file, initial_pose=None):
+    if initial_pose is None:
+      initial_pose = Pose()
+      initial_pose.orientation.w = 1
+
+    model_xml = load_model_xml(model_file)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+                                                      robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+    # time.sleep(.1)
+    return success
+
   def spawn_package_model(self, model_name, package_name, model_path, initial_pose):
     # Must be unique in the gazebo world - failure otherwise
     # Spawning on top of something else leads to bizarre behavior

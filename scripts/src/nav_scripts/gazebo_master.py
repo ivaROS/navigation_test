@@ -303,6 +303,7 @@ class GazeboMaster(mp.Process):
 
                     #TODO: handle failure to launch gazebo
                     world_args = task["world_args"] if "world_args" in task else None
+                    #world_args.update(scenario.getWorldArgs())
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
                     if world_args is not None:
                         task.update(world_args)

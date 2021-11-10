@@ -5,11 +5,9 @@ from nav_scripts.testing_scenarios import TestingScenarios
 import rospy
 import time
 from lxml import etree
-import copy
+from copy import deepcopy
 import tf
-from geometry_msgs.msg import Pose
-from io import StringIO
-
+import os
 
 def format_pose_msg(pose_msg):
     quat = pose_msg.orientation
@@ -120,15 +118,67 @@ class ScenarioExporter(object):
                 self.world.append(model)
 
 
+class ObstacleExtractor(object):
+    def __init__(self, world_file):
+        self.process(world_file=world_file)
+
+    def process(self, world_file):
+        print("Processing task " + world_file)
+
+        dirname, basename  = os.path.split(world_file)
+        name=os.path.splitext(basename)[0]
+        model_path = os.path.join(dirname,name) + ".sdf"
+
+        self.load_environment_xml(world_file=world_file)
+        self.create_new_model(name=name)
+        self.add_obstacles()
+        self.export_model(model_path=model_path)
+
+    def export_model(self, model_path):
+        print("Writing model xml to " + str(model_path) + "...")
+        self.model_tree.write(model_path, pretty_print=True)
+
+    def load_environment_xml(self, world_file):
+        print("Parsing world xml...")
+        self.tree = etree.parse(source=world_file)
+        self.root = self.tree.getroot()
+        self.world = self.root.find("world")
 
 
-rospy.init_node('test_driver', anonymous=True)
+    def create_new_model(self, name):
+        world_sdf = self.root
+        version = world_sdf.get("version")
+        sdf = etree.Element("sdf", version=version)
+        self.super_model = etree.Element("model", name=name)
+        sdf.append(self.super_model)
+        self.model_tree = etree.ElementTree(element=sdf)
 
-task= {'scenario': 'dense', 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
+
+    def add_obstacles(self):
+        models = self.world.findall("model")
+        for model in models:
+            if "_obstacle" in model.attrib['name']:
+                self.super_model.append(deepcopy(model))
 
 
-for seed in range(61,100):
-    task['seed'] = seed
-    scenario = ScenarioExporter(task=task)
+def generate_dense_worlds():
+    rospy.init_node('test_driver', anonymous=True)
 
-rospy.loginfo("Done!!!")
+    task = {'scenario': 'dense', 'robot': 'turtlebot', 'min_obstacle_spacing': 0.5}
+
+    for seed in range(61, 100):
+        task['seed'] = seed
+        scenario = ScenarioExporter(task=task)
+
+def extract_models_from_worlds(path):
+    world_files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and os.path.splitext(f)[1] == ".world"]
+    for file in world_files:
+        world_file = os.path.join(path, file)
+        extractor = ObstacleExtractor(world_file=world_file)
+        pass
+
+if __name__ == "__main__":
+    #generate_dense_worlds()
+    extract_models_from_worlds(path="/home/justin/catkin_ws/src/navigation_test/configs/world/pregenerated_worlds/")
+
+    rospy.loginfo("Done!!!")

@@ -6,7 +6,7 @@ import numpy as np
 import random
 import tf
 import math
-
+import os
 
 class TestingScenarios:
     impls = {}
@@ -113,6 +113,9 @@ class GeneralScenario(TestingScenario):
         path = self.rospack.get_path("nav_configs")
         return path + "/launch/gazebo_" + self.world + "_world.launch"
 
+    def getWorldArgs(self):
+        return {}
+
     #Override this to set starting pose
     def getStartingPose(self):
         return self.init_pose
@@ -145,22 +148,25 @@ class GeneralScenario(TestingScenario):
 
     #Override this to for full control over scenario setup
     def setupScenario(self):
-        rospy.loginfo("Resetting robot...")
+        rospy.loginfo("Setting up scenario...")
         # TODO: Check if reset successful; if not, wait briefly and try again,
         # eventually fail and throw error
+        rospy.loginfo("Waiting for services, etc...")
         self.gazebo_driver.checkServicesTopics(10)
 
         self.gazebo_driver.pause()
+        rospy.loginfo("Moving robot...")
         self.gazebo_driver.moveRobot(self.getStartingPoseMsg())
         self.gazebo_driver.resetOdom()
         self.gazebo_driver.reset(self.seed)
+        rospy.loginfo("Configuring environment...")
         self.setupEnvironment()
         self.gazebo_driver.unpause()
+        rospy.loginfo("Done!")
 
     @staticmethod
     def getUniqueFieldNames():
         return ["world", "seed", 'init_pose', 'target_pose']
-
 
 TestingScenarios.registerScenario(GeneralScenario)
 
@@ -606,6 +612,76 @@ class DenseScenario(SparseScenario):
         self.min_obstacle_spacing = task["min_obstacle_spacing"] if "min_obstacle_spacing" in task else 1
 
 TestingScenarios.registerScenario(DenseScenario)
+
+
+class PregenDenseScenario(DenseScenario):
+    name="pregen_dense"
+    def __init__(self, task):
+        super(PregenDenseScenario, self).__init__(task=task)
+
+        if self.min_obstacle_spacing != 0.5:
+            raise ValueError("Pregenerated Dense environments are for a min_obstacle_spacing of 0.5m!")
+
+        self.worlds_path = self.rospack.get_path("nav_configs") + "/world/pregenerated_worlds"
+
+        scenario_id = "dense_" + str(self.seed)
+        model_path = os.path.join(self.worlds_path, scenario_id + ".sdf")
+        config_path = os.path.join(self.worlds_path, scenario_id + ".txt")
+        self.scenario_id = scenario_id
+        if not os.path.exists(model_path):
+            raise ValueError("Needed path [" + model_path + "] does not exist!")
+        if not os.path.exists(config_path):
+            raise ValueError("Needed path [" + config_path + "] does not exist!")
+
+        self.model_path = model_path
+        with open(config_path, "r") as config_file:
+            lines = config_file.readlines()
+            if len(lines) is not 2:
+                raise ValueError("Config file [" + config_path + "] does not have the correct number of lines int it!")
+
+            def getPose(line):
+                vals = line.split(' ')
+                if len(vals) is not 6:
+                    raise ValueError("Unable to parse pose!")
+
+                vals = [float(v.rstrip()) for v in vals]
+
+                pose = [vals[0], vals[1], vals[2], vals[5]]
+                return pose
+
+            self._start_pose = getPose(lines[0])
+            self._goal_pose = getPose(lines[1])
+
+    def getStartingPose(self):
+        return self._start_pose
+
+    def getGoal(self):
+        return self._goal_pose
+
+    def setupEnvironment(self):
+        #from gazebo_ros import gazebo_interface
+
+        obstacle_key = "_obstacles"
+
+        #first, remove any existing obstacle
+        rospy.loginfo("Checking for existing models to delete...")
+        for model in self.gazebo_driver.models.name:
+            if model.endswith(obstacle_key):
+                rospy.loginfo("Deleting model [" + model + "]...")
+                self.gazebo_driver.deleteModel(name=model)
+                rospy.loginfo("Finished deleting model [" + model + "]...")
+
+        #Now spawn in the obstacles
+        model_name = self.scenario_id + obstacle_key
+        #success = gazebo_interface.spawn_sdf_model_client(model_name, self.model_path,
+        #                                                  rospy.get_namespace(), initial_pose=Pose(), reference_frame="", gazebo_namespace="/gazebo")
+        rospy.loginfo("Requesting to spawn models")
+        success = self.gazebo_driver.spawn_sdf_file(model_name = model_name, model_file = self.model_path)
+        return success
+
+
+
+TestingScenarios.registerScenario(PregenDenseScenario)
 
 
 class MediumScenario(SparseScenario):
