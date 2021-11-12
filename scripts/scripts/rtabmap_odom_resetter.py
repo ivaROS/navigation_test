@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
+from builtins import object
 import rospy
 
 import std_srvs.srv as std_srvs
 
 from rtabmap_ros.msg import OdomInfo
 
-class OdomResetter():
+class OdomResetter(object):
     def __init__(self):
         self.odom_info_topic = "rtabmap/odom_info"
         self.reset_odom_service_name = "rtabmap/reset_odom"

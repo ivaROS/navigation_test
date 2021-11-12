@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from builtins import object
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 import std_msgs.msg as std_msgs
@@ -26,7 +27,7 @@ from nav_msgs.msg import Odometry
 from kobuki_msgs.msg import BumperEvent
 
 
-class BumperCollisionDetector():
+class BumperCollisionDetector(object):
     def __init__(self):
         rospy.init_node('bumper_collision_detector')
 

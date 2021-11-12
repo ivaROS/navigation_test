@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 import rospy
 import random
 import sys, os, time
@@ -79,7 +82,7 @@ class CostmapDriver(object):
             rand_ind = self.nprandom.randint(low=0, high=num_poses)
             pos = self.safe_poses[rand_ind,:]
 
-        pos += self.nprandom.random_sample(size=2)*self.resolution/2
+        pos += old_div(self.nprandom.random_sample(size=2)*self.resolution,2)
 
         return pos
 
@@ -95,15 +98,15 @@ class CostmapDriver(object):
         return cost
 
     def worldToMap(self, wx, wy):
-        mx = (int)((wx - self.origin_x) / self.resolution)
-        my = (int)((wy - self.origin_y) / self.resolution)
+        mx = (int)(old_div((wx - self.origin_x), self.resolution))
+        my = (int)(old_div((wy - self.origin_y), self.resolution))
         return mx, my
 
     def cellsToIndex(self, mx, my):
         return my * self.size_x + mx
 
     def indexToCells(self, index):
-        my = index / self.size_x
+        my = old_div(index, self.size_x)
         mx = index - (my * self.size_x)
         return mx, my
     

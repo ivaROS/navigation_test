@@ -1,4 +1,12 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import filter
+from builtins import next
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
+from past.utils import old_div
 import csv
 import time
 import math
@@ -45,7 +53,7 @@ def convertToStrings(input):
             for v in temp:
                 input.add(v)
         elif isinstance(input, dict):
-            for key, value in input.items():
+            for key, value in list(input.items()):
                 key = convertToStrings(key)
                 input[key] = convertToStrings(value)
         else:
@@ -61,22 +69,22 @@ def filter(results, whitelist=None, blacklist=None, defaults=None):
 
     for entry in results:
         # First, apply consistent formatting to any numeric values
-        for key,value in entry.items():
+        for key,value in list(entry.items()):
             entry[key] = formatString(value)
 
         stillgood = True
         if whitelist is not None:
-            for key, value in whitelist.items():
+            for key, value in list(whitelist.items()):
                 if not isMatch(entry, key, value):
                     stillgood = False
                     break
         if stillgood and blacklist is not None:
-            for key, value in blacklist.items():
+            for key, value in list(blacklist.items()):
                 if isMatch(entry, key, value):
                     stillgood = False
                     break
         if stillgood and defaults is not None:
-            for key, value in defaults.items():
+            for key, value in list(defaults.items()):
                 if key not in entry or not entry[key]: #if the key wasn't included in the result fields or if the field was left blank for this entry
                     entry[key] = value
         if stillgood:
@@ -86,7 +94,7 @@ def filter(results, whitelist=None, blacklist=None, defaults=None):
 def replace(results, replacements=None, replacements2=None):
     if replacements is not None:
         for entry in results:
-            for key, value in replacements.items():
+            for key, value in list(replacements.items()):
                 if key in entry:
                     if type(value) is dict:
                         if entry[key] in value:
@@ -108,7 +116,7 @@ def readFile(filename):
         fieldnames = datareader.fieldnames
         for entry in datareader:
             should_warn=True
-            for k,v in entry.items():
+            for k,v in list(entry.items()):
                 if k != v:
                     should_warn = False
                     break
@@ -178,7 +186,7 @@ def CalculateAgreement(results, result_keyname = "result"):
 
     #num_runs = max((len(seeds_with_x_runs[v]) for v in seeds_with_x_runs.keys()))
 
-    [num_runs, selected_seeds] = max(seeds_with_x_runs.items(), key=lambda num_runs_seeds: len(num_runs_seeds[1]))
+    [num_runs, selected_seeds] = max(list(seeds_with_x_runs.items()), key=lambda num_runs_seeds: len(num_runs_seeds[1]))
     if num_runs == 1:
         return None, None
 
@@ -188,22 +196,22 @@ def CalculateAgreement(results, result_keyname = "result"):
     #print "Num seeds used: " + str(num_seeds)
 
     def agr(i):
-        return (1.0/(num_runs*(num_runs-1))) * sum(n*(n-1) for n in statistics[i].values())
+        return (1.0/(num_runs*(num_runs-1))) * sum(n*(n-1) for n in list(statistics[i].values()))
 
     observed_agreement = (1.0/num_seeds) * sum(agr(i) for i in selected_seeds)
     #expected_agreement = ((1.0/(num_seeds*num_runs))**2) * sum(n**2 for n in result_counts.values())
 
     #agreement_coefficient = (observed_agreement - expected_agreement)/(1-expected_agreement)
 
-    note = '(' + str(num_seeds) + '/' + str(len(statistics.keys())) + ')'
+    note = '(' + str(num_seeds) + '/' + str(len(list(statistics.keys()))) + ')'
 
     return (observed_agreement, note)
 
-class ResultAnalyzer:
+class ResultAnalyzer(object):
 
     def readFile(self, filename, whitelist = None, blacklist = None, defaults=None, replacements=None):
         result_list = readFile(filename)
-        filtered_list = filter(result_list, whitelist=whitelist, blacklist=blacklist, defaults=defaults)
+        filtered_list = list(filter(result_list, whitelist=whitelist, blacklist=blacklist, defaults=defaults))
         convertToStrings(replacements)
         replace(results=filtered_list, replacements=replacements)
         self.results += filtered_list
@@ -246,13 +254,13 @@ class ResultAnalyzer:
     '''
 
     def getCases(self, whitelist=None, blacklist=None):
-        return filter(self.results, whitelist=whitelist, blacklist=blacklist)
+        return list(filter(self.results, whitelist=whitelist, blacklist=blacklist))
 
     def getCases2(self, whitelist=None, blacklist=None):
         return self.getCases(whitelist=whitelist, blacklist=blacklist)
 
     def addDefaults(self, defaults):
-        self.results = filter(self.results, defaults=defaults)
+        self.results = list(filter(self.results, defaults=defaults))
 
     def getFailCases(self, controller):
         has = {'controller': controller}
@@ -284,7 +292,7 @@ class ResultAnalyzer:
         key_values = {}
         for entry in self.results:
             condition = {key: entry[key] for key in independent + dependent}
-            conditionset = frozenset(condition.items())
+            conditionset = frozenset(list(condition.items()))
             
             #print conditionset
             
@@ -293,7 +301,7 @@ class ResultAnalyzer:
             else:
                 statistics[conditionset] = statistics[conditionset] + 1
 
-            for key, value in condition.items():
+            for key, value in list(condition.items()):
                 if not key in key_values:
                     key_values[key] = set()
                 key_values[key].add(value)
@@ -302,15 +310,15 @@ class ResultAnalyzer:
            for controller in sorted(key_values[independent[1]]):
                 total = 0
                 for result in key_values[dependent[0]]:
-                    key = frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
+                    key = frozenset(list({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items()))
                     if key in statistics:
                         total+= statistics[key]
                 print(controller + " controller:")
                 for result in key_values[dependent[0]]:
                     key = frozenset(
-                        {independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
+                        list({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items()))
                     if key in sorted(statistics):
-                        num = statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
+                        num = statistics[frozenset(list({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items()))]
                         print(result + ": " + str(num) + "\t" + str(float(num)/total))
                 print("")
 
@@ -321,7 +329,7 @@ class ResultAnalyzer:
         path_lengths = {}
         for entry in self.results:
             condition = {key: entry[key] for key in ["controller", "scenario"] + ["result"]}
-            conditionset = frozenset(condition.items())
+            conditionset = frozenset(list(condition.items()))
 
             # print conditionset
 
@@ -334,7 +342,7 @@ class ResultAnalyzer:
                 path_times[conditionset].append(int(entry["time"]))
                 path_lengths[conditionset].append(float(entry["path_length"]))
 
-            for key, value in condition.items():
+            for key, value in list(condition.items()):
                 if not key in key_values:
                     key_values[key] = set()
                 key_values[key].add(value)
@@ -361,18 +369,18 @@ class ResultAnalyzer:
                 total = 0
                 for result in key_values["result"]:
                     key = frozenset(
-                        {"controller": controller, "scenario": scenario, "result": result}.items())
+                        list({"controller": controller, "scenario": scenario, "result": result}.items()))
                     if key in statistics:
                         total += statistics[key]
 
                 print(("| " + str(controller)), end=' ')
                 for result in key_values["result"]:
                     key = frozenset(
-                        {"controller": controller, "scenario": scenario, "result": result}.items())
+                        list({"controller": controller, "scenario": scenario, "result": result}.items()))
                     if key in sorted(statistics):
-                        lookupkey = frozenset({"controller": controller, "scenario": scenario, "result": result}.items())
+                        lookupkey = frozenset(list({"controller": controller, "scenario": scenario, "result": result}.items()))
                         num = statistics[lookupkey]
-                        path_time = np.mean(np.array(path_times[lookupkey]))/1e9
+                        path_time = old_div(np.mean(np.array(path_times[lookupkey])),1e9)
                         path_length = np.mean(np.array(path_lengths[lookupkey]))
 
                         print(("| " + "{0:.1f}".format(100*float(num) / total) + "% (" + str(num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m" + " <br>" + "{0:.2f}".format(path_time) + "s"), end=' ')
@@ -412,7 +420,7 @@ class ResultAnalyzer:
 
         for entry in results:
             condition = {key: entry[key] for key in independent + [dependent]}
-            conditionset = frozenset(condition.items())
+            conditionset = frozenset(list(condition.items()))
 
             # print conditionset
 
@@ -432,13 +440,13 @@ class ResultAnalyzer:
             path_times[conditionset][entry[seed_keyname]] += [int(entry["time"])]
             path_lengths[conditionset][entry[seed_keyname]] += [float(entry["path_length"])]
 
-            for key, value in condition.items():
+            for key, value in list(condition.items()):
                 if not key in key_values:
                     key_values[key] = set()
                 key_values[key].add(value)
 
             independent_condition = {key: entry[key] for key in independent}
-            independent_conditionset = frozenset(independent_condition.items())
+            independent_conditionset = frozenset(list(independent_condition.items()))
             if independent_conditionset not in condition_lists:
                 condition_lists[independent_conditionset] = []
             condition_lists[independent_conditionset].append(entry)
@@ -467,13 +475,13 @@ class ResultAnalyzer:
                 lookup_keys = []
                 total=0
                 for dependent_value in key_values[dependent]: #TODO: use all permutations of multiple dependents
-                    key = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
+                    key = frozenset(list(shared_conditions_dict.items()) + list({dependent: dependent_value}.items()))
                     if key in statistics:
                         total += statistics[key]
 
                 #print("| " + str(controller)),
                 for dependent_value in sort(key_values, dependent):
-                    lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
+                    lookupkey = frozenset(list(shared_conditions_dict.items()) + list({dependent: dependent_value}.items()))
                     if lookupkey in statistics:
                         num = statistics[lookupkey]
                         #path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
@@ -489,7 +497,7 @@ class ResultAnalyzer:
                         print(("| "), end=' ')
 
                 if check_agreement:
-                    independent_key = frozenset(shared_conditions_dict.items())
+                    independent_key = frozenset(list(shared_conditions_dict.items()))
                     r = condition_lists[independent_key]
                     agr, note = CalculateAgreement(results=r, result_keyname='result')
                     agreement_details = False
@@ -497,7 +505,7 @@ class ResultAnalyzer:
                     #print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
 
                 dependent_value= success_keyname
-                lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value}.items())
+                lookupkey = frozenset(list(shared_conditions_dict.items()) + list({dependent: dependent_value}.items()))
 
                 if lookupkey in statistics:
                 
@@ -506,11 +514,11 @@ class ResultAnalyzer:
 
                     # Print average path length and time over all successful cases
                     times = path_times[lookupkey]
-                    times = reduce_list(times.values())
-                    path_time = np.mean(times) / 1e9
+                    times = reduce_list(list(times.values()))
+                    path_time = old_div(np.mean(times), 1e9)
 
                     path_length = path_lengths[lookupkey]
-                    path_length = reduce_list(path_length.values())
+                    path_length = reduce_list(list(path_length.values()))
                     path_length = np.mean(path_length)
 
                     print(("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
@@ -520,7 +528,7 @@ class ResultAnalyzer:
                     if shared_safe_keys is not None and len(shared_safe_keys) > 0:
                         times = [path_times[lookupkey][k] for k in shared_safe_keys]
                         times = reduce_list(times)
-                        path_time = np.mean(times) / 1e9
+                        path_time = old_div(np.mean(times), 1e9)
 
                         path_length = [path_lengths[lookupkey][k] for k in shared_safe_keys]
                         path_length = reduce_list(path_length)
@@ -551,11 +559,11 @@ class ResultAnalyzer:
                     dependent_value = success_keyname
                     if condition_name in key_values:
                         for condition_value in key_values[condition_name]:
-                            lookupkey = frozenset(shared_conditions_dict.items() + {dependent: dependent_value, condition_name: condition_value}.items())
+                            lookupkey = frozenset(list(shared_conditions_dict.items()) + list({dependent: dependent_value, condition_name: condition_value}.items()))
 
                             if lookupkey in path_times:
                                 condition_safe_keys = path_times[lookupkey]
-                                condition_safe_keys = condition_safe_keys.keys()
+                                condition_safe_keys = list(condition_safe_keys.keys())
                                 if safe_keys is None:
                                     safe_keys = set(condition_safe_keys)
                                 else:
@@ -629,7 +637,7 @@ class ResultAnalyzer:
         path_lengths = {}
         for entry in self.results:
             condition = {key: entry[key] for key in ["controller", "scenario"] + ["result"]}
-            conditionset = frozenset(condition.items())
+            conditionset = frozenset(list(condition.items()))
 
             # print conditionset
 
@@ -642,7 +650,7 @@ class ResultAnalyzer:
                 path_times[conditionset].append(int(entry["time"]))
                 path_lengths[conditionset].append(float(entry["path_length"]))
 
-            for key, value in condition.items():
+            for key, value in list(condition.items()):
                 if not key in key_values:
                     key_values[key] = set()
                 key_values[key].add(value)
@@ -670,18 +678,18 @@ class ResultAnalyzer:
                 total = 0
                 for result in key_values["result"]:
                     key = frozenset(
-                        {"controller": controller, "scenario": scenario, "result": result}.items())
+                        list({"controller": controller, "scenario": scenario, "result": result}.items()))
                     if key in statistics:
                         total += statistics[key]
 
                 result = "SUCCEEDED"
 
                 key = frozenset(
-                    {"controller": controller, "scenario": scenario, "result": result}.items())
+                    list({"controller": controller, "scenario": scenario, "result": result}.items()))
                 if key in sorted(statistics):
-                    lookupkey = frozenset({"controller": controller, "scenario": scenario, "result": result}.items())
+                    lookupkey = frozenset(list({"controller": controller, "scenario": scenario, "result": result}.items()))
                     num = statistics[lookupkey]
-                    path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
+                    path_time = old_div(np.mean(np.array(path_times[lookupkey])), 1e9)
                     path_length = np.mean(np.array(path_lengths[lookupkey]))
 
                     print(("| " + "{0:.1f}".format(100 * float(num) / total) + "% <br>" + "{0:.2f}".format(path_length) + "m"), end=' ')
@@ -700,7 +708,7 @@ class ResultAnalyzer:
         key_values = {}
         for entry in self.results:
             condition = {key: entry[key] for key in independent}
-            conditionset = frozenset(condition.items())
+            conditionset = frozenset(list(condition.items()))
             self.frozen_set.append(conditionset)
 
     def getAverageTime(self, tasks):
@@ -711,16 +719,16 @@ class ResultAnalyzer:
             total_time += t
             num_tasks += 1
             
-        avg_time = total_time/num_tasks if num_tasks > 0 else 0
-        print(': ' + str(avg_time/1e9)) #tasks[0]['controller'] +
+        avg_time = old_div(total_time,num_tasks) if num_tasks > 0 else 0
+        print(': ' + str(old_div(avg_time,1e9))) #tasks[0]['controller'] +
 
     def contains(self, task):
-        stripped_task = {str(key): str(task[key]) for key,value in task.items()}
-        stripped_task = frozenset(stripped_task.items())
+        stripped_task = {str(key): str(task[key]) for key,value in list(task.items())}
+        stripped_task = frozenset(list(stripped_task.items()))
 
         for entry in self.results:
-            condition = {key: entry[key] for key,value in task.items() if key in entry}
-            conditionset = frozenset(condition.items())
+            condition = {key: entry[key] for key,value in list(task.items()) if key in entry}
+            conditionset = frozenset(list(condition.items()))
             if conditionset == stripped_task:
                 if 'result' in entry: #and (entry['result'] == 'SUCCEEDED' or entry['result'] == 'BUMPER_COLLISION'):
                     return True
@@ -728,12 +736,12 @@ class ResultAnalyzer:
         return False
 
     def getMatchingResult(self, task):
-        stripped_task = {str(key): str(task[key]) for key,value in task.items()}
-        stripped_task = frozenset(stripped_task.items())
+        stripped_task = {str(key): str(task[key]) for key,value in list(task.items())}
+        stripped_task = frozenset(list(stripped_task.items()))
 
         for entry in self.results:
-            condition = {key: entry[key] for key,value in task.items()}
-            conditionset = frozenset(condition.items())
+            condition = {key: entry[key] for key,value in list(task.items())}
+            conditionset = frozenset(list(condition.items()))
             if conditionset == stripped_task:
                 return entry
 
@@ -776,7 +784,7 @@ class ResultAnalyzer:
                 task2 = self.getMatchingResult(task2)
                 if task2 is not None:
                     condition = {task1['result']:task2['result']}
-                    conditionset = frozenset(condition.items())
+                    conditionset = frozenset(list(condition.items()))
 
                     # print conditionset
 
@@ -787,6 +795,6 @@ class ResultAnalyzer:
 
 
         print(controller1 + " : " + controller2)
-        for key,value in statistics.items():
+        for key,value in list(statistics.items()):
             print(str(next(iter(key))) + " : " + str(value))
 

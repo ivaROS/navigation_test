@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import rospy
 import random
 import sys, os, time
@@ -55,7 +60,7 @@ def load_model_xml(filename):
 
   return model_xml
 
-class GazeboDriver():
+class GazeboDriver(object):
   # Copied from pips_test: gazebo_driver.py
   def barrel_points(self,xmins, ymins, xmaxs, ymaxs, min_dist, num_barrels, max_tries =500):
     '''
@@ -80,8 +85,8 @@ class GazeboDriver():
     ymins = np.array(ymins)
 
     region_weights = (xmaxs - xmins)*(ymaxs - ymins)
-    region_weights = region_weights / (np.sum(region_weights))
-    region_inds = range(len(xmins))
+    region_weights = old_div(region_weights, (np.sum(region_weights)))
+    region_inds = list(range(len(xmins)))
 
     sampled_regions = self.nprandom.choice(region_inds,replace=True,p=region_weights,size=max_tries)
 
@@ -484,7 +489,7 @@ class GazeboDriver():
     self.nprandom = np.random.RandomState(self.seed)
   
   def getRandInt(self, lower, upper):
-    a = range(lower, upper + 1)
+    a = list(range(lower, upper + 1))
     start = self.random.choice(a)
     a.remove(start)
     end = self.random.choice(a)

@@ -1,4 +1,6 @@
 from __future__ import print_function
+from builtins import str
+from builtins import object
 import rosbag
 import rospy
 import tf2_ros
@@ -133,7 +135,7 @@ def getCorrectiveTransform(tfBuffer, Tr_m, frame_id):
         print(e)
 
 
-class OdometryCorrection:
+class OdometryCorrection(object):
 
     def __init__(self):
         self.rtab_frame_id = "corrected_map"

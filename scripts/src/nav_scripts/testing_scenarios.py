@@ -1,3 +1,8 @@
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import rospkg, rospy
 from nav_scripts.gazebo_driver import GazeboDriver
 from nav_scripts.costmap_driver import CostmapDriver
@@ -8,7 +13,7 @@ import tf
 import math
 import os
 
-class TestingScenarios:
+class TestingScenarios(object):
     impls = {}
 
     def __init__(self):
@@ -43,7 +48,7 @@ class TestingScenarios:
     @staticmethod
     def getFieldNames():
         fieldnames = ["scenario"]
-        for scenario in TestingScenarios.getScenarioTypes().itervalues():
+        for scenario in list(TestingScenarios.getScenarioTypes().values()):
             fieldnames.extend(scenario.getUniqueFieldNames())
         return fieldnames
 
@@ -337,7 +342,7 @@ class SectorScenario(GeneralScenario):
         super(SectorScenario, self).__init__(task=task)
         # TODO: create class dictionary of default values, do all checking/setting of values at general level. Support lambdas
         self.init_id = task["init_id"] if "init_id" in task else 0
-        self.target_id = task["target_id"] if "target_id" in task else (self.init_id + len(self.poses)/2) % len(self.poses)
+        self.target_id = task["target_id"] if "target_id" in task else (self.init_id + old_div(len(self.poses),2)) % len(self.poses)
 
 
     @staticmethod
@@ -479,7 +484,7 @@ class FourthFloorScenario(GeneralScenario):
             dis = []
             for pose in self.target_poses:
                 dis.append(math.sqrt((init[0]-pose[0])**2+(init[1]-pose[1])**2))
-            dis_idx = sorted(range(len(dis)), key=dis.__getitem__)
+            dis_idx = sorted(list(range(len(dis))), key=dis.__getitem__)
             init_rand = self.random.randint(1,3)
             self.target_id = dis_idx[init_rand]
 

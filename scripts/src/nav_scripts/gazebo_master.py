@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import object
 import multiprocessing as mp
 import os
 import sys
@@ -9,7 +14,7 @@ import roslaunch
 import time
 import nav_scripts.movebase_driver as test_driver
 import threading
-import Queue
+import queue
 from ctypes import c_bool
 
 import signal
@@ -41,7 +46,7 @@ def port_in_use(port):
 
 
 
-class MultiMasterCoordinator:
+class MultiMasterCoordinator(object):
     def __init__(self, num_masters=1, save_results = True):
         signal.signal(signal.SIGINT, self.signal_shutdown)
         signal.signal(signal.SIGTERM, self.signal_shutdown)
@@ -82,7 +87,7 @@ class MultiMasterCoordinator:
     def startProcesses(self):
         self.ros_port = 11311
         self.gazebo_port = self.ros_port + 100
-        for ind in xrange(self.num_masters):
+        for ind in range(self.num_masters):
             self.addProcess()
 
 
@@ -121,7 +126,7 @@ class MultiMasterCoordinator:
                     task = queue.get(block=False)
 
                     result_string = "Result of ["
-                    for k,v in task.iteritems():
+                    for k,v in list(task.items()):
                         #if "result" not in k:
                             result_string+= str(k) + ":" + str(v) + ","
                     result_string += "]"
@@ -140,7 +145,7 @@ class MultiMasterCoordinator:
 
                     #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
                     queue.task_done()
-                except Queue.Empty as e:
+                except queue.Empty as e:
                     #print "No results!"
                     time.sleep(1)
 
@@ -364,7 +369,7 @@ class GazeboMaster(mp.Process):
                     print(result, file=sys.stderr)
 
 
-            except Queue.Empty as e:
+            except queue.Empty as e:
                 with self.soft_kill_flag.get_lock():
                     if self.soft_kill_flag.value:
                         self.shutdown()
@@ -499,7 +504,7 @@ class GazeboMaster(mp.Process):
         sys.stdout = open(os.devnull, "w")
 
         # Set environment variables to specify controller arguments
-        for key,value in controller_args.items():
+        for key,value in list(controller_args.items()):
             var_name = "GM_PARAM_"+ key.upper()
             value = str(value)
             os.environ[var_name] = value
@@ -548,7 +553,7 @@ class GazeboMaster(mp.Process):
         #roslaunch.configure_logging(uuid) #What does this do?
         #print path
 
-        for key,value in robot_args.items():
+        for key,value in list(robot_args.items()):
             var_name = "GM_PARAM_"+ key.upper()
             value = str(value)
             os.environ[var_name] = value
@@ -598,7 +603,7 @@ class GazeboMaster(mp.Process):
             world_args = {'gazebo_gui':'false'}
 
         # Set environment variables to specify world arguments
-        for key,value in world_args.items():
+        for key,value in list(world_args.items()):
             var_name = "GM_PARAM_"+ key.upper()
             value = str(value)
             os.environ[var_name] = value

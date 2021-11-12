@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from builtins import input
+from builtins import range
 import rospy
 import rospkg
 import roslaunch
@@ -78,7 +80,7 @@ if __name__=="__main__":
     #Expand This
     controller_name = None
     gazebo_driver = Prototype()
-    temp = input("Select your controller type:  ")
+    temp = eval(input("Select your controller type:  "))
     if (temp == 1):
         controller_name = "baseLocalPlanner_controller.launch"
     elif (temp == 2):

@@ -1,3 +1,5 @@
+from builtins import input
+from builtins import object
 import rospy
 from nav_scripts.gazebo_driver import GazeboDriver
 from geometry_msgs.msg import Twist
@@ -66,7 +68,7 @@ class SimulationStepper(object):
         #print(str(cmd))
         if self.mode == 2 or self.mode == 1:
             self.driver.pause()
-            key = raw_input("Paused! Press 's' to step, or 'space' to resume, followed by 'Enter'")
+            key = input("Paused! Press 's' to step, or 'space' to resume, followed by 'Enter'")
             #key = read_single_keypress()
             if key == 's':
                 self.driver.unpause()
@@ -74,7 +76,7 @@ class SimulationStepper(object):
                 self.mode = 0
                 self.driver.unpause()
         elif self.mode == 0:
-            key = raw_input("Press 's' to step, or 'space' to pause, followed by 'Enter'")
+            key = input("Press 's' to step, or 'space' to pause, followed by 'Enter'")
             #key = read_single_keypress()
             if key == 's':
                 self.mode = 2

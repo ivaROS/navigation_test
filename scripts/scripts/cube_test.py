@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from builtins import input
+from builtins import range
 import rospy
 import rospkg
 import roslaunch
@@ -73,7 +75,7 @@ if __name__=="__main__":
     print("1: Base Local Planner, 2: Teb local Planner, 3: DWA local planner, 4: Eband local planner, 5: PIPS DWA")
     #Expand This
     controller_name = None
-    temp = input("Select your controller type:  ")
+    temp = eval(input("Select your controller type:  "))
     if (temp == 1):
         controller_name = "baseLocalPlanner_controller.launch"
     elif (temp == 2):

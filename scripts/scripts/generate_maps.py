@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 #import time
+from builtins import str
+from builtins import range
+from builtins import object
 import rospy
 import subprocess
 from nav_scripts.testing_scenarios import TestingScenarios

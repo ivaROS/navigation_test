@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from builtins import str
+from builtins import object
 import rospy
 import actionlib
 from move_base_msgs.msg import *
@@ -23,7 +25,7 @@ import time
 import angles
 from std_msgs.msg import Int16 as Int16msg
 
-class BumperChecker:
+class BumperChecker(object):
     def __init__(self):
         self.sub = rospy.Subscriber("mobile_base/events/bumper", BumperEvent, self.bumperCB, queue_size=5)
         self.collided = False
@@ -182,7 +184,7 @@ class ResultRecorder(object):
 
 
 #Not currently in use
-class OdomChecker:
+class OdomChecker(object):
     def __init__(self):
         #self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
         self.not_moving = False
@@ -227,7 +229,7 @@ class OdomChecker:
             print(e)
             pass
 
-class OdomAccumulator:
+class OdomAccumulator(object):
     def __init__(self):
         #Note: it might be more efficient to use the simple action client's callback rather than this separate subscriber
         self.feedback_subscriber = rospy.Subscriber("move_base/feedback", MoveBaseActionFeedback, self.feedbackCB, queue_size=5)

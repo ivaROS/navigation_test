@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
+from builtins import next
+from builtins import object
+from past.utils import old_div
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 import std_msgs.msg as std_msgs
@@ -27,7 +31,7 @@ from nav_msgs.msg import Odometry
 from kobuki_msgs.msg import BumperEvent, WheelDropEvent
 import math
 
-class DemoResetter():
+class DemoResetter(object):
     def __init__(self):
         rospy.init_node('Prototype')
 
@@ -169,8 +173,8 @@ class DemoResetter():
         map_origin.orientation.w = 1# .505
         map_origin.orientation.z = 0#.505
 
-        map_width = int((world_height) / self.resolution)
-        map_height = int((world_width) / self.resolution)
+        map_width = int(old_div((world_height), self.resolution))
+        map_height = int(old_div((world_width), self.resolution))
 
         empty_map = self.OCC_UNKNOWN*np.ones(shape=(map_width,map_height), dtype=np.int8)
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
+from builtins import str
 from nav_scripts.movebase_driver import run_test
 from nav_scripts.testing_scenarios import TestingScenarios
 import rospy

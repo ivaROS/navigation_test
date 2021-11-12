@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import division
+from past.utils import old_div
 from gazebo_driver_v2 import GazeboDriver
 import rospy
 from geometry_msgs.msg import Pose, Point, Quaternion
@@ -39,8 +41,8 @@ while not rospy.is_shutdown():
     driver.pause()
     driver.moveRobot(Pose(orientation=upright))
 
-    moveBlock("cinder_block_h", Pose(position=Point(fw,-robot_radius - block_width/2,0), orientation=upright))
-    moveBlock("cinder_block_v", Pose(position=Point(fw,robot_radius + block_height,block_width/2), orientation=rotated))
+    moveBlock("cinder_block_h", Pose(position=Point(fw,-robot_radius - old_div(block_width,2),0), orientation=upright))
+    moveBlock("cinder_block_v", Pose(position=Point(fw,robot_radius + block_height,old_div(block_width,2)), orientation=rotated))
     driver.unpause()
 
     driver.updateModels()
@@ -50,8 +52,8 @@ while not rospy.is_shutdown():
     driver.pause()
     driver.moveRobot(Pose(orientation=upright))
 
-    moveBlock("cinder_block_h", Pose(position=Point(fw,robot_radius + block_width/2,0), orientation=upright))
-    moveBlock("cinder_block_v", Pose(position=Point(fw,-robot_radius,block_width/2), orientation=rotated))
+    moveBlock("cinder_block_h", Pose(position=Point(fw,robot_radius + old_div(block_width,2),0), orientation=upright))
+    moveBlock("cinder_block_v", Pose(position=Point(fw,-robot_radius,old_div(block_width,2)), orientation=rotated))
     driver.unpause()
 
     r.sleep()

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from builtins import str
+from builtins import range
 import time
 from nav_scripts.gazebo_master import MultiMasterCoordinator
 if __name__ == "__main__":

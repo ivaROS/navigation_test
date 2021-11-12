@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 import rospy
 import rospkg
 import roslaunch
@@ -34,7 +37,7 @@ filenum = 33
 numTest = 50
 numbarrels = 7
 
-class TrashAuto():
+class TrashAuto(object):
   def gazebo_setup(self):
       print("Gazebo setup")
       self.gazebo_driver.shutdown()

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from builtins import str
+from builtins import range
 from nav_scripts.gazebo_master import MultiMasterCoordinator
 from nav_scripts.testing_scenarios import TestingScenarios, GeneralScenario
 from nav_scripts.controller_launcher import ControllerLauncher

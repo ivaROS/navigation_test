@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import rospkg, rospy
 import math
 
@@ -9,7 +11,7 @@ class ControllerConfig(object):
         self.environment = environment
 
 #TODO: Move all controller launch logic as well as controller-specific data into this class
-class ControllerLauncher:
+class ControllerLauncher(object):
     impls = {}
     rospack = rospkg.RosPack()
 
@@ -107,6 +109,6 @@ class ControllerLauncher:
     @staticmethod
     def getFieldNames():
         fieldnames = ["controller"]
-        for controller in ControllerLauncher.getScenarioTypes().itervalues():
+        for controller in list(ControllerLauncher.getScenarioTypes().values()):
             fieldnames.extend(controller.getUniqueFieldNames())
         return fieldnames
