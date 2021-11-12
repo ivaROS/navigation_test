@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import rospy
 import rospkg
 import roslaunch
@@ -35,7 +36,7 @@ numbarrels = 7
 
 class TrashAuto():
   def gazebo_setup(self):
-      print "Gazebo setup"
+      print("Gazebo setup")
       self.gazebo_driver.shutdown()
       global returnedPosition
       self.gazebo_driver.moveBarrels(numbarrels)
@@ -44,13 +45,13 @@ class TrashAuto():
 
 
   def gazebo_bridge(self):
-      print "Gazebo Bridge"
+      print("Gazebo Bridge")
       self.gazebo_driver.resetRobot()
       self.gazebo_driver.resetBarrels(self.numbarrels)
 
 
   def gazebo_teardown(self):
-      print "Gazebo teardown"
+      print("Gazebo teardown")
       self.gazebo_driver.delete_barrels(self.numbarrels)
       # Pause physics?
 
@@ -74,7 +75,7 @@ class TrashAuto():
       # We'll assume Gazebo is launched are ready to go
       uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
       roslaunch.configure_logging(uuid)
-      print path
+      print(path)
 
       self.launch = roslaunch.parent.ROSLaunchParent(
           uuid, [path + "/launch/" + controller_name])
@@ -131,16 +132,16 @@ class TrashAuto():
           gms = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
           resp1 = gms(model_name="mobile_base", relative_entity_name="world")
           return resp1
-      except rospy.ServiceException, e:
-          print "Service call failed: %s" % e
+      except rospy.ServiceException as e:
+          print("Service call failed: %s" % e)
 
 
   def getState(self):
       data = self.getRobotPose()
       current_x = data.pose.position.x
-      print("My Position is ", current_x)
+      print(("My Position is ", current_x))
       current_y = data.pose.position.y
-      print("My Position is ", current_y)
+      print(("My Position is ", current_y))
       diff_x = (goal_x - current_x) * (goal_x - current_x)
       diff_y = (goal_y - current_y) * (goal_y - current_y)
       diff_total = math.sqrt(diff_x + diff_y)

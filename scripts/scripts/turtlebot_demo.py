@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 import std_msgs.msg as std_msgs
@@ -39,9 +40,9 @@ class DemoResetter():
         self.pub = rospy.Publisher("/mobile_base/commands/reset_odometry",std_msgs.Empty, queue_size=1)
 
         self.client = actionlib.SimpleActionClient('move_base', move_base_msgs.MoveBaseAction)
-        print "waiting for server"
+        print("waiting for server")
         self.client.wait_for_server()
-        print "Done!"
+        print("Done!")
         
         self.stop = False
 
@@ -74,8 +75,8 @@ class DemoResetter():
                     goal = next(self.goal_generator)
                     self.navigateToGoal(goal_pose=goal)
                     self.resetCostmaps()
-                except Exception, e:
-                    print e
+                except Exception as e:
+                    print(e)
                     pass
                     rospy.sleep(.1)
             else:
@@ -85,7 +86,7 @@ class DemoResetter():
     def getNextGoal(self):
         while True:
             for goal in self.goals:
-                print goal
+                print(goal)
                 yield goal
 
     def navigateToGoal(self, goal_pose):
@@ -98,9 +99,9 @@ class DemoResetter():
         goal.target_pose.header.frame_id = "odom"
 
         # Send the goal!
-        print "sending goal"
+        print("sending goal")
         self.client.send_goal(goal)
-        print "waiting for result"
+        print("waiting for result")
 
         r = rospy.Rate(5)
 
@@ -127,14 +128,14 @@ class DemoResetter():
             rospy.wait_for_service('/move_base/clear_costmaps')
             self.clear_costmap_srv = rospy.ServiceProxy('/move_base/clear_costmaps', std_srvs.Empty)
         self.clear_costmap_srv()
-        print "reset costmaps"
+        print("reset costmaps")
 
     def resetOdom(self):
-        print "reset Odom"
+        print("reset Odom")
         self.pub.publish(std_msgs.Empty())
 
     def resetGoals(self):
-        print "cancel goals"
+        print("cancel goals")
         self.client.cancel_all_goals()
         self.goal_generator = self.getNextGoal()
 

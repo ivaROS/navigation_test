@@ -1,3 +1,4 @@
+from __future__ import print_function
 import rospy
 import random
 import sys, os, time
@@ -59,7 +60,7 @@ class CostmapDriver(object):
     def pointCB(self, point):
         with self.lock:
             issafe = self.isSafe(point.point.x, point.point.y)
-        print issafe
+        print(issafe)
 
     def preprocessMap(self):
         map = np.reshape(np.array(self.data), newshape=(self.size_y, self.size_x))
@@ -84,7 +85,7 @@ class CostmapDriver(object):
 
     def isSafe(self, wx, wy):
         cost = self.getCost(wx,wy)
-        print cost
+        print(cost)
         return cost < self.thresh
 
     def getCost(self, wx, wy):
@@ -116,7 +117,7 @@ class CostmapDriver(object):
 
 if __name__ == '__main__':
     try:
-        print "Costmap Driver Main\n"
+        print("Costmap Driver Main\n")
         rospy.init_node("costmap_driver_test")
 
         driver = CostmapDriver(seed=0)

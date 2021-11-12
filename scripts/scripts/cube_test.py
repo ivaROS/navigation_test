@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import rospy
 import rospkg
 import roslaunch
@@ -12,12 +13,12 @@ import time
 launch = None
 
 def gazebo_setup():
-    print "Gazebo setup"
+    print("Gazebo setup")
     gazebo_driver.reset_world()
     gazebo_driver.spawn_model("cube_20k", (-1, 3.3), "dumpster1")
 
 def gazebo_teardown():
-    print "Gazebo teardown"
+    print("Gazebo teardown")
     gazebo_driver.delete_model("dumpster1")
     # Pause physics?
 
@@ -66,7 +67,7 @@ def main(controller_name):
         gazebo_teardown()
 
     for duration in durations:
-        print duration
+        print(duration)
 
 if __name__=="__main__":
     print("1: Base Local Planner, 2: Teb local Planner, 3: DWA local planner, 4: Eband local planner, 5: PIPS DWA")

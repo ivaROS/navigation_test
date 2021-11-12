@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from nav_scripts.testing_scenarios import TestingScenarios
 #from nav_scripts.gazebo_driver import load_model_xml
 import rospy

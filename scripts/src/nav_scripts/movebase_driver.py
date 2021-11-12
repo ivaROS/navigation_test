@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import rospy
 import actionlib
 from move_base_msgs.msg import *
@@ -73,7 +74,7 @@ class ResultRecorder(object):
 
         bagpath = "~/simulation_data/" + str(datetime.datetime.now()) + ".bag"
         self.bagfilepath = os.path.expanduser(bagpath)
-        print "bag file = " + self.bagfilepath + "\n"
+        print("bag file = " + self.bagfilepath + "\n")
         self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
 
         #self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
@@ -189,7 +190,7 @@ class OdomChecker:
 
     def checkOdom(self, event=None):
         try:
-            print "timer callback"
+            print("timer callback")
             now = rospy.Time.now()
             past = now - rospy.Duration(5.0)
             trans = self.tfBuffer.lookup_transform_full(
@@ -200,9 +201,9 @@ class OdomChecker:
                 fixed_frame='odom',
                 timeout=rospy.Duration(1.0)
             )
-            print str(trans)
+            print(str(trans))
             displacement = math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y)
-            print "Odom displacement: " + str(displacement)
+            print("Odom displacement: " + str(displacement))
             if(displacement < .05):
                 self.not_moving = True
 
@@ -215,15 +216,15 @@ class OdomChecker:
                 fixed_frame='odom',
                 timeout=rospy.Duration(1.0)
             )
-            print str(trans)
+            print(str(trans))
             displacement = math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y)
-            print "map displacement: " + str(displacement)
+            print("map displacement: " + str(displacement))
             if(displacement >.1):
                 self.collided = True
 
 
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException),e:
-            print e
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            print(e)
             pass
 
 class OdomAccumulator:
@@ -262,9 +263,9 @@ class OdomAccumulator:
 
 def run_testImpl(pose):
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-    print "waiting for server"
+    print("waiting for server")
     client.wait_for_server()
-    print "Done!"
+    print("Done!")
 
     # Create the goal point
     goal = MoveBaseGoal()
@@ -281,18 +282,18 @@ def run_testImpl(pose):
     goal.target_pose.header.stamp = rospy.Time.now()
 
     # Send the goal!
-    print "sending goal"
+    print("sending goal")
     client.send_goal(goal)
-    print "waiting for result"
+    print("waiting for result")
     client.wait_for_result(rospy.Duration(300))
-    print "done!"
+    print("done!")
 
     # 3 means success, according to the documentation
     # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
-    print "getting goal status"
+    print("getting goal status")
     print(client.get_goal_status_text())
-    print "done!"
-    print "returning state number"
+    print("done!")
+    print("returning state number")
     return client.get_state() == 3
 
 def reset_costmaps():
@@ -336,9 +337,9 @@ def run_test(goal_pose, record=False, timeout=None):
         result_recorder = ResultRecorder()
 
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-    print "waiting for server"
+    print("waiting for server")
     client.wait_for_server()
-    print "Done!"
+    print("Done!")
 
     # Create the goal point
     goal = MoveBaseGoal()
@@ -358,13 +359,13 @@ def run_test(goal_pose, record=False, timeout=None):
         result_recorder.setGoal(goal)
 
     # Send the goal!
-    print "sending goal"
+    print("sending goal")
     if record:
         client.send_goal(goal, feedback_cb=set_cur_pose)
     else:
         client.send_goal(goal)
 
-    print "waiting for result"
+    print("waiting for result")
 
     r = rospy.Rate(5)
 
@@ -403,15 +404,15 @@ def run_test(goal_pose, record=False, timeout=None):
 
     if result is None:
         #client.wait_for_result(rospy.Duration(45))
-        print "done!"
+        print("done!")
 
 
         # 3 means success, according to the documentation
         # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
-        print "getting goal status"
+        print("getting goal status")
         print(client.get_goal_status_text())
-        print "done!"
-        print "returning state number"
+        print("done!")
+        print("returning state number")
         #return client.get_state() == 3
         state = client.get_state()
         if state == GoalStatus.SUCCEEDED:
@@ -442,4 +443,4 @@ if __name__ == "__main__":
         rospy.init_node('pips_test', anonymous=True)
         run_test()
     except rospy.ROSInterruptException:
-        print "Keyboard Interrupt"
+        print("Keyboard Interrupt")

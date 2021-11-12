@@ -1,3 +1,4 @@
+from __future__ import print_function
 import rosbag
 import rospy
 import tf2_ros
@@ -114,7 +115,7 @@ def transformFromRtab(pose):
     trans.header = pose.header
     trans.child_frame_id = pose.child_frame_id
 
-    print trans
+    print(trans)
 
     return trans
 
@@ -128,8 +129,8 @@ def getCorrectiveTransform(tfBuffer, Tr_m, frame_id):
 
         return correction
 
-    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException), e:
-        print e
+    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+        print(e)
 
 
 class OdometryCorrection:
@@ -158,7 +159,7 @@ class OdometryCorrection:
         fields = [float(x) for x in line.split()]
 
         if len(fields) is not 8:
-            print "Error! Line does not have 8 fields. Line = \n\t" + str(line)
+            print("Error! Line does not have 8 fields. Line = \n\t" + str(line))
             return None
 
         pose.header.frame_id = self.rtab_frame_id
@@ -207,7 +208,7 @@ class OdometryCorrection:
 
     def getCorrectiveTransform(self, Tr_m):
         correction = getCorrectiveTransform(self.tfBuffer, Tr_m=Tr_m, frame_id=self.global_frame_id)
-        print str(correction)
+        print(str(correction))
         return correction
 
 

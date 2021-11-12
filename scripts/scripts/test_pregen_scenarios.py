@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from nav_scripts.gazebo_master import MultiMasterCoordinator
 from nav_scripts.testing_scenarios import TestingScenarios, GeneralScenario
 from nav_scripts.controller_launcher import ControllerLauncher
@@ -31,7 +32,7 @@ def run_auto_tests(show_gazebo=False):
     master.wait_to_finish()
     master.shutdown()
     end_time = time.time()
-    print "Total time: " + str(end_time - start_time)
+    print("Total time: " + str(end_time - start_time))
 
 
 if __name__ == "__main__":

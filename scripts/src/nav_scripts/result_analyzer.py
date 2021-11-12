@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 import time
 import math
@@ -177,7 +178,7 @@ def CalculateAgreement(results, result_keyname = "result"):
 
     #num_runs = max((len(seeds_with_x_runs[v]) for v in seeds_with_x_runs.keys()))
 
-    [num_runs, selected_seeds] = max(seeds_with_x_runs.items(), key=lambda (num_runs, seeds): len(seeds))
+    [num_runs, selected_seeds] = max(seeds_with_x_runs.items(), key=lambda num_runs_seeds: len(num_runs_seeds[1]))
     if num_runs == 1:
         return None, None
 
@@ -264,7 +265,7 @@ class ResultAnalyzer:
         #gm.start()
 
         for result in results:
-            print result
+            print(result)
             #gm.task_queue.put(result)
 
     def getMaxTime(self):
@@ -275,7 +276,7 @@ class ResultAnalyzer:
                 time = entry['time']
                 if time > max_time:
                     max_time = time
-        print "Max time: " + str(max_time)
+        print("Max time: " + str(max_time))
 
 
     def computeStatistics(self, independent, dependent):
@@ -297,21 +298,21 @@ class ResultAnalyzer:
                     key_values[key] = set()
                 key_values[key].add(value)
         for num_barrels in key_values[independent[0]]:
-           print str(num_barrels) + " barrels:"
+           print(str(num_barrels) + " barrels:")
            for controller in sorted(key_values[independent[1]]):
                 total = 0
                 for result in key_values[dependent[0]]:
                     key = frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
                     if key in statistics:
                         total+= statistics[key]
-                print controller + " controller:"
+                print(controller + " controller:")
                 for result in key_values[dependent[0]]:
                     key = frozenset(
                         {independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())
                     if key in sorted(statistics):
                         num = statistics[frozenset({independent[1]: controller, independent[0]: num_barrels, dependent[0]: result}.items())]
-                        print result + ": " + str(num) + "\t" + str(float(num)/total)
-                print ""
+                        print(result + ": " + str(num) + "\t" + str(float(num)/total))
+                print("")
 
     def generateTable(self):
         statistics = {}
@@ -338,21 +339,21 @@ class ResultAnalyzer:
                     key_values[key] = set()
                 key_values[key].add(value)
         for scenario in key_values["scenario"]:
-            print ""
-            print "Scenario: " + str(scenario)
+            print("")
+            print("Scenario: " + str(scenario))
 
-            print ""
+            print("")
 
-            print("| controller"),
+            print(("| controller"), end=' ')
             for result in key_values["result"]:
-                print(" | " + str(result)),
+                print((" | " + str(result)), end=' ')
 
 
             print("|")
 
 
             for i in range(len(key_values["result"])+1):
-                print("| -------"),
+                print(("| -------"), end=' ')
 
             print("|")
 
@@ -364,7 +365,7 @@ class ResultAnalyzer:
                     if key in statistics:
                         total += statistics[key]
 
-                print("| " + str(controller)),
+                print(("| " + str(controller)), end=' ')
                 for result in key_values["result"]:
                     key = frozenset(
                         {"controller": controller, "scenario": scenario, "result": result}.items())
@@ -374,9 +375,9 @@ class ResultAnalyzer:
                         path_time = np.mean(np.array(path_times[lookupkey]))/1e9
                         path_length = np.mean(np.array(path_lengths[lookupkey]))
 
-                        print("| " + "{0:.1f}".format(100*float(num) / total) + "% (" + str(num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m" + " <br>" + "{0:.2f}".format(path_time) + "s"),
+                        print(("| " + "{0:.1f}".format(100*float(num) / total) + "% (" + str(num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m" + " <br>" + "{0:.2f}".format(path_time) + "s"), end=' ')
                     else:
-                        print("| "),
+                        print(("| "), end=' ')
                 print("|")
 
     def generateGenericTable(self, independent, dependent, whitelist=None, blacklist=None, replacements=None, order=None, check_agreement=False):
@@ -482,17 +483,17 @@ class ResultAnalyzer:
                         #    num) + ") " + "<br>" + "{0:.2f}".format(path_length) + "m" + " <br>" + "{0:.2f}".format(
                         #    path_time) + "s"),
 
-                        print("| " + "{0:.1f}".format(100 * float(num) / total) + "% (" + str(
-                            num) + ") "),
+                        print(("| " + "{0:.1f}".format(100 * float(num) / total) + "% (" + str(
+                            num) + ") "), end=' ')
                     else:
-                        print("| "),
+                        print(("| "), end=' ')
 
                 if check_agreement:
                     independent_key = frozenset(shared_conditions_dict.items())
                     r = condition_lists[independent_key]
                     agr, note = CalculateAgreement(results=r, result_keyname='result')
                     agreement_details = False
-                    print("| " + (("{0:.3f}".format(agr) + (note if agreement_details else '')) if agr is not None else "N/A")),
+                    print(("| " + (("{0:.3f}".format(agr) + (note if agreement_details else '')) if agr is not None else "N/A")), end=' ')
                     #print("| " + ("{0:.3f}".format(agr) if agr is not None else "N/A")),
 
                 dependent_value= success_keyname
@@ -512,8 +513,8 @@ class ResultAnalyzer:
                     path_length = reduce_list(path_length.values())
                     path_length = np.mean(path_length)
 
-                    print("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
-                        path_time) + ""),
+                    print(("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
+                        path_time) + ""), end=' ')
 
                     # Now print the averages of shared successful cases
                     if shared_safe_keys is not None and len(shared_safe_keys) > 0:
@@ -525,13 +526,13 @@ class ResultAnalyzer:
                         path_length = reduce_list(path_length)
                         path_length = np.mean(path_length)
 
-                        print("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
-                            path_time) + ""),
+                        print(("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
+                            path_time) + ""), end=' ')
                     else:
-                        print("|"),
+                        print(("|"), end=' ')
 
                 else:
-                    print("| "),
+                    print(("| "), end=' ')
 
 
 
@@ -563,25 +564,25 @@ class ResultAnalyzer:
                                 pass
 
                     print("")
-                    print("| " + remapped_condition_name),
+                    print(("| " + remapped_condition_name), end=' ')
                     for result in sort(key_values, dependent):
-                        print(" | " + remap(str(result))),
+                        print((" | " + remap(str(result))), end=' ')
 
                     if check_agreement:
-                        print("| " + agreement_keyname),
+                        print(("| " + agreement_keyname), end=' ')
                         
-                    print(" | " + path_length_keyname + " | " + path_time_keyname + " | " + common_length_keyname + " | " + common_time_keyname),
+                    print((" | " + path_length_keyname + " | " + path_time_keyname + " | " + common_length_keyname + " | " + common_time_keyname), end=' ')
 
                     print("|")
 
                     for i in range(len(key_values[dependent]) + (6 if check_agreement else 5)):
-                        print("| -------"),
+                        print(("| -------"), end=' ')
 
                     print("|")
 
                 else:
                     print("")
-                    print(remapped_condition_name + ":"),
+                    print((remapped_condition_name + ":"), end=' ')
 
                 singlevalue = len(key_values[condition_name]) == 1
                 for condition_value in sort(key_values, condition_name):
@@ -593,7 +594,7 @@ class ResultAnalyzer:
                     if len(res_list) > 0:
 
                         if depth == max_depth-1:
-                          print("| " + str(remapped_condition_value)),
+                          print(("| " + str(remapped_condition_value)), end=' ')
                         else:
                             if singlevalue:
                                 print(" " + str(remapped_condition_value))
@@ -646,24 +647,24 @@ class ResultAnalyzer:
                     key_values[key] = set()
                 key_values[key].add(value)
 
-        print ""
+        print("")
 
-        print("| "),
+        print(("| "), end=' ')
         for scenario in sorted(key_values["scenario"]):
             if scenario == "corridor_zigzag":
-                print("| corridor <br> zigzag"),
+                print(("| corridor <br> zigzag"), end=' ')
             elif scenario == "corridor_zigzag_door":
-                print("| corridor <br> zigzag <br> door"),
+                print(("| corridor <br> zigzag <br> door"), end=' ')
             else:
-                print("| " + str(scenario)),
-        print "|"
+                print(("| " + str(scenario)), end=' ')
+        print("|")
 
         for i in range(len(key_values["scenario"])+1):
-            print("| -------"),
-        print "|"
+            print(("| -------"), end=' ')
+        print("|")
 
         for controller in sorted(key_values["controller"]):
-            print("| " + str(controller)),
+            print(("| " + str(controller)), end=' ')
             for scenario in sorted(key_values["scenario"]):
 
                 total = 0
@@ -683,9 +684,9 @@ class ResultAnalyzer:
                     path_time = np.mean(np.array(path_times[lookupkey])) / 1e9
                     path_length = np.mean(np.array(path_lengths[lookupkey]))
 
-                    print("| " + "{0:.1f}".format(100 * float(num) / total) + "% <br>" + "{0:.2f}".format(path_length) + "m"),
+                    print(("| " + "{0:.1f}".format(100 * float(num) / total) + "% <br>" + "{0:.2f}".format(path_length) + "m"), end=' ')
                 else:
-                    print("| 0.0%"),
+                    print(("| 0.0%"), end=' ')
             print("|")
 
 
@@ -711,7 +712,7 @@ class ResultAnalyzer:
             num_tasks += 1
             
         avg_time = total_time/num_tasks if num_tasks > 0 else 0
-        print  ': ' + str(avg_time/1e9) #tasks[0]['controller'] +
+        print(': ' + str(avg_time/1e9)) #tasks[0]['controller'] +
 
     def contains(self, task):
         stripped_task = {str(key): str(task[key]) for key,value in task.items()}
@@ -758,7 +759,7 @@ class ResultAnalyzer:
             
             if still_good:
                 good_seeds.append(seed)
-                print str(seed) + ": good"
+                print(str(seed) + ": good")
                 
         return good_seeds
 
@@ -785,7 +786,7 @@ class ResultAnalyzer:
                         statistics[conditionset] = statistics[conditionset] + 1
 
 
-        print controller1 + " : " + controller2
+        print(controller1 + " : " + controller2)
         for key,value in statistics.items():
-            print str(next(iter(key))) + " : " + str(value)
+            print(str(next(iter(key))) + " : " + str(value))
 

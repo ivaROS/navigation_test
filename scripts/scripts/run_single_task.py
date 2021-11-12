@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+from __future__ import print_function
 from nav_scripts.movebase_driver import run_test
 from nav_scripts.testing_scenarios import TestingScenarios
 import rospy
@@ -94,7 +95,7 @@ start_time = time.time()
 scenario.setupScenario()
 end_time = time.time()
 
-print str(end_time-start_time)
+print(str(end_time-start_time))
 #print scenario.getGoalMsg()
 result = run_test(goal_pose=scenario.getGoalMsg(), record=False)
 

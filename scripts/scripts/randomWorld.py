@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import rospy
 import rospkg
 import roslaunch
@@ -56,7 +57,7 @@ def launch_controller(controller_name):
     # We'll assume Gazebo is launched are ready to go
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
     roslaunch.configure_logging(uuid)
-    print path
+    print(path)
     global launch
     launch = roslaunch.parent.ROSLaunchParent(
         uuid, [path + "/launch/" + controller_name])
@@ -116,15 +117,15 @@ def callService():
         gms = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
         resp1 = gms(model_name="mobile_base", relative_entity_name="world")
         return resp1
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
 
 def getState(goal_index):
     data = callService()
     current_x = data.pose.position.x
-    print("My Position is ", current_x)
+    print(("My Position is ", current_x))
     current_y = data.pose.position.y
-    print("My Position is ", current_y)
+    print(("My Position is ", current_y))
     diff_x = (total_section[goal_index][0] - current_x) * (total_section[goal_index][0] - current_x)
     diff_y = (total_section[goal_index][1] - current_y) * (total_section[goal_index][1] - current_y)
     diff_total = math.sqrt(diff_x + diff_y)
@@ -139,8 +140,8 @@ def callService():
         gms = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
         resp1 = gms(model_name="mobile_base", relative_entity_name="world")
         return resp1
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
 
     
 def main(controller_name):

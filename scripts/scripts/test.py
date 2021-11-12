@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import rospy
 import rospkg
 import roslaunch
@@ -18,7 +19,7 @@ import math
 
 
 def gazebo_setup():
-    print "Gazebo setup"
+    print("Gazebo setup")
     gazebo_driver.shutdown()
     global returnedPosition
     x = [0, -1, -2]
@@ -29,13 +30,13 @@ def gazebo_setup():
 
 
 def gazebo_bridge():
-    print "Gazebo Bridge"
+    print("Gazebo Bridge")
     gazebo_driver.resetRobot()
     gazebo_driver.resetBarrels(3)
 
 
 def gazebo_teardown():
-    print "Gazebo teardown"
+    print("Gazebo teardown")
     gazebo_driver.delete_barrels(3)
     # Pause physics?
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import time
 from nav_scripts.gazebo_master import MultiMasterCoordinator
 if __name__ == "__main__":
@@ -28,4 +29,4 @@ if __name__ == "__main__":
     # rospy.spin()
     master.shutdown()
     end_time = time.time()
-    print "Total time: " + str(end_time - start_time)
+    print("Total time: " + str(end_time - start_time))
