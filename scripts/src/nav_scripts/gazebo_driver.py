@@ -368,8 +368,8 @@ class GazeboDriver(object):
       pose.orientation.w = 1
       self.poses.append(pose)
       if not self.setPose(name, pose):
-	    self.spawn_barrel(name, pose)
-	
+        self.spawn_barrel(name, pose)
+
   def moveBarrels(self,n,minx=None,miny=None,maxx=None,maxy=None,grid_spacing=None):
     self.poses = []
 
