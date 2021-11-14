@@ -109,12 +109,12 @@ class MultiMasterCoordinator(object):
         time.sleep(1)
 
 
-    def processResults(self,queue):
+    def processResults(self,my_queue):
 
         outputfile_name = "~/simulation_data/results_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
-        with open(outputfile_name, 'wb') as csvfile:
+        with open(outputfile_name, 'w') as csvfile:
             seen = set()
             fieldnames = [x for x in self.fieldnames if not (x in seen or seen.add(x))] #http://www.martinbroadhurst.com/removing-duplicates-from-a-list-while-preserving-order-in-python.html
 
@@ -123,7 +123,7 @@ class MultiMasterCoordinator(object):
 
             while not self.should_shutdown: #This means that results stop getting saved to file as soon shutdown is commanded
                 try:
-                    task = queue.get(block=False)
+                    task = my_queue.get(block=False)
 
                     result_string = "Result of ["
                     for k,v in list(task.items()):
@@ -144,7 +144,7 @@ class MultiMasterCoordinator(object):
                         self.addProcess()
 
                     #print "Result of " + task["world"] + ":" + task["controller"] + "= " + str(task["result"])
-                    queue.task_done()
+                    my_queue.task_done()
                 except queue.Empty as e:
                     #print "No results!"
                     time.sleep(1)
