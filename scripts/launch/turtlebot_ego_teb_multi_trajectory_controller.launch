@@ -2,7 +2,7 @@
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
-  <arg name="debug_prefix" value="xterm -e gdb -ex run -args" if="$(arg debug)"/>
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
   <!--<arg name="debug_prefix" value="valgrind" if="$(arg debug)"/>-->
 
   <arg name="initial_trajectory_factor" default="$(optenv GM_PARAM_INITIAL_TRAJECTORY_FACTOR 0.6)"/>
@@ -20,7 +20,8 @@
   <arg name="goal_sampling_des_extension_dist" default="$(optenv GM_PARAM_GAP_SAMPLING_DES_EXTENSION_DIST 0.2)"/>
   <arg name="goal_sampling_safety_dist" default="$(optenv GM_PARAM_GAP_SAMPLING_SAFETY_DIST 0.2)"/>
   <arg name="narrow_gap_prevent_replan_dist_factor" default="$(optenv GM_PARAM_NARROW_GAP_PREVENT_REPLAN_DIST_FACTOR 2)"/>
-
+  <arg name="use_global_potentials" default="$(optenv GM_PARAM_USE_GLOBAL_POTENTIALS true)"/>
+  <arg name="verifier_num_poses" default="$(optenv GM_PARAM_VERIFIER_NUM_POSES 5)"/>
 
   <arg name="raw_egocircle_topic" default="/point_scan"/>
 
@@ -43,7 +44,7 @@
   <node pkg="teb_trajectory_nav" type="teb_behavior_test_node" respawn="false" name="teb_global_planner" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
     <rosparam file="$(find teb_trajectory_nav)/param/teb_params.yaml" command="load" ns="teb_trajectory_source"/>
     <rosparam file="$(find teb_trajectory_nav)/param/ego_teb_params.yaml" command="load" ns="teb_trajectory_source"/>
-    <rosparam file="$(find teb_trajectory_nav)/param/multi_goal_params.yaml" command="load" ns="teb_trajectory_source"/>
+    <rosparam if="$(arg use_global_potentials)" file="$(find teb_trajectory_nav)/param/multi_goal_params.yaml" command="load" ns="teb_trajectory_source"/>
 
     <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
     <rosparam file="$(find nav_configs)/config/global_costmap_params_no_ns.yaml" command="load" ns="global_costmap"/>
@@ -63,7 +64,9 @@
     <param name="basic_replan_logic/min_tte" value="1"/>-->
     <param name="teb_replan_logic/max_replan_period" value="$(arg max_replan_period)"/>
     <param name="teb_replan_logic/min_tte" value="$(arg replan_min_tte)"/>
+    <param name="teb_replan_logic/feasibility_check_no_poses" value="$(arg verifier_num_poses)"/>
     <param name="online_verifier/min_ttc" value="$(arg replan_min_ttc)"/>
+    <param name="online_verifier/feasibility_check_no_poses" value="$(arg verifier_num_poses)"/>
     <param name="teb_replan_logic/replan_exclusion_radius" value="$(arg replan_exclusion_radius)"/>
 
     <param name="use_projection_operator" value="$(arg use_projection_operator)"/>
