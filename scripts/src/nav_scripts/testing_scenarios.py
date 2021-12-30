@@ -308,6 +308,18 @@ class CampusObstacleScenario(CampusScenario):
 TestingScenarios.registerScenario(CampusObstacleScenario)
 
 
+class LaserSafeCampusObstacleScenario(CampusObstacleScenario):
+    name="ls_campus_obstacle"
+
+    def __init__(self, task):
+        super(LaserSafeCampusObstacleScenario, self).__init__(task=task)
+
+    def setupEnvironment(self):
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing, model_types=['square_post', 'cylinder'])
+
+TestingScenarios.registerScenario(LaserSafeCampusObstacleScenario)
+
+
 class FullCampusObstacleScenario(CampusObstacleScenario):
     name="full_campus_obstacle"
     world = "campus"
@@ -544,6 +556,18 @@ class FourthFloorObstacleScenario(FourthFloorScenario):
         self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing)
 
 TestingScenarios.registerScenario(FourthFloorObstacleScenario)
+
+
+class LaserSafeFourthFloorObstacleScenario(FourthFloorObstacleScenario):
+    name="ls_fourth_floor_obstacle"
+
+    def __init__(self, task):
+        super(LaserSafeFourthFloorObstacleScenario, self).__init__(task=task)
+
+    def setupEnvironment(self):
+        self.gazebo_driver.moveObstacles(self.num_obstacles, minx=self.minx, maxx=self.maxx, miny=self.miny, maxy=self.maxy, grid_spacing=self.min_spacing, model_types=['square_post', 'cylinder'])
+
+TestingScenarios.registerScenario(LaserSafeFourthFloorObstacleScenario)
 
 
 class FullFourthFloorObstacleScenario(FourthFloorObstacleScenario):
