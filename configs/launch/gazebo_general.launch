@@ -6,6 +6,14 @@
   <!--<arg name="publish_ground_truth_map" default="$(optenv GM_PARAM_PUBLISH_GROUND_TRUTH_MAP)"/> -->
   <arg name="ground_truth_map_file" default="$(optenv GM_PARAM_GAZEBO_GROUND_TRUTH_MAP_FILE)"/>
   <arg name="gui" default="$(optenv GM_PARAM_GAZEBO_GUI true)"/>
+  <arg name="recording" default="$(optenv GM_PARAM_GAZEBO_RECORDING false)"/>
+  <arg name="recording_path" default="$(optenv GM_PARAM_GAZEBO_RECORDING_PATH '')"/>
+  <arg name="command_arg2_5t" default="" if="$(eval recording_path=='')"/>
+  <arg name="command_arg2_5t" default="--record_path $(arg recording_path)" unless="$(eval recording_path=='')"/>
+
+  <arg name="command_arg2_5" default="" unless="$(arg recording)"/>
+  <arg name="command_arg2_5" default="$(arg command_arg2_5t)" if="$(arg recording)"/>
+
 
       <!-- NOTE: we can't just use gazebo_ros empty_world.launch because we want 'required=true' -->
       <!--BEGIN gazebo_ros empty_world.launch-->
@@ -13,7 +21,6 @@
       <arg name="paused" default="false"/>
       <arg name="use_sim_time" default="true"/>
       <arg name="extra_gazebo_args" default=""/>
-      <arg name="recording" default="false"/>
       <!-- Note that 'headless' is currently non-functional.  See gazebo_ros_pkgs issue #491 (-r arg does not disable
            rendering, but instead enables recording). The arg definition has been left here to prevent breaking downstream
            launch files, but it does nothing. -->
@@ -45,7 +52,7 @@
         <param name="gazebo/pub_clock_frequency" value="$(arg pub_clock_frequency)" />
       </group>
       <node name="gazebo" pkg="gazebo_ros" type="$(arg script_type)" respawn="$(arg respawn_gazebo)" output="screen"
-	    args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)" required="true"/>
+	    args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg2_5) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)" required="true"/>
 	
       <!-- start gazebo client -->
       <group if="$(arg gui)">
@@ -54,6 +61,7 @@
 
     <!--END gazebo_ros empty_world.launch-->
 
+    <param name="temp_args" value="$(arg command_arg1) $(arg command_arg2) $(arg command_arg2_5) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)"/>
 
   <node name="map" pkg="map_server" type="map_server" args="$(arg map_file)" required="true" unless="$(eval map_file=='')">
     <param name="frame_id" value="$(arg world_frame_id)"/>

@@ -1,4 +1,6 @@
 from __future__ import division
+
+import time
 from builtins import str
 from builtins import range
 from past.utils import old_div
@@ -92,6 +94,8 @@ class GeneralScenario(TestingScenario):
         self.init_pose_msg = None
         self.target_pose_msg = None
 
+        self.task = task
+
         if not hasattr(self, 'world'):
             if "world" not in task:
                 rospy.logerr("["+self.name + "] scenario requires 'world' to be specified in task!")
@@ -119,7 +123,38 @@ class GeneralScenario(TestingScenario):
         return path + "/launch/gazebo_" + self.world + "_world.launch"
 
     def getWorldArgs(self):
-        return {}
+        args = {}
+        #NOTE: gazebo_recording_path only has an effect if gazebo_recording enabled elsewhere, so technically the path
+        #could always be added to the world_args. However, with the current system that would unnecessarily clutter
+        #the generated results file
+        if 'world_args' in self.task:
+            world_args = self.task['world_args']
+
+            if 'gazebo_recording' in world_args and world_args['gazebo_recording']:
+                controller = self.task["controller"] if 'controller' in self.task else "none"
+                repeat = self.task["repeat"] if 'repeat' in self.task else "none"
+                task_str = str(self.name) + str(self.seed) + str(controller) + str(repeat) + str('%010x' % random.randrange(16**10))
+
+                gazebo_recording_path = "~/.gazebo/log/nav_bench"
+                gazebo_recording_path = os.path.join(gazebo_recording_path, task_str)
+                gazebo_recording_path = os.path.expanduser(gazebo_recording_path)
+                args['gazebo_recording_path'] = gazebo_recording_path
+
+        return args
+
+    def cleanup(self):
+        import subprocess
+        if 'gazebo_recording' in self.task and self.task['gazebo_recording']:
+            #If logging enabled, need to wait for it to flush to file
+            #stop logging
+            print("Send command to stop logging...")
+            result = subprocess.run(["gz", "log", '--record', "0"], env=os.environ)
+            print("Wait 2 seconds...")
+            time.sleep(2)
+            print("Wait for Gazebo to resume updates...")
+            self.gazebo_driver.updateModels(timeout=30)
+            print("Hopefully finished writing log files...")
+            pass
 
     #Override this to set starting pose
     def getStartingPose(self):
@@ -641,12 +676,12 @@ class PregenDenseScenario(DenseScenario):
         self.model_path = model_path
         with open(config_path, "r") as config_file:
             lines = config_file.readlines()
-            if len(lines) is not 2:
+            if len(lines) != 2:
                 raise ValueError("Config file [" + config_path + "] does not have the correct number of lines int it!")
 
             def getPose(line):
                 vals = line.split(' ')
-                if len(vals) is not 6:
+                if len(vals) != 6:
                     raise ValueError("Unable to parse pose!")
 
                 vals = [float(v.rstrip()) for v in vals]
@@ -687,6 +722,39 @@ class PregenDenseScenario(DenseScenario):
 
 
 TestingScenarios.registerScenario(PregenDenseScenario)
+
+
+class PregenWorldDenseScenario(PregenDenseScenario):
+    name='pregen_world_dense'
+    world='empty_room_20x20_pregen'
+
+    def __init__(self, task):
+        super(PregenWorldDenseScenario, self).__init__(task=task)
+        self.task = task
+
+        # world_path = os.path.join(self.worlds_path, self.scenario_id  + ".world")
+        # if not os.path.exists(world_path):
+        #     raise ValueError("Needed path [" + world_path + "] does not exist!")
+        #
+        # self.world_path = world_path
+
+    def setupEnvironment(self):
+        pass
+
+    #Override this in scenarios using worlds not included within navigation_test
+    # def getGazeboLaunchFile(self):
+    #     path = self.rospack.get_path("nav_configs")
+    #     return path + "/launch/gazebo_" + self.world + "_world.launch"
+
+    def getWorldArgs(self):
+        args = super(PregenWorldDenseScenario, self).getWorldArgs()
+        args['scenario_id'] = self.scenario_id
+
+        return args
+
+
+TestingScenarios.registerScenario(PregenWorldDenseScenario)
+
 
 
 class MediumScenario(SparseScenario):

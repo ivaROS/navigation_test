@@ -80,6 +80,10 @@ task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':5, 'robot':'tur
 
 task= {'scenario': 'dense', 'controller':'ego_teb_multi', 'seed':68, 'robot':'turtlebot', 'min_obstacle_spacing':0.5}
 
+#task= {'scenario': 'fourth_floor_obstacle', 'controller':'teb', 'seed':59, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}
+#task= {'scenario': 'campus_obstacle', 'controller':'ego_teb_multi', 'seed':20, 'robot':'turtlebot', 'min_obstacle_spacing': 1, 'num_obstacles':500}   #9
+
+
 rospy.init_node('test_driver', anonymous=True)
 
 #test_driver.reset_costmaps()

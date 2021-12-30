@@ -308,8 +308,8 @@ class GazeboMaster(mp.Process):
                 if scenario is not None:
 
                     #TODO: handle failure to launch gazebo
-                    world_args = task["world_args"] if "world_args" in task else None
-                    #world_args.update(scenario.getWorldArgs())
+                    world_args = task["world_args"] if "world_args" in task else {}
+                    world_args.update(scenario.getWorldArgs())
                     self.roslaunch_gazebo(scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
                     if world_args is not None:
                         task.update(world_args)
@@ -338,7 +338,7 @@ class GazeboMaster(mp.Process):
                                 timeout = task["timeout"] if "timeout" in task else None
                                 #TODO: make this a more informative type
                                 result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record, timeout=timeout)
-
+                                scenario.cleanup()
                             except rospy.ROSException as e:
                                 result = "ROSException: " + str(e)
                                 task["error"]= True
@@ -346,8 +346,8 @@ class GazeboMaster(mp.Process):
                             except roslaunch.RLException as e:
                                 result = "RLException: " + str(e)
 
-
-                            self.controller_launch.shutdown()
+                            if self.controller_launch is not None:
+                                self.controller_launch.shutdown()
 
                         else:
                             result = "gazebo_crash"
