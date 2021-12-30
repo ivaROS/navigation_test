@@ -109,7 +109,7 @@ def replace(results, replacements=None, replacements2=None):
 def readFile(filename):
     expanded_filename = os.path.expanduser(filename)
 
-    with open(expanded_filename, 'rb') as csvfile:
+    with open(expanded_filename, 'r') as csvfile:
         datareader = csv.DictReader(csvfile, restval='')
 
         result_list = []
