@@ -2,24 +2,24 @@
   <arg name="debug" default="false"/>
 
   <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
-  <arg name="debug_prefix" value="xterm -e gdb -ex run - -args" if="$(arg debug)"/>
+  <arg name="debug_prefix" value="xterm -e gdb -ex run -args" if="$(arg debug)"/>
   <!--<arg name="debug_prefix" value="valgrind" if="$(arg debug)"/>-->
 
-  <arg name="initial_trajectory_factor" default="$(optenv GM_INITIAL_TRAJECTORY_FACTOR 0.6)"/>
-  <arg name="use_projection_operator" default="$(optenv GM_USE_PROJECTION_OPERATOR false)"/>
-  <arg name="mpc_update_period" default="$(optenv GM_MPC_UPDATE_PERIOD 0.5)"/>
-  <arg name="max_replan_period" default="$(optenv GM_MAX_REPLAN_PERIOD -1)"/>
-  <arg name="replan_min_tte" default="$(optenv GM_REPLAN_MIN_TTE 0)"/>
-  <arg name="replan_min_ttc" default="$(optenv GM_REPLAN_MIN_TTC 3)"/>
-  <arg name="replan_exclusion_radius" default="$(optenv GM_REPLAN_EXCLUSION_RADIUS 0.3)"/>
-  <arg name="gap_goal_min_dist" default="$(optenv GM_GAP_GOAL_MIN_DIST 0.2)"/>
+  <arg name="initial_trajectory_factor" default="$(optenv GM_PARAM_INITIAL_TRAJECTORY_FACTOR 0.6)"/>
+  <arg name="use_projection_operator" default="$(optenv GM_PARAM_USE_PROJECTION_OPERATOR false)"/>
+  <arg name="mpc_update_period" default="$(optenv GM_PARAM_MPC_UPDATE_PERIOD 0.5)"/>
+  <arg name="max_replan_period" default="$(optenv GM_PARAM_MAX_REPLAN_PERIOD -1)"/>
+  <arg name="replan_min_tte" default="$(optenv GM_PARAM_REPLAN_MIN_TTE 0)"/>
+  <arg name="replan_min_ttc" default="$(optenv GM_PARAM_REPLAN_MIN_TTC 3)"/>
+  <arg name="replan_exclusion_radius" default="$(optenv GM_PARAM_REPLAN_EXCLUSION_RADIUS 0.3)"/>
+  <arg name="gap_goal_min_dist" default="$(optenv GM_PARAM_GAP_GOAL_MIN_DIST 0.2)"/>
   <arg name="egocircle" default="true"/>
-  <arg name="transformed_egocircle" default="$(optenv GM_TRANSFORMED_EGOCIRCLE true)"/>
+  <arg name="transformed_egocircle" default="$(optenv GM_PARAM_TRANSFORMED_EGOCIRCLE true)"/>
 
-  <arg name="narrow_gap_threshold_factor" default="$(optenv GM_NARROW_GAP_THRESHOLD_FACTOR 1.5)"/>
-  <arg name="goal_sampling_des_extension_dist" default="$(optenv GM_GAP_SAMPLING_DES_EXTENSION_DIST 0.2)"/>
-  <arg name="goal_sampling_safety_dist" default="$(optenv GM_GAP_SAMPLING_SAFETY_DIST 0.2)"/>
-  <arg name="narrow_gap_prevent_replan_dist_factor" default="$(optenv GM_NARROW_GAP_PREVENT_REPLAN_DIST_FACTOR 2)"/>
+  <arg name="narrow_gap_threshold_factor" default="$(optenv GM_PARAM_NARROW_GAP_THRESHOLD_FACTOR 1.5)"/>
+  <arg name="goal_sampling_des_extension_dist" default="$(optenv GM_PARAM_GAP_SAMPLING_DES_EXTENSION_DIST 0.2)"/>
+  <arg name="goal_sampling_safety_dist" default="$(optenv GM_PARAM_GAP_SAMPLING_SAFETY_DIST 0.2)"/>
+  <arg name="narrow_gap_prevent_replan_dist_factor" default="$(optenv GM_PARAM_NARROW_GAP_PREVENT_REPLAN_DIST_FACTOR 2)"/>
 
 
   <arg name="raw_egocircle_topic" default="/point_scan"/>
@@ -31,6 +31,7 @@
   <arg name="fixed_frame_id" default="map"/> <!--NOTE: This should really be 'map', but something broke when doing that -->
   <arg name="map_frame_id" default="map"/>
 
+  <param name="base_frame_id" value="base_footprint"/>
 
   <arg name="param" default="simplified_robot_description"/>
 
@@ -52,7 +53,7 @@
     <param name="planning_frame_id" value="$(arg planning_frame_id)"/>
     <param name="fixed_frame_id" value="odom"/>
     <param name="odom_frame_id" value="odom"/>
-    <param name="base_frame_id" value="base_link"/>
+    <param name="base_frame_id" value="base_footprint"/>
     <param name="global_goal_state/fixed_frame_id" value="map"/>
 
     <param name="teb_trajectory_scoring/initial_trajectory_factor" value="$(arg initial_trajectory_factor)"/>
