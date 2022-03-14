@@ -47,7 +47,7 @@ def port_in_use(port):
 
 
 class MultiMasterCoordinator(object):
-    def __init__(self, num_masters=1, save_results = True):
+    def __init__(self, num_masters=1, save_results = True, use_existing_roscore=False):
         signal.signal(signal.SIGINT, self.signal_shutdown)
         signal.signal(signal.SIGTERM, self.signal_shutdown)
         self.children_shutdown = mp.Value(c_bool, False)
@@ -56,7 +56,11 @@ class MultiMasterCoordinator(object):
         self.should_shutdown = False
         self.started = False
 
+        if num_masters != 1 and use_existing_roscore:
+            raise ValueError("You cannot run more than 1 instance of GazeboMaster when use_existing_roscore is enabled!")
+
         self.num_masters = num_masters
+        self.use_existing_roscore = use_existing_roscore
 
         self.save_results = save_results
         self.task_queue_capacity = 2000 #2*self.num_masters
@@ -92,14 +96,15 @@ class MultiMasterCoordinator(object):
 
 
     def addProcess(self):
-        while port_in_use(self.ros_port):
-            self.ros_port += 1
+        if not self.use_existing_roscore:
+            while port_in_use(self.ros_port):
+                self.ros_port += 1
 
         while port_in_use(self.gazebo_port):
             self.gazebo_port += 1
 
         gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.children_shutdown, self.soft_shutdown, self.ros_port,
-                                     self.gazebo_port, gazebo_launch_mutex=self.gazebo_launch_mutex)
+                                     self.gazebo_port, self.use_existing_roscore, gazebo_launch_mutex=self.gazebo_launch_mutex)
         gazebo_master.start()
         self.gazebo_masters.append(gazebo_master)
 
@@ -232,7 +237,7 @@ class MultiMasterCoordinator(object):
 
 
 class GazeboMaster(mp.Process):
-    def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, gazebo_launch_mutex, **kwargs):
+    def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, use_existing_roscore, gazebo_launch_mutex, **kwargs):
         super(GazeboMaster, self).__init__()
         self.rospack = rospkg.RosPack()
         self.rospack_caches = {}
@@ -241,6 +246,7 @@ class GazeboMaster(mp.Process):
 
         self.task_queue = task_queue
         self.result_queue = result_queue
+        self.use_existing_roscore = use_existing_roscore
         self.ros_port = ros_port
         self.gazebo_port = gazebo_port
         self.gazebo_launch_mutex = gazebo_launch_mutex
@@ -288,7 +294,8 @@ class GazeboMaster(mp.Process):
         print("Run totally done")
 
     def process_tasks(self):
-        self.roslaunch_core()
+        if not self.use_existing_roscore:
+            self.roslaunch_core()
         rospy.set_param('/use_sim_time', 'True')
         rospy.init_node('test_driver', anonymous=True)
         rospy.on_shutdown(self.shutdown)
@@ -300,8 +307,9 @@ class GazeboMaster(mp.Process):
         while not self.is_shutdown and not self.had_error:
             # TODO: If fail to run task, put task back on task queue
             try:
-
+                rospy.loginfo("Trying to get next task...")
                 task = self.task_queue.get(block=False)
+                rospy.loginfo("Got next task [" + str(task) + "]")
 
                 scenario = scenarios.getScenario(task)
 
@@ -393,15 +401,16 @@ class GazeboMaster(mp.Process):
         if self.controller_launch is not None:
             self.controller_launch.shutdown()
 
-        print("GazeboMaster shutdown: killing core...")
-        self.core.shutdown()
+        if self.core is not None:
+            print("GazeboMaster shutdown: killing core...")
+            self.core.shutdown()
         #self.core.kill()
 
         print("All cleaned up")
 
 
     def roslaunch_core(self):
-
+        rospy.loginfo("Launching roscore with port [" + str(self.ros_port) + "]")
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
         #roslaunch.configure_logging(uuid)
 
@@ -412,6 +421,7 @@ class GazeboMaster(mp.Process):
         self.core.start()
 
     def roslaunch_controller(self, robot, controller_name, controller_args=None):
+        rospy.loginfo("Launching controller [" + controller_name + "] for robot [" + str(robot) + "] with args [" + str(controller_args) + "]")
 
         if controller_args is None:
             controller_args = {}
@@ -528,6 +538,8 @@ class GazeboMaster(mp.Process):
         sys.stdout = sys.__stdout__
 
     def roslaunch_robot(self, robot, robot_args=None):
+        rospy.loginfo("Launching Gazebo Robot [" + robot + "] with args [" + str(robot_args) + "]")
+
         if robot == self.current_robot:
             if not self.robot_launch._shutting_down:
                 return
@@ -579,6 +591,7 @@ class GazeboMaster(mp.Process):
 
 
     def roslaunch_gazebo(self, world, world_args=None):
+        rospy.loginfo("Launching Gazebo World [" + world + "] with args [" + str(world_args) + "]")
         if world == self.current_world and world_args == self.current_world_args:
             if not self.gazebo_launch._shutting_down:
                 return
@@ -638,8 +651,11 @@ class GazeboMaster(mp.Process):
 
     def return_result(self,result):
         print("Returning completed task: " + str(result))
+        rospy.loginfo("Returning completed task [" + str(result) + "]...")
         self.result_queue.put(result)
+        rospy.loginfo("Returned completed task, marking task done [" + str(result) + "]...")
         self.task_queue.task_done()
+        rospy.loginfo("Marked task done [" + str(result) + "]")
 
 
 
