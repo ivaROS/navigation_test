@@ -61,7 +61,7 @@
     <!--END gazebo_ros empty_world.launch-->
 
     <!--BEGIN turtlebot_gazebo kobuki.launch.xml-->
-      <arg name="urdf_file" default="$(find xacro)/xacro.py '$(find nav_configs)/turtlebot_stereo/$(arg base)_$(arg stacks)_kinect_$(arg camera).urdf.xacro'" />
+      <arg name="urdf_file" default="$(find xacro)/xacro '$(find nav_configs)/turtlebot_stereo/$(arg base)_$(arg stacks)_kinect_$(arg camera).urdf.xacro'" />
       <param name="robot_description" command="$(arg urdf_file)" />
       
       <!-- Gazebo model spawner -->
