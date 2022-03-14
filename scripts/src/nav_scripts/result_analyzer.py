@@ -26,6 +26,8 @@ def formatString(value):
             num = float(value)
         except ValueError:
             return str(value)
+        except TypeError:
+            return value  # value isn't a string, a number, or a bool, leave it as is
         else:
             return ('%f' % num).rstrip('0').rstrip('.') #Copied from https://stackoverflow.com/a/2440786
 
@@ -133,7 +135,8 @@ def readFile(filename):
 def getPrunedList(results, keys):
     return [{k: entry[k] for k in keys if k in entry} for entry in results]
 
-
+def get_entries_for_key(cases, key):
+    return list(set((case[key] for case in cases)))
 
 def CalculateAgreement(results, result_keyname = "result"):
     seed_keyname = "seed"
@@ -516,13 +519,15 @@ class ResultAnalyzer(object):
                     times = path_times[lookupkey]
                     times = reduce_list(list(times.values()))
                     path_time = old_div(np.mean(times), 1e9)
+                    path_time_std = old_div(np.std(times), 1e9)
 
                     path_length = path_lengths[lookupkey]
-                    path_length = reduce_list(list(path_length.values()))
-                    path_length = np.mean(path_length)
+                    path_lengthx = reduce_list(list(path_length.values()))
+                    path_length = np.mean(path_lengthx)
+                    path_length_std = np.std(path_lengthx)
 
-                    print(("| " + "{0:.1f}".format(path_length) + " |" + "{0:.1f}".format(
-                        path_time) + ""), end=' ')
+                    print(("| " + "{0:.1f}".format(path_length) + "(" + str(path_time_std) + ") |" + "{0:.1f}".format(
+                        path_time) + "(" + str(path_length_std) + ")"), end=' ')
 
                     # Now print the averages of shared successful cases
                     if shared_safe_keys is not None and len(shared_safe_keys) > 0:
