@@ -244,8 +244,9 @@ class OdomAccumulator(object):
 
             deltaX = cur_pos.x - prev_pos.x
             deltaY = cur_pos.y - prev_pos.y
+            deltaZ = cur_pos.z - prev_pos.z
 
-            displacement = math.sqrt(deltaX*deltaX + deltaY*deltaY)
+            displacement = math.sqrt(deltaX*deltaX + deltaY*deltaY +deltaZ*deltaZ)
             self.path_length += displacement
 
             prev_yaw = quaternionToYaw(self.prev_msg.feedback.base_position.pose.orientation)
@@ -305,6 +306,9 @@ def reset_costmaps():
 def run_test(goal_pose, record=False, timeout=None):
     if timeout is None:
         timeout = 300
+
+    rospy.loginfo("Beginning navigation test with timeout [" + str(timeout) + "]")
+
     # Get a node handle and start the move_base action server
     # init_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1)
 
@@ -331,7 +335,7 @@ def run_test(goal_pose, record=False, timeout=None):
     bumper_checker = BumperChecker()
     odom_checker = OdomChecker()
     odom_accumulator = OdomAccumulator()
-    traj_recorder = TrajTypeRecorder()
+    #traj_recorder = TrajTypeRecorder()
 
     #record = False
 
@@ -340,8 +344,11 @@ def run_test(goal_pose, record=False, timeout=None):
 
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print("waiting for server")
+    rospy.loginfo("Waiting for MoveBaseActionServer...")
     client.wait_for_server()
     print("Done!")
+    rospy.loginfo("Found MoveBaseActionServer!")
+
 
     # Create the goal point
     goal = MoveBaseGoal()
@@ -362,6 +369,7 @@ def run_test(goal_pose, record=False, timeout=None):
 
     # Send the goal!
     print("sending goal")
+    rospy.loginfo("Sending goal...")
     if record:
         client.send_goal(goal, feedback_cb=set_cur_pose)
     else:
@@ -395,6 +403,7 @@ def run_test(goal_pose, record=False, timeout=None):
             result = "TIMED_OUT"
         else:
             r.sleep()
+        rospy.loginfo_throttle(period=5, msg="Waiting for result...")
 
     task_time = str(rospy.Time.now() - start_time)
 
@@ -431,9 +440,10 @@ def run_test(goal_pose, record=False, timeout=None):
         else:
             result = "UNKNOWN"
 
+    rospy.loginfo("Got result [" + str(result) + "]")
     res = {'result': result, 'time': task_time, 'path_length': path_length, 'end_pose': poseToString(end_pose), 'total_rotation': total_rotation}
 
-    res.update(traj_recorder.get_results())
+    #res.update(traj_recorder.get_results())
 
     if record:
         res.update({'bag_file_path': result_recorder.bagfilepath})
