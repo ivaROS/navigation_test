@@ -24,6 +24,7 @@ import contextlib
 
 from nav_scripts.testing_scenarios import TestingScenarios
 from nav_scripts.controller_launcher import ControllerLauncher
+from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher
 
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock as ClockMsg
@@ -89,7 +90,7 @@ class MultiMasterCoordinator(object):
         self.result_thread.start()
 
     def startProcesses(self):
-        self.ros_port = 11311
+        self.ros_port = 11311   #TODO: when using existing core, attempt to read port from environment variables
         self.gazebo_port = self.ros_port + 100
         for ind in range(self.num_masters):
             self.addProcess()
@@ -250,14 +251,13 @@ class GazeboMaster(mp.Process):
         self.ros_port = ros_port
         self.gazebo_port = gazebo_port
         self.gazebo_launch_mutex = gazebo_launch_mutex
-        self.core = None
-        self.gazebo_launch = None
-        self.controller_launch = None
+        self.roscore = RoscoreLauncher(ros_port=ros_port, use_mp=False)
+        self.robot_launcher = RobotLauncher(ros_port=ros_port, use_mp=False)
+        self.gazebo_launcher = GazeboLauncher(ros_port=ros_port, gazebo_port=gazebo_port, gazebo_launch_mutex=gazebo_launch_mutex, robot_launcher=self.robot_launcher, use_mp=False)
+        self.controller_launcher = ControllerLauncher(ros_port=ros_port, use_mp=False)
+
         self.robot_launch = None
-        self.current_robot = None
         self.gazebo_driver = None
-        self.current_world = None
-        self.current_world_args = None
         self.kill_flag = kill_flag
         self.soft_kill_flag = soft_kill_flag
         self.is_shutdown = False
@@ -295,7 +295,7 @@ class GazeboMaster(mp.Process):
 
     def process_tasks(self):
         if not self.use_existing_roscore:
-            self.roslaunch_core()
+            self.roscore.launch()
         rospy.set_param('/use_sim_time', 'True')
         rospy.init_node('test_driver', anonymous=True)
         rospy.on_shutdown(self.shutdown)
@@ -318,24 +318,24 @@ class GazeboMaster(mp.Process):
                     #TODO: handle failure to launch gazebo
                     world_args = task["world_args"] if "world_args" in task else {}
                     world_args.update(scenario.getWorldArgs())
-                    self.roslaunch_gazebo(scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
+                    self.gazebo_launcher.launch(world=scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
                     if world_args is not None:
                         task.update(world_args)
                     if "robot" in task and task['robot'] is not None:
                         robot_args = task["robot_args"] if "robot_args" in task else {}
-                        self.roslaunch_robot(task["robot"], robot_args=robot_args)
+                        self.robot_launcher.launch(robot=task["robot"], robot_args=robot_args)
                         task.update(robot_args)
 
                         if task["controller"] is None:
                             result = "nothing"
-                        elif not self.gazebo_launch._shutting_down:
+                        elif not self.gazebo_launcher.shutting_down():
 
                             controller_args = task["controller_args"] if "controller_args" in task else {}
 
                             try:
 
                                 scenario.setupScenario()
-                                self.roslaunch_controller(task["robot"], task["controller"], controller_args)
+                                self.controller_launcher.launch(robot=task["robot"], controller_name=task["controller"], controller_args=controller_args)
                                 task.update(controller_args)    #Adding controller arguments to main task dict for easy logging
 
                                 print("Running test...")
@@ -354,8 +354,8 @@ class GazeboMaster(mp.Process):
                             except roslaunch.RLException as e:
                                 result = "RLException: " + str(e)
 
-                            if self.controller_launch is not None:
-                                self.controller_launch.shutdown()
+                            #finally?
+                            self.controller_launcher.shutdown()
 
                         else:
                             result = "gazebo_crash"
@@ -392,33 +392,15 @@ class GazeboMaster(mp.Process):
         print("Done with processing, killing launch files...")
         # It seems like killing the core should kill all of the nodes,
         # but it doesn't
-        if self.gazebo_launch is not None:
-            self.gazebo_launch.shutdown()
+        self.controller_launcher.shutdown()
+        self.robot_launcher.shutdown()
+        self.gazebo_launcher.shutdown()
 
-        if self.robot_launch is not None:
-            self.robot_launch.shutdown()
-
-        if self.controller_launch is not None:
-            self.controller_launch.shutdown()
-
-        if self.core is not None:
-            print("GazeboMaster shutdown: killing core...")
-            self.core.shutdown()
-        #self.core.kill()
+        print("GazeboMaster shutdown: killing core...")
+        self.roscore.shutdown()
 
         print("All cleaned up")
 
-
-    def roslaunch_core(self):
-        rospy.loginfo("Launching roscore with port [" + str(self.ros_port) + "]")
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-        #roslaunch.configure_logging(uuid)
-
-        self.core = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[],
-            is_core=True, port=self.ros_port
-        )
-        self.core.start()
 
     def roslaunch_controller(self, robot, controller_name, controller_args=None):
         rospy.loginfo("Launching controller [" + controller_name + "] for robot [" + str(robot) + "] with args [" + str(controller_args) + "]")
@@ -537,108 +519,6 @@ class GazeboMaster(mp.Process):
 
         sys.stdout = sys.__stdout__
 
-    def roslaunch_robot(self, robot, robot_args=None):
-        rospy.loginfo("Launching Gazebo Robot [" + robot + "] with args [" + str(robot_args) + "]")
-
-        if robot == self.current_robot:
-            if not self.robot_launch._shutting_down:
-                return
-            else:
-                print("Error with robot, restarting")
-
-        if self.robot_launch is not None:
-            self.robot_launch.shutdown()
-
-        self.current_robot = robot
-
-        if robot_args is None:
-            robot_args = {}
-
-        if os.path.isfile(robot):
-            robot_path = robot
-        else:
-            robot_path = self.rospack.get_path("nav_configs") + "/launch/spawn_" + robot + ".launch"
-
-        # This will wait for a roscore if necessary, so as long as we detect any failures
-        # in roslaunch_core, we should be fine
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
-        #roslaunch.configure_logging(uuid) #What does this do?
-        #print path
-
-        for key,value in list(robot_args.items()):
-            var_name = "GM_PARAM_"+ key.upper()
-            value = str(value)
-            os.environ[var_name] = value
-            print("Setting environment variable [" + var_name + "] to '" + value + "'")
-
-        self.robot_launch = roslaunch.parent.ROSLaunchParent(
-            run_id=uuid, roslaunch_files=[robot_path],
-            is_core=False, port=self.ros_port
-        )
-        self.robot_launch.start()
-
-        odom_topic = "/odom"
-        if 'odom_topic' in robot_args:
-            odom_topic = robot_args['odom_topic']
-        # Wait for gazebo simulation to be running
-        try:
-            msg = rospy.wait_for_message(odom_topic, Odometry, 30)
-        except rospy.exceptions.ROSException:
-            print("Error! /odom not received!")
-            return False
-
-        return True
-
-
-    def roslaunch_gazebo(self, world, world_args=None):
-        rospy.loginfo("Launching Gazebo World [" + world + "] with args [" + str(world_args) + "]")
-        if world == self.current_world and world_args == self.current_world_args:
-            if not self.gazebo_launch._shutting_down:
-                return
-            else:
-                print("Gazebo crashed, restarting")
-
-        if self.gazebo_launch is not None:
-            self.gazebo_launch.shutdown()
-            self.current_robot = None   # Ensures a new robot will be spawned
-
-        self.current_world = world
-        self.current_world_args = world_args
-
-
-        # This will wait for a roscore if necessary, so as long as we detect any failures
-        # in roslaunch_core, we should be fine
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
-        #roslaunch.configure_logging(uuid) #What does this do?
-        #print path
-
-        if world_args is None:
-            world_args = {'gazebo_gui':'false'}
-
-        # Set environment variables to specify world arguments
-        for key,value in list(world_args.items()):
-            var_name = "GM_PARAM_"+ key.upper()
-            value = str(value)
-            os.environ[var_name] = value
-            print("Setting environment variable [" + var_name + "] to '" + value + "'")
-
-        #Without the mutex, we frequently encounter this problem:
-        # https://bitbucket.org/osrf/gazebo/issues/821/apparent-transport-race-condition-on
-        with self.gazebo_launch_mutex:
-            self.gazebo_launch = roslaunch.parent.ROSLaunchParent(
-                run_id=uuid, roslaunch_files=[world],
-                is_core=False, port=self.ros_port
-            )
-            self.gazebo_launch.start()
-
-        # Wait for gazebo simulation to be running
-        try:
-            msg = rospy.wait_for_message("/clock", ClockMsg, 30)
-        except rospy.exceptions.ROSException:
-            print("Error! clock not received!")
-            return False
-
-        return True
 
     def shutdown(self):
         self.is_shutdown = True

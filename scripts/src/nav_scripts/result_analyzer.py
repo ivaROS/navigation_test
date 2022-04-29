@@ -13,7 +13,7 @@ import math
 import numpy as np
 import copy
 import os
-
+from collections import defaultdict
 
 #standardize value formatting:
 # Bools: 'True' and 'False'
@@ -210,6 +210,17 @@ def CalculateAgreement(results, result_keyname = "result"):
 
     return (observed_agreement, note)
 
+def getValuesForKeys(results, keys):
+    values = defaultdict(set)
+
+    for entry in results:
+        for key in keys:
+            if key in entry:
+                values[key].add(entry[key])
+
+    return values
+
+
 class ResultAnalyzer(object):
 
     def readFile(self, filename, whitelist = None, blacklist = None, defaults=None, replacements=None):
@@ -289,6 +300,8 @@ class ResultAnalyzer(object):
                     max_time = time
         print("Max time: " + str(max_time))
 
+    def getValuesForKeys(self, keys):
+        return getValuesForKeys(results=self.results,keys=keys)
 
     def computeStatistics(self, independent, dependent):
         statistics = {}

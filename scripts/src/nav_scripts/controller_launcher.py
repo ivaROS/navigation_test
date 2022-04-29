@@ -1,7 +1,12 @@
 from builtins import str
 from builtins import object
+
 import rospkg, rospy
 import math
+import os
+
+
+from nav_scripts.ros_launcher_helper import RosLauncherHelper, LaunchInfo
 
 class ControllerConfig(object):
 
@@ -10,13 +15,63 @@ class ControllerConfig(object):
         self.filepath = filepath
         self.environment = environment
 
-#TODO: Move all controller launch logic as well as controller-specific data into this class
-class ControllerLauncher(object):
-    impls = {}
-    rospack = rospkg.RosPack()
 
-    def __init__(self):
-        pass
+
+
+#TODO: Move all controller launch logic as well as controller-specific data into this class
+
+class ControllerLauncher(RosLauncherHelper):
+    impls = {}
+
+    def __init__(self, ros_port, use_mp):
+        super(ControllerLauncher, self).__init__(name="controller", ros_port=ros_port, hide_stdout=True,
+                                                 use_mp=use_mp, profile=True)
+
+    # TODO: use kwargs or something to pass everything to the other process?
+    def launch(self, robot, controller_name, controller_args=None):
+        info = LaunchInfo(info=controller_name, args=controller_args)
+        info.robot = robot
+        res = RosLauncherHelper.launch(self=self, launch_info=info)
+        return res
+
+    def get_bash_file(self, launch_info):
+        arg_bash_file = super().get_bash_file(launch_info=launch_info)
+
+        try:
+            bash_source_file = ControllerLauncher.getEnvironment(launch_info.info)
+        except KeyError as e:
+            bash_source_file = None
+
+        if arg_bash_file is not None and arg_bash_file != bash_source_file:
+            print(
+                "Warning, environment provided in args will overwrite the environment provided by config")
+            bash_source_file = arg_bash_file
+
+        return bash_source_file
+
+    def get_launch_files(self, launch_info, rospack):
+        controller_name = launch_info.info
+        robot = launch_info.robot
+
+        controller_path = None
+        if os.path.isfile(controller_name):
+            controller_path = controller_name
+        elif ControllerLauncher.contains(controller_name):
+            controller_path = ControllerLauncher.getPath(name=controller_name)
+
+        if controller_path is None:
+            path = rospack.get_path("nav_scripts")
+            controller_path = path + "/launch/" + robot + "_" + controller_name + "_controller.launch"
+
+        if controller_path is None:
+            raise RuntimeError("Can't find controller [" + str(controller_name) + "] for robot [" + str(robot) + "]")
+
+        if not os.path.isfile(controller_path):
+            print("Error! Attempting to load controller from path [" + str(
+                controller_path) + "], but the file does not exist!")
+            raise FileNotFoundError("Can't find controller at " + str(controller_path))
+        else:
+            return [controller_path]
 
 
     '''
@@ -109,6 +164,7 @@ class ControllerLauncher(object):
     @staticmethod
     def getFieldNames():
         fieldnames = ["controller"]
-        for controller in list(ControllerLauncher.getScenarioTypes().values()):
+        for controller in list(ControllerLauncher.getControllerTypes().values()):
             fieldnames.extend(controller.getUniqueFieldNames())
         return fieldnames
+
