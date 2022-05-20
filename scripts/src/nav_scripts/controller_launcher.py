@@ -18,7 +18,6 @@ class ControllerConfig(object):
 
 
 
-#TODO: Move all controller launch logic as well as controller-specific data into this class
 
 class ControllerLauncher(RosLauncherHelper):
     impls = {}

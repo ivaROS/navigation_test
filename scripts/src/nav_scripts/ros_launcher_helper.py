@@ -83,10 +83,12 @@ def source_workspace(bash_file):
     import os, subprocess as sp, json
 
     source = 'source ' + bash_file
-    dump = '/usr/bin/python -c "import os, json;print json.dumps(dict(os.environ))"'
+    dump = sys.executable + ' -c "from __future__ import print_function;import os, json;print(json.dumps(dict(os.environ)))"'
     pipe = sp.Popen(['/bin/bash', '-c', '%s && %s' % (source, dump)], stdout=sp.PIPE)
     env = json.loads(pipe.stdout.read())
     return env
+
+import errno
 
 class EnvironmentSourcer(object):
     def __init__(self, bash_source_file=None):
@@ -95,6 +97,8 @@ class EnvironmentSourcer(object):
         if bash_source_file is not None:
             if os.path.isfile(bash_source_file):
                 self.bash_source_file = bash_source_file
+            else:
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), bash_source_file) #https://stackoverflow.com/a/36077407
 
     def __enter__(self):
         if self.bash_source_file is not None:
@@ -105,6 +109,53 @@ class EnvironmentSourcer(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.bash_source_file is not None:
             os.environ = self.old_environ
+
+
+import roslaunch.node_args
+
+class RoslaunchEnvironmentSourcer(EnvironmentSourcer):
+    rospack_cache = {}
+
+    def __init__(self, bash_source_file=None):
+        super(RoslaunchEnvironmentSourcer, self).__init__(bash_source_file=bash_source_file)
+        self.roslaunch_rospack_bak = None
+
+    def __enter__(self):
+        super(RoslaunchEnvironmentSourcer, self).__enter__()
+        try:
+            rospack = RoslaunchEnvironmentSourcer.rospack_cache[self.bash_source_file]
+        except KeyError as e:
+            rospack = rospkg.RosPack()
+            RoslaunchEnvironmentSourcer.rospack_cache[self.bash_source_file] = rospack
+
+        #Backup roslaunch's current rospack instance and replace with desired instance
+        self.roslaunch_rospack_bak = roslaunch.node_args._rospack
+        roslaunch.node_args._rospack = rospack
+
+        return rospack
+
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        super(RoslaunchEnvironmentSourcer, self).__exit__(exc_type=exc_type, exc_val=exc_val, exc_tb=exc_tb)
+
+        #Restore roslaunch's rospack instance
+        roslaunch.node_args._rospack = self.roslaunch_rospack_bak
+
+
+class StdOutputHider(object):
+
+    def __init__(self, enabled):
+        self.hide_stdout = enabled
+
+    def __enter__(self):
+        if self.hide_stdout:
+            # Remapping stdout to /dev/null
+            sys.stdout = open(os.devnull, "w")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.hide_stdout:
+            sys.stdout = sys.__stdout__
+
 
 
 class RosLauncherHelper(object):
@@ -156,39 +207,37 @@ class RosLauncherHelper(object):
         if self.roslaunch_object is not None:
             self.roslaunch_object.shutdown()
 
+        breakpoint()
+
         #Perform any necessary processing that doesn't depend on rospack
         bash_source_file = self.get_bash_source(launch_info=launch_info)
         args = launch_info.args
 
-        #TODO: Add environment sourcing here, get appropriate rospack instance for environment
-        rospack = rospkg.RosPack()
+        #with EnvironmentSourcer(bash_source_file=bash_source_file) as sourcer: #RoslaunchEnvironmentSourcer
+        if True:
+            #rospack = sourcer.rospack()
+            rospack = rospkg.RosPack()
 
-        launch_files = self.get_launch_files(launch_info=launch_info, rospack=rospack)
-        #TODO: verify that all files exist?
+            launch_files = self.get_launch_files(launch_info=launch_info, rospack=rospack)
+            #TODO: verify that all files exist?
 
-        print("Launching Process [" + self.name + "] with pid: " + str(os.getpid()))
-        print("Launch files=" + str(launch_files) + "\nargs=" + str(args) + "\nbash_source_file=" + str(bash_source_file))
+            print("Launching Process [" + self.name + "] with pid: " + str(os.getpid()))
+            print("Launch files=" + str(launch_files) + "\nargs=" + str(args) + "\nbash_source_file=" + str(bash_source_file))
 
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, not self.is_core)
+            uuid = roslaunch.rlutil.get_or_generate_uuid(None, not self.is_core)
 
-        for key, value in list(args.items()):
-            var_name = "GM_PARAM_" + key.upper()
-            value = str(value)
-            os.environ[var_name] = value
-            print("Setting environment variable [" + var_name + "] to '" + value + "'")
+            for key, value in list(args.items()):
+                var_name = "GM_PARAM_" + key.upper()
+                value = str(value)
+                os.environ[var_name] = value
+                print("Setting environment variable [" + var_name + "] to '" + value + "'")
 
-        if self.hide_stdout:
-            # Remapping stdout to /dev/null
-            sys.stdout = open(os.devnull, "w")
-
-        self.roslaunch_object = RoslaunchShutdownWrapper(
-            run_id=uuid, roslaunch_files=launch_files,
-            is_core=self.is_core, port=self.ros_port
-        )
-        self.roslaunch_object.start()
-
-        if self.hide_stdout:
-            sys.stdout = sys.__stdout__
+            with StdOutputHider(enabled=self.hide_stdout):
+                self.roslaunch_object = RoslaunchShutdownWrapper(
+                    run_id=uuid, roslaunch_files=launch_files,
+                    is_core=self.is_core, port=self.ros_port
+                )
+                self.roslaunch_object.start()
 
         return True
 
@@ -212,7 +261,7 @@ class RosLauncherHelper(object):
 
 
     #Override this in derived classes
-    def get_launch_files(self, launch_info):
+    def get_launch_files(self, launch_info, rospack):
         print("Error! 'get_launch_file' has not been implemented for this launcher!")
         raise NotImplementedError()
     
