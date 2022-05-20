@@ -115,6 +115,7 @@ import roslaunch.node_args
 
 class RoslaunchEnvironmentSourcer(EnvironmentSourcer):
     rospack_cache = {}
+    roslaunch_rospack_mutex = threading.Lock()
 
     def __init__(self, bash_source_file=None):
         super(RoslaunchEnvironmentSourcer, self).__init__(bash_source_file=bash_source_file)
@@ -128,6 +129,9 @@ class RoslaunchEnvironmentSourcer(EnvironmentSourcer):
             rospack = rospkg.RosPack()
             RoslaunchEnvironmentSourcer.rospack_cache[self.bash_source_file] = rospack
 
+        #Ensure that no other instance of RoslaunchEnvironmentSourcer attempts to modify roslaunch.node_args._rospack while we are using it
+        RoslaunchEnvironmentSourcer.roslaunch_rospack_mutex.__enter__()
+
         #Backup roslaunch's current rospack instance and replace with desired instance
         self.roslaunch_rospack_bak = roslaunch.node_args._rospack
         roslaunch.node_args._rospack = rospack
@@ -140,6 +144,8 @@ class RoslaunchEnvironmentSourcer(EnvironmentSourcer):
 
         #Restore roslaunch's rospack instance
         roslaunch.node_args._rospack = self.roslaunch_rospack_bak
+
+        RoslaunchEnvironmentSourcer.roslaunch_rospack_mutex.__exit__(exc_type, exc_val, exc_tb)
 
 
 class StdOutputHider(object):
@@ -207,17 +213,11 @@ class RosLauncherHelper(object):
         if self.roslaunch_object is not None:
             self.roslaunch_object.shutdown()
 
-        breakpoint()
-
         #Perform any necessary processing that doesn't depend on rospack
         bash_source_file = self.get_bash_source(launch_info=launch_info)
         args = launch_info.args
 
-        #with EnvironmentSourcer(bash_source_file=bash_source_file) as sourcer: #RoslaunchEnvironmentSourcer
-        if True:
-            #rospack = sourcer.rospack()
-            rospack = rospkg.RosPack()
-
+        with RoslaunchEnvironmentSourcer(bash_source_file=bash_source_file) as rospack:
             launch_files = self.get_launch_files(launch_info=launch_info, rospack=rospack)
             #TODO: verify that all files exist?
 
