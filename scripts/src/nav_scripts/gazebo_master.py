@@ -26,14 +26,9 @@ from nav_scripts.testing_scenarios import TestingScenarios
 from nav_scripts.controller_launcher import ControllerLauncher
 from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher
 
-from nav_msgs.msg import Odometry
-from rosgraph_msgs.msg import Clock as ClockMsg
-from sensor_msgs.msg import JointState
 import rospy
 import csv
 import datetime
-
-from roslaunch.node_args import _rospack
 
 
 def port_in_use(port):
@@ -240,10 +235,7 @@ class MultiMasterCoordinator(object):
 class GazeboMaster(mp.Process):
     def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, use_existing_roscore, gazebo_launch_mutex, **kwargs):
         super(GazeboMaster, self).__init__()
-        self.rospack = rospkg.RosPack()
-        self.rospack_caches = {}
-
-        self.daemon = False
+        self.daemon = False #Should this be daemon after all?
 
         self.task_queue = task_queue
         self.result_queue = result_queue
@@ -269,9 +261,9 @@ class GazeboMaster(mp.Process):
         print("New master")
 
         self.ros_master_uri = "http://localhost:" + str(self.ros_port)
-        self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
+        #self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
         os.environ["ROS_MASTER_URI"] = self.ros_master_uri
-        os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
+        #os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
 
         #if 'SIMULATION_RESULTS_DIR' in os.environ:
 
@@ -294,110 +286,115 @@ class GazeboMaster(mp.Process):
         print("Run totally done")
 
     def process_tasks(self):
-        if not self.use_existing_roscore:
-            self.roscore.launch()
-        rospy.set_param('/use_sim_time', 'True')
-        rospy.init_node('test_driver', anonymous=True)
-        rospy.on_shutdown(self.shutdown)
+        #Starts roscore if needed; does not launch anything else, but ensures they all get shutdown properly
+        with self.roscore if not self.use_existing_roscore else contextlib.nullcontext(), self.gazebo_launcher, self.robot_launcher:
+            rospy.set_param('/use_sim_time', 'True')
+            rospy.init_node('test_driver', anonymous=True)
+            rospy.on_shutdown(self.shutdown)
 
-        scenarios = TestingScenarios()
+            scenarios = TestingScenarios()
 
-        self.had_error = False
+            self.had_error = False
 
-        while not self.is_shutdown and not self.had_error:
-            # TODO: If fail to run task, put task back on task queue
-            try:
-                rospy.loginfo("Trying to get next task...")
-                task = self.task_queue.get(block=False)
-                rospy.loginfo("Got next task [" + str(task) + "]")
+            while not self.is_shutdown and not self.had_error:
+                # TODO: If fail to run task, put task back on task queue
+                try:
+                    rospy.loginfo("Trying to get next task...")
+                    task = self.task_queue.get(block=False)
+                    rospy.loginfo("Got next task [" + str(task) + "]")
 
-                scenario = scenarios.getScenario(task)
+                    scenario = scenarios.getScenario(task)
 
-                if scenario is not None:
+                    if scenario is not None:
 
-                    #TODO: handle failure to launch gazebo
-                    world_args = task["world_args"] if "world_args" in task else {}
-                    world_args.update(scenario.getWorldArgs())
-                    self.gazebo_launcher.launch(world=scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
-                    if world_args is not None:
-                        task.update(world_args)
-                    if "robot" in task and task['robot'] is not None:
-                        robot_args = task["robot_args"] if "robot_args" in task else {}
-                        self.robot_launcher.launch(robot=task["robot"], robot_args=robot_args)
-                        task.update(robot_args)
+                        #TODO: handle failure to launch gazebo
+                        world_args = task["world_args"] if "world_args" in task else {}
+                        world_args.update(scenario.getWorldArgs())
+                        self.gazebo_launcher.launch(world=scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
+                        if world_args is not None:
+                            task.update(world_args)
+                        if "robot" in task and task['robot'] is not None:
+                            robot_args = task["robot_args"] if "robot_args" in task else {}
+                            self.robot_launcher.launch(robot=task["robot"], robot_args=robot_args)
+                            task.update(robot_args)
 
-                        if task["controller"] is None:
-                            result = "nothing"
-                        elif not self.gazebo_launcher.shutting_down():
+                            if task["controller"] is None:
+                                result = "nothing"
+                            elif not self.gazebo_launcher.shutting_down():
 
-                            controller_args = task["controller_args"] if "controller_args" in task else {}
+                                controller_args = task["controller_args"] if "controller_args" in task else {}
 
-                            try:
+                                try:
+                                    #TODO: Catch exceptions that don't necessarily indicate a fatal problem
+                                    scenario.setupScenario()
 
-                                scenario.setupScenario()
-                                self.controller_launcher.launch(robot=task["robot"], controller_name=task["controller"], controller_args=controller_args)
-                                task.update(controller_args)    #Adding controller arguments to main task dict for easy logging
+                                    #Ensure controller shutdown immediately following experiment
+                                    with self.controller_launcher:
+                                        self.controller_launcher.launch(robot=task["robot"], controller_name=task["controller"], controller_args=controller_args)
+                                        task.update(controller_args)    #Adding controller arguments to main task dict for easy logging
 
-                                print("Running test...")
+                                        print("Running test...")
 
-                                #master = rosgraph.Master('/mynode')
+                                        #master = rosgraph.Master('/mynode')
 
-                                record = task["record"] if "record" in task else False
-                                timeout = task["timeout"] if "timeout" in task else None
-                                #TODO: make this a more informative type
-                                result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record, timeout=timeout)
-                                scenario.cleanup()
-                            except rospy.ROSException as e:
-                                result = "ROSException: " + str(e)
-                                task["error"]= True
+                                        record = task["record"] if "record" in task else False
+                                        timeout = task["timeout"] if "timeout" in task else None
+                                        #TODO: make this a more informative type
+                                        result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record, timeout=timeout)
+
+                                    scenario.cleanup()
+
+                                except rospy.ROSException as e:
+                                    result = "ROSException: " + str(e)
+                                    task["error"]= True
+                                    self.had_error = True
+                                except roslaunch.RLException as e:  #These are launch-specific exceptions, and probably shouldn't be caught anyway
+                                    result = "RLException: " + str(e)
+
+                                #finally?
+                                #self.controller_launcher.shutdown()
+
+                            else:
+                                result = "gazebo_crash"
+                                task["error"] = True
                                 self.had_error = True
-                            except roslaunch.RLException as e:
-                                result = "RLException: " + str(e)
-
-                            #finally?
-                            self.controller_launcher.shutdown()
-
                         else:
-                            result = "gazebo_crash"
-                            task["error"] = True
-                            self.had_error = True
+                            result = "bad_robot"
                     else:
-                        result = "bad_robot"
-                else:
-                    result = "bad_scenario"
+                        result = "bad_scenario"
 
-                if isinstance(result, dict):
-                    task.update(result)
-                else:
-                    task["result"] = result
-                task["pid"] = os.getpid()
-                self.return_result(task)
+                    if isinstance(result, dict):
+                        task.update(result)
+                    else:
+                        task["result"] = result
+                    task["pid"] = os.getpid()
+                    self.return_result(task)
 
-                if self.had_error:
-                    print(result, file=sys.stderr)
+                    if self.had_error:
+                        print(result, file=sys.stderr)
 
 
-            except queue.Empty as e:
-                with self.soft_kill_flag.get_lock():
-                    if self.soft_kill_flag.value:
+                except queue.Empty as e:
+                    with self.soft_kill_flag.get_lock():
+                        if self.soft_kill_flag.value:
+                            self.shutdown()
+                            print("Soft shutdown requested")
+                    time.sleep(1)
+
+
+                with self.kill_flag.get_lock():
+                    if self.kill_flag.value:
                         self.shutdown()
-                        print("Soft shutdown requested")
-                time.sleep(1)
 
+            print("Done with processing, killing launch files...")
+            # It seems like killing the core should kill all of the nodes,
+            # but it doesn't
+            #self.controller_launcher.shutdown()
+            #self.robot_launcher.shutdown()
+            #self.gazebo_launcher.shutdown()
 
-            with self.kill_flag.get_lock():
-                if self.kill_flag.value:
-                    self.shutdown()
-
-        print("Done with processing, killing launch files...")
-        # It seems like killing the core should kill all of the nodes,
-        # but it doesn't
-        self.controller_launcher.shutdown()
-        self.robot_launcher.shutdown()
-        self.gazebo_launcher.shutdown()
-
-        print("GazeboMaster shutdown: killing core...")
-        self.roscore.shutdown()
+            #print("GazeboMaster shutdown: killing core...")
+            #self.roscore.shutdown()
 
         print("All cleaned up")
 

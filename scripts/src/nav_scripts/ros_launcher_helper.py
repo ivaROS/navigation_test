@@ -163,6 +163,20 @@ class StdOutputHider(object):
             sys.stdout = sys.__stdout__
 
 
+''' The original idea was to separate context manager functionality from the launcher itself.
+    I may return to this approach in the future, but for now just including it in the launchers'''
+class LauncherContextManager(object):
+
+    def __init__(self, launcher):
+        self.launcher = launcher
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 
 class RosLauncherHelper(object):
     def __init__(self, name, ros_port, hide_stdout=False, use_mp=True, profile=False, is_core=False):
@@ -316,11 +330,24 @@ class RosLauncherHelper(object):
     def disable_profiling(self):
         return self.launcher_status.call("noprofile")
 
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.shutdown()
+
 
 
 class RoscoreLauncher(RosLauncherHelper):
     def __init__(self, ros_port, use_mp):
         super(RoscoreLauncher, self).__init__(name="core", ros_port = ros_port, hide_stdout=False, use_mp=use_mp, profile=False, is_core=True)
+
+    def __enter__(self):
+        self.launch()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("GazeboMaster shutdown: killing core...")
+        super(RoscoreLauncher, self).__exit__(exc_type, exc_val, exc_tb)
 
     def launch(self):
         RosLauncherHelper.launch(self=self, launch_info=LaunchInfo())
