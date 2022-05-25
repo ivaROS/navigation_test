@@ -163,6 +163,73 @@ class StdOutputHider(object):
             sys.stdout = sys.__stdout__
 
 
+
+import socket
+import contextlib
+
+def port_in_use(port):
+    with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        if sock.connect_ex(('127.0.0.1', port)) == 0:
+            print("Port " + str(port) + " is in use")
+            return True
+        else:
+            print("Port " + str(port) + " is not in use")
+            return False
+
+
+
+class PortSelector(object):
+
+    @classmethod
+    def port(cls):
+        port_object = cls.current_port
+        with port_object.get_lock():
+            while port_in_use(port_object.value):
+                port_object.value += 1
+            val = port_object.value
+            port_object.value += 1
+
+        return val
+
+
+class RosPort(PortSelector):
+    current_port = mp.Value('i', 11311)
+
+
+
+import os
+class RosEnv(object):
+    port = None
+
+    @staticmethod
+    def init(use_existing_roscore=False):
+        ros_port = RosEnv.get_ros_port() if use_existing_roscore else RosPort.port()
+        RosEnv.set_ros_port(ros_port=ros_port)
+        RosEnv.port = ros_port
+
+    @staticmethod
+    def set_ros_port(ros_port):
+        ros_master_uri = "http://localhost:" + str(ros_port)
+        os.environ["ROS_MASTER_URI"] = ros_master_uri
+
+    @staticmethod
+    def get_ros_port():
+        try:
+            ros_master_uri = os.environ["ROS_MASTER_URI"]
+        except KeyError as e:
+            print("No ROS_MASTER_URI specified!")
+            raise e
+        else:
+            port_ind = ros_master_uri.rindex(":")
+            port_str = ros_master_uri[port_ind+1:]
+            ros_port = int(port_str)
+            return ros_port
+
+
+
+
+
+
 ''' The original idea was to separate context manager functionality from the launcher itself.
     I may return to this approach in the future, but for now just including it in the launchers'''
 class LauncherContextManager(object):
@@ -180,7 +247,7 @@ class LauncherContextManager(object):
 
 class RosLauncherHelper(object):
     def __init__(self, name, ros_port, hide_stdout=False, use_mp=True, profile=False, is_core=False):
-        self.ros_port=ros_port
+        #self.ros_port=ros_port
         self.roslaunch_object = None
         self.hide_stdout=hide_stdout
         self.use_mp = use_mp
@@ -190,8 +257,8 @@ class RosLauncherHelper(object):
         self.current_value = None
         self.current_args = None
 
-        self.ros_master_uri = "http://localhost:" + str(self.ros_port)
-        os.environ["ROS_MASTER_URI"] = self.ros_master_uri
+        #self.ros_master_uri = "http://localhost:" + str(self.ros_port)
+        #os.environ["ROS_MASTER_URI"] = self.ros_master_uri
 
         self.monitor_event = mp.Event()
 
@@ -246,12 +313,14 @@ class RosLauncherHelper(object):
                 os.environ[var_name] = value
                 print("Setting environment variable [" + var_name + "] to '" + value + "'")
 
-            with StdOutputHider(enabled=self.hide_stdout):
-                self.roslaunch_object = RoslaunchShutdownWrapper(
-                    run_id=uuid, roslaunch_files=launch_files,
-                    is_core=self.is_core, port=self.ros_port
-                )
-                self.roslaunch_object.start()
+            with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
+                with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
+                    with StdOutputHider(enabled=self.hide_stdout):
+                        self.roslaunch_object = RoslaunchShutdownWrapper(
+                            run_id=uuid, roslaunch_files=launch_files,
+                            is_core=self.is_core, port=RosEnv.port
+                        )
+                        self.roslaunch_object.start()
 
         return True
 
@@ -339,11 +408,16 @@ class RosLauncherHelper(object):
 
 
 class RoscoreLauncher(RosLauncherHelper):
-    def __init__(self, ros_port, use_mp):
-        super(RoscoreLauncher, self).__init__(name="core", ros_port = ros_port, hide_stdout=False, use_mp=use_mp, profile=False, is_core=True)
+    def __init__(self, use_existing_roscore, use_mp):
+        super(RoscoreLauncher, self).__init__(name="core", ros_port = None, hide_stdout=False, use_mp=use_mp, profile=False, is_core=True)
+        RosEnv.init(use_existing_roscore=use_existing_roscore)
+        self.use_existing_roscore = use_existing_roscore
 
     def __enter__(self):
-        self.launch()
+        if not self.use_existing_roscore:
+            self.launch()
+        else:
+            print("Not starting a new ROS Core")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         print("GazeboMaster shutdown: killing core...")
@@ -356,12 +430,21 @@ class RoscoreLauncher(RosLauncherHelper):
         return []
 
 
+
+
+class GazeboPort(PortSelector):
+    current_port = mp.Value('i', 11411)
+
 from rosgraph_msgs.msg import Clock as ClockMsg
 
 class GazeboLauncher(RosLauncherHelper):
+    gazebo_launch_mutex = mp.Lock()
+
     def __init__(self, ros_port, gazebo_port, gazebo_launch_mutex=None, robot_launcher=None, use_mp=False):
         super(GazeboLauncher, self).__init__(name="gazebo", ros_port = ros_port, hide_stdout=False, use_mp=use_mp, profile=False, is_core=False)
-        self.gazebo_launch_mutex = gazebo_launch_mutex if gazebo_launch_mutex is not None else mp.Lock()
+        #self.gazebo_launch_mutex = gazebo_launch_mutex if gazebo_launch_mutex is not None else mp.Lock()
+
+        gazebo_port = GazeboPort.port()
 
         self.gazebo_port = gazebo_port
         self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
@@ -391,7 +474,8 @@ class GazeboLauncher(RosLauncherHelper):
 
         info = LaunchInfo(info=[world], args=world_args)
 
-        with self.gazebo_launch_mutex:
+        #with self.gazebo_launch_mutex:
+        with GazeboLauncher.gazebo_launch_mutex:
             res = RosLauncherHelper.launch(self=self, launch_info=info)
 
         try:

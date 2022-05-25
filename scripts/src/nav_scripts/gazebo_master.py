@@ -239,11 +239,11 @@ class GazeboMaster(mp.Process):
 
         self.task_queue = task_queue
         self.result_queue = result_queue
-        self.use_existing_roscore = use_existing_roscore
+        #self.use_existing_roscore = use_existing_roscore
         self.ros_port = ros_port
-        self.gazebo_port = gazebo_port
-        self.gazebo_launch_mutex = gazebo_launch_mutex
-        self.roscore = RoscoreLauncher(ros_port=ros_port, use_mp=False)
+        #self.gazebo_port = gazebo_port
+        #self.gazebo_launch_mutex = gazebo_launch_mutex
+        self.roscore = RoscoreLauncher(use_existing_roscore=use_existing_roscore, use_mp=False)
         self.robot_launcher = RobotLauncher(ros_port=ros_port, use_mp=False)
         self.gazebo_launcher = GazeboLauncher(ros_port=ros_port, gazebo_port=gazebo_port, gazebo_launch_mutex=gazebo_launch_mutex, robot_launcher=self.robot_launcher, use_mp=False)
         self.controller_launcher = ControllerLauncher(ros_port=ros_port, use_mp=False)
@@ -260,9 +260,9 @@ class GazeboMaster(mp.Process):
 
         print("New master")
 
-        self.ros_master_uri = "http://localhost:" + str(self.ros_port)
+        #self.ros_master_uri = "http://localhost:" + str(self.ros_port)
         #self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
-        os.environ["ROS_MASTER_URI"] = self.ros_master_uri
+        #os.environ["ROS_MASTER_URI"] = self.ros_master_uri
         #os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
 
         #if 'SIMULATION_RESULTS_DIR' in os.environ:
@@ -287,7 +287,7 @@ class GazeboMaster(mp.Process):
 
     def process_tasks(self):
         #Starts roscore if needed; does not launch anything else, but ensures they all get shutdown properly
-        with self.roscore if not self.use_existing_roscore else contextlib.nullcontext(), self.gazebo_launcher, self.robot_launcher:
+        with self.roscore, self.gazebo_launcher, self.robot_launcher:
             rospy.set_param('/use_sim_time', 'True')
             rospy.init_node('test_driver', anonymous=True)
             rospy.on_shutdown(self.shutdown)
