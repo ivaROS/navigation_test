@@ -21,7 +21,7 @@ class ControllerConfig(object):
 
 class ControllerLauncher(RosLauncherHelper):
     impls = {}
-    rospack = rospkg.RosPack()
+    #rospack = rospkg.RosPack()
 
     def __init__(self, ros_port, use_mp):
         super(ControllerLauncher, self).__init__(name="controller", ros_port=ros_port, hide_stdout=True,
@@ -168,3 +168,4 @@ class ControllerLauncher(RosLauncherHelper):
             fieldnames.extend(controller.getUniqueFieldNames())
         return fieldnames
 
+ControllerLauncher.init()

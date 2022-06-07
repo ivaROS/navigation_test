@@ -230,9 +230,8 @@ class RosEnv(object):
 
 
 
-''' The original idea was to separate context manager functionality from the launcher itself.
-    I may return to this approach in the future, but for now just including it in the launchers'''
-class LauncherContextManager(object):
+#If a launcher raises an error, this class catches it and shuts the launcher down
+class LauncherErrorCatcher(object):
 
     def __init__(self, launcher):
         self.launcher = launcher
@@ -241,11 +240,41 @@ class LauncherContextManager(object):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None and issubclass(exc_type, type(self.launcher).exc_type):
+            print("Caught error from " + str(self.launcher.name) + ", shutting it down")
+            self.launcher.shutdown()
         pass
+
+
+class NavBenchException(BaseException):
+    pass
+
+#Raising this should cause everything to shutdown ASAP
+class FatalNavBenchException(NavBenchException):
+    pass
+
+#Raising this should cause the worker to move on to the next task
+class NonFatalNavBenchException(NavBenchException):
+    pass
+
+class RosLauncherException(NonFatalNavBenchException):
+    pass
 
 
 
 class RosLauncherHelper(object):
+
+    @classmethod
+    def init(cls):
+        class RosLauncherTypeException(RosLauncherException): pass
+        class RosLauncherRuntimeException(RosLauncherTypeException): pass
+        class RosLauncherLaunchException(RosLauncherTypeException): pass
+
+        cls.exc_type = RosLauncherTypeException
+        cls.exc_type_launch = RosLauncherLaunchException
+        cls.exc_type_runtime = RosLauncherRuntimeException
+
+
     def __init__(self, name, ros_port, hide_stdout=False, use_mp=True, profile=False, is_core=False):
         #self.ros_port=ros_port
         self.roslaunch_object = None
@@ -316,11 +345,15 @@ class RosLauncherHelper(object):
             with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
                 with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
                     with StdOutputHider(enabled=self.hide_stdout):
-                        self.roslaunch_object = RoslaunchShutdownWrapper(
-                            run_id=uuid, roslaunch_files=launch_files,
-                            is_core=self.is_core, port=RosEnv.port
-                        )
-                        self.roslaunch_object.start()
+                        try:
+                            self.roslaunch_object = RoslaunchShutdownWrapper(
+                                run_id=uuid, roslaunch_files=launch_files,
+                                is_core=self.is_core, port=RosEnv.port
+                            )
+                            self.roslaunch_object.start()
+                        except roslaunch.core.RLException as e:
+                            raise type(self).exc_type_launch from e
+
 
         return True
 
@@ -331,6 +364,13 @@ class RosLauncherHelper(object):
 
 
         self.monitor_thread = threading.Thread(target=monitor_thread_func)
+
+
+    #Check if everything is running correctly; raise appropriate exception if not
+    def update(self):
+        if self.roslaunch_object.pm.is_shutdown:
+            raise self.exc_type_runtime
+
 
 
     #Override for additional launcher-specific processing
@@ -384,6 +424,7 @@ class RosLauncherHelper(object):
             res=self.launch_impl(launch_info=launch_info)
             self.pipe_output.send(res)
 
+    #TODO: shutdown 'dependent' launchers as well?
     def shutdown(self):
         self.launcher_status.call(True)
         print("Shut down [" +str(self.name) + ']')
@@ -405,7 +446,13 @@ class RosLauncherHelper(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.shutdown()
 
+class RosLauncherMonitor(object):
+    def __init__(self, launchers):
+        self.launchers = launchers
 
+    def update(self):
+        for l in self.launchers:
+            l.update()
 
 class RoscoreLauncher(RosLauncherHelper):
     def __init__(self, use_existing_roscore, use_mp):
@@ -418,6 +465,7 @@ class RoscoreLauncher(RosLauncherHelper):
             self.launch()
         else:
             print("Not starting a new ROS Core")
+            #TODO: Verify that the port number specified by environment variables matches that given by RosPort
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         print("GazeboMaster shutdown: killing core...")
@@ -429,6 +477,7 @@ class RoscoreLauncher(RosLauncherHelper):
     def get_launch_files(self, launch_info, rospack):
         return []
 
+RoscoreLauncher.init()
 
 
 
@@ -470,6 +519,9 @@ class GazeboLauncher(RosLauncherHelper):
         self.current_args = world_args
 
         if world_args is None:
+            world_args = {}
+
+        if not 'gazebo_gui' in world_args:
             world_args = {'gazebo_gui':'false'}
 
         info = LaunchInfo(info=[world], args=world_args)
@@ -488,6 +540,8 @@ class GazeboLauncher(RosLauncherHelper):
 
     def get_launch_files(self, launch_info, rospack):
         return launch_info.info
+
+GazeboLauncher.init()
 
 
 class RobotLauncher(RosLauncherHelper):
@@ -536,3 +590,5 @@ class RobotLauncher(RosLauncherHelper):
                 raise RuntimeError("Cannot find robot " + str(robot))
 
         return [robot_path]
+
+RobotLauncher.init()

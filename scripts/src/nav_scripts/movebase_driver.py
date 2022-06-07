@@ -303,7 +303,7 @@ def reset_costmaps():
     service = rospy.ServiceProxy("move_base/clear_costmaps", std_srvs.Empty)
     service()
 
-def run_test(goal_pose, record=False, timeout=None):
+def run_test(goal_pose, record=False, timeout=None, monitor=None):
     if timeout is None:
         timeout = 300
 
@@ -345,9 +345,12 @@ def run_test(goal_pose, record=False, timeout=None):
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     print("waiting for server")
     rospy.loginfo("Waiting for MoveBaseActionServer...")
-    client.wait_for_server()
-    print("Done!")
-    rospy.loginfo("Found MoveBaseActionServer!")
+    if client.wait_for_server(timeout=rospy.Duration(secs=20)):
+        print("Done!")
+        rospy.loginfo("Found MoveBaseActionServer!")
+    else:
+        rospy.logerr("MoveBaseActionServer not found!")
+        return "MoveBaseActionServer not found!"
 
 
     # Create the goal point
@@ -385,6 +388,8 @@ def run_test(goal_pose, record=False, timeout=None):
 
     keep_waiting = True
     while keep_waiting:
+        if monitor is not None:
+            monitor.update()
         state = client.get_state()
         #print "State: " + str(state)
         if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
