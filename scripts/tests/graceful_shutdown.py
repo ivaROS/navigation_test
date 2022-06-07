@@ -220,12 +220,11 @@ def run_queue_wrapper_test(num):
             is_full = False
             while not self.shutdown_event.is_set():
                 try:
-                    self.queue.put(task, block=False) #, block=True, timeout=self.sleep_time)
+                    self.queue.put(task, block=True, timeout=self.sleep_time)
                 except queue.Full as e:
                     if not is_full:
                         print("[" + str(self.name) + "] is full!, unable to add task!")
                     is_full = True
-                    time.sleep(self.sleep_time)
                 else:
                     print("Added task " + str(task) + " to [" + str(self.name) + "]")
                     break
@@ -234,23 +233,16 @@ def run_queue_wrapper_test(num):
 
             class NextGetter(object):
 
-                #class DoneException(BaseException): pass
-                #
-                # def __init__(self, queue, name):
-                #     self.queue = queue
-                #     self.name = name
-
                 def __enter__(myself):
                     is_empty = False
 
                     while not self.shutdown_event.is_set():
                         try:
-                            task = self.queue.get(block=False)
+                            task = self.queue.get(block=True, timeout=self.sleep_time)
                         except queue.Empty as e:
                             if not is_empty:
                                 print("No task in [" + str(self.name) + "]!")
                             is_empty = True
-                            time.sleep(1)
                         else:
                             print("Got task " + str(task) + " from [" + str(self.name) + "]!")
                             return task
@@ -264,13 +256,16 @@ def run_queue_wrapper_test(num):
 
             return NextGetter()
 
+        def join(self):
+            return self.queue.join()
+
     class TaskCommunication(object):
 
         #Takes in lists (or generators) of tasks and transfers them, in order, to the task queue
         class TaskQueuer(object):
 
             def __init__(self, task_queue, shutdown_event):
-                self.task_queue = InterruptibleQueueWrapper(queue=task_queue, shutdown_event=shutdown_event, sleep_time=1, name="Task Queue")
+                self.task_queue = task_queue #InterruptibleQueueWrapper(queue=task_queue, shutdown_event=shutdown_event, sleep_time=1, name="Task Queue")
                 self.thread = threading.Thread(target=self.run)
                 self.task_input_queue = InterruptibleQueueWrapper(queue=queue.Queue(10), shutdown_event=shutdown_event, sleep_time=1, name="Task Input Queue")
                 self.shutdown_event = shutdown_event
@@ -281,7 +276,7 @@ def run_queue_wrapper_test(num):
                 try:
                     while not self.shutdown_event.is_set():
                         with self.task_input_queue.get() as task_obj:
-                            task_it = task_obj() if isinstance(task_obj, types.GeneratorType) else task_obj if isinstance(task_obj, list) else None
+                            task_it = task_obj if isinstance(task_obj, types.GeneratorType) else task_obj if isinstance(task_obj, list) else None
 
                             for t in task_it:
                                 self.task_queue.put(t)
@@ -301,9 +296,12 @@ def run_queue_wrapper_test(num):
 
 
         def __init__(self):
-            self.task_queue = mp.JoinableQueue(maxsize=10)
-            self.result_queue = mp.JoinableQueue(maxsize=10)
             self.shutdown_event = mp.Event()
+
+            self.task_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10), shutdown_event=self.shutdown_event, sleep_time=1,
+                                                        name="Task Queue")
+
+            self.result_queue = mp.JoinableQueue(maxsize=10)
             self.task_adder = TaskCommunication.TaskQueuer(task_queue=self.task_queue, shutdown_event=self.shutdown_event)
 
         def shutdown(self):
@@ -329,6 +327,19 @@ def run_queue_wrapper_test(num):
             self.num = num
 
         def run(self):
+            try:
+                while not self.tc.shutdown_event.is_set():
+                    with self.tc.task_queue.get() as task:
+                        msg = "[" + str(self.num) + "]: Do some work (" + str(task)
+                        print(msg)
+                        do_stuff()
+                        # self.tc.result_queue.put
+                        #self.tc.task_queue.task_done()
+
+            except GracefulShutdownException as e:
+                print(str(e))
+
+
             is_empty = False
             while not self.tc.shutdown_event.is_set():
                 try:
@@ -369,7 +380,7 @@ def run_queue_wrapper_test(num):
 
     for _ in range(3):
         tc.add_tasks(make_tasks_list(num=10))
-    tc.add_tasks(make_tasks_list(num=50))
+    tc.add_tasks(make_tasks_gen(num=500))
 
 
     if False:
