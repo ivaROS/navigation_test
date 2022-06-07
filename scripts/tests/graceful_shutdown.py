@@ -204,6 +204,7 @@ def run_queue_wrapper_test(num):
     import threading
     import queue
     import types
+    import signal
 
 
     class GracefulShutdownException(BaseException): pass
@@ -236,13 +237,15 @@ def run_queue_wrapper_test(num):
                 def __enter__(myself):
                     is_empty = False
 
-                    while not self.shutdown_event.is_set():
+                    while True:
                         try:
                             task = self.queue.get(block=True, timeout=self.sleep_time)
                         except queue.Empty as e:
                             if not is_empty:
                                 print("No task in [" + str(self.name) + "]!")
                             is_empty = True
+                            if self.shutdown_event.is_set():
+                                raise GracefulShutdownException()
                         else:
                             print("Got task " + str(task) + " from [" + str(self.name) + "]!")
                             return task
@@ -274,12 +277,16 @@ def run_queue_wrapper_test(num):
             def run(self):
 
                 try:
-                    while not self.shutdown_event.is_set():
+                    while True:
                         with self.task_input_queue.get() as task_obj:
                             task_it = task_obj if isinstance(task_obj, types.GeneratorType) else task_obj if isinstance(task_obj, list) else None
+                            #Only pass tasks on if not trying to shutdown
+                            if not self.shutdown_event.is_set():
+                                for t in task_it:
+                                    self.task_queue.put(t)
+                            else:
+                                print("Task input queue: Ignoring tasks " + str(task_it))
 
-                            for t in task_it:
-                                self.task_queue.put(t)
                 except GracefulShutdownException as e:
                     print(str(e))
 
@@ -326,36 +333,25 @@ def run_queue_wrapper_test(num):
             self.tc = tc
             self.num = num
 
+        def signal_handler(self, signum, frame):
+            print("[" + str(self.num) + "]: Received signal " + str(signum)) # + "\n\n" + str(frame))
+
         def run(self):
+            signal.signal(signal.SIGINT, self.signal_handler)
+            signal.signal(signal.SIGTERM, self.signal_handler)
+
             try:
-                while not self.tc.shutdown_event.is_set():
+                while True: #not self.tc.shutdown_event.is_set():
                     with self.tc.task_queue.get() as task:
-                        msg = "[" + str(self.num) + "]: Do some work (" + str(task)
-                        print(msg)
-                        do_stuff()
-                        # self.tc.result_queue.put
-                        #self.tc.task_queue.task_done()
+                        if not self.tc.shutdown_event.is_set():
+                            msg = "[" + str(self.num) + "]: Do some work (" + str(task)
+                            print(msg)
+                            do_stuff()
+                        else:
+                            print("[" + str(self.num) + "]: Ignoring task " + str(task))
 
             except GracefulShutdownException as e:
                 print(str(e))
-
-
-            is_empty = False
-            while not self.tc.shutdown_event.is_set():
-                try:
-                    task = self.tc.task_queue.get(block=False)
-                except queue.Empty as e:
-                    if not is_empty:
-                        print("No task in task queue!")
-                    is_empty = True
-                    time.sleep(1)
-                else:
-                    is_empty = False
-                    msg = "[" + str(self.num) + "]: Do some work (" + str(task)
-                    print(msg)
-                    do_stuff()
-                    #self.tc.result_queue.put
-                    self.tc.task_queue.task_done()
 
             print("[" + str(self.num) + "]: Exiting!")
 
@@ -372,14 +368,25 @@ def run_queue_wrapper_test(num):
     processes = [Worker(tc=tc, num=i) for i in range(num)]
     print("Created [" + str(num) + "] Workers")
 
-    tc.add_tasks(make_tasks_list(num=30))
+    def shutdown():
+        tc.shutdown()
+
+    def signal_handler(signum, frame):
+        print("Main process received signal " + str(signum))
+        #print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
+        shutdown()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    #tc.add_tasks(make_tasks_list(num=30))
+    for _ in range(5):
+        tc.add_tasks(make_tasks_list(num=100))
 
     for p in processes:
         p.start()
     print("Started Workers")
 
-    for _ in range(3):
-        tc.add_tasks(make_tasks_list(num=10))
     tc.add_tasks(make_tasks_gen(num=500))
 
 
