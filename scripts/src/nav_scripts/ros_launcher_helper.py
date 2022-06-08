@@ -368,8 +368,12 @@ class RosLauncherHelper(object):
 
     #Check if everything is running correctly; raise appropriate exception if not
     def update(self):
-        if self.roslaunch_object.pm.is_shutdown:
-            raise self.exc_type_runtime
+        try:
+            if self.roslaunch_object.pm.is_shutdown:
+                raise self.exc_type_runtime
+        except AttributeError as e:
+            print(str(e))
+            raise self.exc_type_runtime from e
 
 
 
@@ -476,6 +480,9 @@ class RoscoreLauncher(RosLauncherHelper):
 
     def get_launch_files(self, launch_info, rospack):
         return []
+
+    def update(self):
+        return self.use_existing_roscore or RosLauncherHelper.update(self)
 
 RoscoreLauncher.init()
 
