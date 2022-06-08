@@ -84,28 +84,14 @@ class MultiMasterCoordinator(object):
         self.result_thread.start()
 
     def startProcesses(self):
-        self.ros_port = 11311   #TODO: when using existing core, attempt to read port from environment variables
-        self.gazebo_port = self.ros_port + 100
-        for ind in range(self.num_masters):
+        for _ in range(self.num_masters):
             self.addProcess()
 
 
     def addProcess(self):
-        if not self.use_existing_roscore:
-            while port_in_use(self.ros_port):
-                self.ros_port += 1
-
-        while port_in_use(self.gazebo_port):
-            self.gazebo_port += 1
-
-        gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.children_shutdown, self.soft_shutdown, self.ros_port,
-                                     self.gazebo_port, self.use_existing_roscore, gazebo_launch_mutex=self.gazebo_launch_mutex)
+        gazebo_master = GazeboMaster(self.task_queue, self.result_queue, self.children_shutdown, self.soft_shutdown, self.use_existing_roscore)
         gazebo_master.start()
         self.gazebo_masters.append(gazebo_master)
-
-        self.ros_port += 1
-        self.gazebo_port += 1
-
         time.sleep(1)
 
 
@@ -232,20 +218,17 @@ class MultiMasterCoordinator(object):
 
 
 class GazeboMaster(mp.Process):
-    def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, ros_port, gazebo_port, use_existing_roscore, gazebo_launch_mutex, **kwargs):
+    def __init__(self, task_queue, result_queue, kill_flag, soft_kill_flag, use_existing_roscore):
         super(GazeboMaster, self).__init__()
         self.daemon = False #Should this be daemon after all?
 
         self.task_queue = task_queue
         self.result_queue = result_queue
-        #self.use_existing_roscore = use_existing_roscore
-        self.ros_port = ros_port
-        #self.gazebo_port = gazebo_port
-        #self.gazebo_launch_mutex = gazebo_launch_mutex
-        self.roscore = RoscoreLauncher(use_existing_roscore=use_existing_roscore, use_mp=False)
-        self.robot_launcher = RobotLauncher(ros_port=ros_port, use_mp=False)
-        self.gazebo_launcher = GazeboLauncher(ros_port=ros_port, gazebo_port=gazebo_port, gazebo_launch_mutex=gazebo_launch_mutex, robot_launcher=self.robot_launcher, use_mp=False)
-        self.controller_launcher = ControllerLauncher(ros_port=ros_port, use_mp=False)
+
+        self.roscore = RoscoreLauncher(use_existing_roscore=use_existing_roscore)
+        self.robot_launcher = RobotLauncher()
+        self.gazebo_launcher = GazeboLauncher(robot_launcher=self.robot_launcher)
+        self.controller_launcher = ControllerLauncher()
 
         self.monitor = RosLauncherMonitor(launchers=[self.roscore, self.robot_launcher, self.gazebo_launcher, self.controller_launcher])
 
@@ -260,11 +243,6 @@ class GazeboMaster(mp.Process):
 
 
         print("New master")
-
-        #self.ros_master_uri = "http://localhost:" + str(self.ros_port)
-        #self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
-        #os.environ["ROS_MASTER_URI"] = self.ros_master_uri
-        #os.environ["GAZEBO_MASTER_URI"]= self.gazebo_master_uri
 
         #if 'SIMULATION_RESULTS_DIR' in os.environ:
 

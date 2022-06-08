@@ -23,9 +23,9 @@ class ControllerLauncher(RosLauncherHelper):
     impls = {}
     #rospack = rospkg.RosPack()
 
-    def __init__(self, ros_port, use_mp):
-        super(ControllerLauncher, self).__init__(name="controller", ros_port=ros_port, hide_stdout=True,
-                                                 use_mp=use_mp, profile=True)
+    def __init__(self):
+        super(ControllerLauncher, self).__init__(name="controller", hide_stdout=True,
+                                                 use_mp=False, profile=True)
 
     # TODO: use kwargs or something to pass everything to the other process?
     def launch(self, robot, controller_name, controller_args=None):

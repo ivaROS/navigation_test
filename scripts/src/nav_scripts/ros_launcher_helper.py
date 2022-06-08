@@ -275,7 +275,7 @@ class RosLauncherHelper(object):
         cls.exc_type_runtime = RosLauncherRuntimeException
 
 
-    def __init__(self, name, ros_port, hide_stdout=False, use_mp=True, profile=False, is_core=False):
+    def __init__(self, name, hide_stdout=False, use_mp=False, profile=False, is_core=False):
         #self.ros_port=ros_port
         self.roslaunch_object = None
         self.hide_stdout=hide_stdout
@@ -455,8 +455,8 @@ class RosLauncherMonitor(object):
             l.update()
 
 class RoscoreLauncher(RosLauncherHelper):
-    def __init__(self, use_existing_roscore, use_mp):
-        super(RoscoreLauncher, self).__init__(name="core", ros_port = None, hide_stdout=False, use_mp=use_mp, profile=False, is_core=True)
+    def __init__(self, use_existing_roscore):
+        super(RoscoreLauncher, self).__init__(name="core", hide_stdout=False, use_mp=False, profile=False, is_core=True)
         RosEnv.init(use_existing_roscore=use_existing_roscore)
         self.use_existing_roscore = use_existing_roscore
 
@@ -489,15 +489,12 @@ from rosgraph_msgs.msg import Clock as ClockMsg
 class GazeboLauncher(RosLauncherHelper):
     gazebo_launch_mutex = mp.Lock()
 
-    def __init__(self, ros_port, gazebo_port, gazebo_launch_mutex=None, robot_launcher=None, use_mp=False):
-        super(GazeboLauncher, self).__init__(name="gazebo", ros_port = ros_port, hide_stdout=False, use_mp=use_mp, profile=False, is_core=False)
-        #self.gazebo_launch_mutex = gazebo_launch_mutex if gazebo_launch_mutex is not None else mp.Lock()
+    def __init__(self, robot_launcher=None):
+        super(GazeboLauncher, self).__init__(name="gazebo", hide_stdout=False, use_mp=False, profile=False, is_core=False)
 
         gazebo_port = GazeboPort.port()
-
-        self.gazebo_port = gazebo_port
-        self.gazebo_master_uri = "http://localhost:" + str(self.gazebo_port)
-        os.environ["GAZEBO_MASTER_URI"] = self.gazebo_master_uri
+        gazebo_master_uri = "http://localhost:" + str(gazebo_port)
+        os.environ["GAZEBO_MASTER_URI"] = gazebo_master_uri
 
         self.robot_launcher=robot_launcher
 
@@ -532,9 +529,9 @@ class GazeboLauncher(RosLauncherHelper):
 
         try:
             msg = rospy.wait_for_message("/clock", ClockMsg, 30)
-        except rospy.exceptions.ROSException:
+        except rospy.exceptions.ROSException as e:
             print("Error! clock not received!")
-            return False
+            raise self.exc_type_launch("No clock message received!") from e
 
         return res
 
@@ -545,8 +542,8 @@ GazeboLauncher.init()
 
 
 class RobotLauncher(RosLauncherHelper):
-    def __init__(self, ros_port, use_mp):
-        super(RobotLauncher, self).__init__(name="gazebo", ros_port=ros_port, hide_stdout=False, use_mp=use_mp,
+    def __init__(self):
+        super(RobotLauncher, self).__init__(name="gazebo", hide_stdout=False, use_mp=False,
                                              profile=False, is_core=False)
         self.current_value = None
         self.current_args = None
@@ -572,9 +569,9 @@ class RobotLauncher(RosLauncherHelper):
         # Wait for gazebo simulation to be running
         try:
             msg = rospy.wait_for_message(odom_topic, Odometry, 30)
-        except rospy.exceptions.ROSException:
+        except rospy.exceptions.ROSException as e:
             print("Error! /odom not received!")
-            return False
+            raise self.exc_type_launch("No message received on odom_topic [" + odom_topic + "]") from e
 
         return res
 
