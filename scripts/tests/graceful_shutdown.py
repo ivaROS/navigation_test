@@ -440,8 +440,8 @@ def processing_stages_test(num):
             self.sleep_time = sleep_time
             self.name = name
 
-        def event(self):
-            return self.shutdown_event
+        #def event(self):
+        #    return self.shutdown_event
 
         def put(self, task):
             is_full = False
@@ -496,11 +496,14 @@ def processing_stages_test(num):
             self.use_mp=use_mp
             self.shutdown_now = mp.Event()
             self.shutdown_when_ready = mp.Event()
+            self.waiting_for_finish = mp.Event()
             self.input_queue = None
             self.output_queue = None
             self.prev_stage =  None
             self.next_stage = None
             self.task_exec = mp.Process(target=self.run, daemon=False) if self.use_mp else threading.Thread(target=self.run, daemon=False)
+
+            self.have_shutdown = False
 
 
         def set_input_stage(self, stage):
@@ -523,10 +526,7 @@ def processing_stages_test(num):
             try:
                 while True:
                     with self.input_queue.get() as task:
-                        if not self.shutdown_now.is_set():
-                            self.process_task(task=task)
-                        else:
-                            self.ignore_task(task=task)
+                        self.handle_task(task=task)
 
             except GracefulShutdownException as e:
                 print(str(e))
@@ -534,17 +534,29 @@ def processing_stages_test(num):
             self.done()
 
         def signal_handler(self, signum, frame):
-            print("[" + str(self.name) + "]: Received signal " + str(signum))
+            #print("[" + str(self.name) + "]: Received signal " + str(signum))
+            pass
+
+        def handle_task(self, task):
+            if not self.shutdown_now.is_set():
+                self.process_task(task=task)
+            else:
+                self.ignore_task(task=task)
 
         def process_task(self, task):
-            pass
+            print(self.name + ": You must implement 'process_task' in your processing stage!")
+            raise NotImplementedError("You must implement 'process_task'!")
 
         def ignore_task(self, task):
             print(self.name + ": Ignoring task " + str(task))
 
-        def shutdown(self):
+        def shutdown(self, source="Unknown"):
+            if self.have_shutdown:
+                print(self.name + ": Why are we shutting down again? [" + str(source) + "]")
+                pass
+            self.have_shutdown = True
             self.shutdown_now.set()
-            self.wait_for_finish()
+            self.wait_for_finish(source=source)
 
         def join_input(self):
             self.input_queue.shutdown_event.set()
@@ -556,16 +568,22 @@ def processing_stages_test(num):
             self.task_exec.join()
             print(self.name + ": Joined exec " + ('Thread' if not self.use_mp else 'Process'))
 
-        def wait_for_finish(self):
-            print(self.name + ": Waiting for finish")
+        def wait_for_finish(self, source="Unknown"):
+            start_t = time.time()
+            print(self.name + ": Waiting for finish [" + str(source) + "]")
             self.join_input()
             self.join_exec()
 
+            if self.waiting_for_finish.is_set():
+                print(self.name + ": Already waiting for finish [" + str(source) + "]")
+                #return
+            print(self.name + ": took " + str(time.time()-start_t) + "s to join input and exec [" + str(source) + "]")
+
             if self.next_stage is not None:
                 if self.shutdown_now.is_set():
-                    self.next_stage.shutdown()
+                    self.next_stage.shutdown(source=(source + "=>" + self.name))
                 else:
-                    self.next_stage.wait_for_finish()
+                    self.next_stage.wait_for_finish(source=(source + "=>" + self.name))
 
         #Not needed?
         def done(self):
@@ -581,10 +599,14 @@ def processing_stages_test(num):
             self.input_queue = InterruptibleQueueWrapper(queue=queue.Queue(10), shutdown_event=self.shutdown_when_ready, sleep_time=1,
                                                               name="Task Input Queue")
 
-        def process_task(self, task):
-            task_it = task if isinstance(task, types.GeneratorType) else task if isinstance(task, list) else None
+        def handle_task(self, task):
+            task_it = task #if isinstance(task, types.GeneratorType) else task if isinstance(task, list) else None
             for t in task_it:
-                self.output_queue.put(t)
+                super(TaskInput, self).handle_task(task=t)
+
+        def process_task(self, task):
+            #NOTE: This can end up blocking indefinitely, because the event that would make it return early is only set.... I don't understand
+            self.output_queue.put(task)
 
         def add_tasks(self, tasks):
             self.input_queue.put(task=tasks)
@@ -599,10 +621,10 @@ def processing_stages_test(num):
         def run(self):
             #with filewriter
             super(ResultRecorder, self).run()
-            print("Finished processing all current results")
+            print(self.name + ": Finished processing all current results")
 
         def process_task(self, task):
-            print("Processed result " + str(task))
+            print(self.name + ": Processed result " + str(task))
 
 
     """
@@ -618,6 +640,12 @@ def processing_stages_test(num):
                       
     """
 
+    def busy_work(i=1e6):
+        s = 0
+        for i in range(int(i)):
+            s += i
+        return s
+
     class Worker(TaskProcessingStage):
 
         def __init__(self, task_queue, num):
@@ -627,7 +655,7 @@ def processing_stages_test(num):
         def process_task(self, task):
             msg = "[" + str(self.name) + "]: Do some work (" + str(task) + ")"
             print(msg)
-            do_stuff()
+            busy_work(i=1e8)
             task["result"] = 'Done'
             self.output_queue.put(task)
 
@@ -636,7 +664,7 @@ def processing_stages_test(num):
 
         def __init__(self, num_workers=1):
             super(WorkerPool,self).__init__(name="Worker Pool", use_mp=False)
-            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10), shutdown_event=self.shutdown_when_ready, sleep_time=1,
+            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=3), shutdown_event=self.shutdown_when_ready, sleep_time=1,
                                                         name="Task Queue")
             self.workers = [Worker(task_queue=self.input_queue, num=i) for i in range(num_workers)]
             for w in self.workers:
@@ -682,11 +710,11 @@ def processing_stages_test(num):
         def add_tasks(self, tasks):
             self.task_input.add_tasks(tasks=tasks)
 
-        def wait_for_finish(self):
-            self.stages[0].wait_for_finish()
+        def wait_for_finish(self, source="Unknown"):
+            self.stages[0].wait_for_finish(source=(str(source) + "=>tpp"))
 
-        def shutdown(self):
-            self.stages[0].shutdown()
+        def shutdown(self, source="Unknown"):
+            self.stages[0].shutdown(source=(str(source) + "=>tpp"))
 
 
     def make_tasks_gen(num):
@@ -703,18 +731,19 @@ def processing_stages_test(num):
     def signal_handler(signum, frame):
         print("Main process received signal " + str(signum))
         #print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
-        tpp.shutdown()
+        tpp.shutdown(source=("signal_" + str(signum)))
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
     #tc.add_tasks(make_tasks_list(num=30))
-    for _ in range(5):
-        tpp.add_tasks(make_tasks_list(num=100))
+    #for _ in range(5):
+    #    tpp.add_tasks(make_tasks_list(num=100))
 
-    tpp.add_tasks(make_tasks_gen(num=500))
+    #tpp.add_tasks(make_tasks_gen(num=500))
+    tpp.add_tasks(make_tasks_gen(num=6))
 
-    tpp.wait_for_finish()
+    tpp.wait_for_finish(source="client")
 
     print("All Done")
 
@@ -851,4 +880,4 @@ if __name__ == "__main__":
     #run_queue_wrapper_test(5)
     #interruptible_queue_object_test()
     #interruptible_queue_keyboard_interrupt()
-    processing_stages_test(num=8)
+    processing_stages_test(num=1)
