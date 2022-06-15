@@ -60,10 +60,11 @@ def processing_stages_test(num):
             return self.evaluate_condition(condition=RunConditions.PROCESS_NEXT)
 
         def process_current(self):
-            return self.evaluate_condition(condition=RunConditions.PROCESS_CURRENT)
+            return self.evaluate_condition(condition=RunConditions.PROCESS_CURRENT, must_be_waiting=False)
+            #return
 
-        def evaluate_condition(self, condition):
-            if not self.waiting_for_finish():
+        def evaluate_condition(self, condition, must_be_waiting=True):
+            if must_be_waiting and not self.waiting_for_finish():
                 return True
             else:
                 res = condition & self.run_conditions
@@ -126,12 +127,12 @@ def processing_stages_test(num):
                                 raise GracefulShutdownException("Done getting tasks from [" + str(self.name) + "]")
                         else:
                             print("Got task " + str(task) + " from [" + str(self.name) + "]!")
+                            self.queue.task_done()
                             return task
 
                 def __exit__(myself, exc_type, exc_val, exc_tb):
-                    # if exc_type is not None and issubclass(exc_type, NextGetter.DoneException):
-                    #    return True
-                    self.queue.task_done()
+                    #self.queue.task_done() #This requires waiting for current task to complete before previous stage can shutdown and notify this stage to wait_for_finish
+                    pass
 
             return NextGetter()
 
@@ -191,7 +192,7 @@ def processing_stages_test(num):
             pass
 
         def handle_task(self, task):
-            if self.events.process_next():
+            if self.events.process_next() and self.events.process_current():
                 self.process_task(task=task)
                 self.num_processed.value += 1
             else:
@@ -296,12 +297,13 @@ def processing_stages_test(num):
             while j < i and not j % denom == 0:
                 s += j
                 j += 1
-            print("value of j when checking if current " + str(j) + ": state of flag= " + str(events.process_current()))
+            #print("value of j when checking if current " + str(j) + ": state of flag= " + str(events.process_current()))
             s += j
             j += 1
         if j < i:
             #raise GracefulShutdownException("Task interrupted!")   #This doesn't empty out the input_queue, might be ok for instant shutdown if have interruptible joings
-            print("Task interrupted!")
+            raise InterruptedError("Task interrupted!")
+            #print("Task interrupted!")
         return s
 
     def busy_work(i=1e6):
@@ -320,10 +322,16 @@ def processing_stages_test(num):
             msg = "[" + str(self.name) + "]: Do some work (" + str(task) + ")"
             print(msg)
             # busy_work(i=1e8)
-            interruptible_work(events=self.events, i=1e8, denom=1e6)
-            task["result"] = 'Done'
-            task["worker"] = self.name
-            self.output_queue.put(task)
+            try:
+                interruptible_work(events=self.events, i=1e8, denom=1e6)
+            except InterruptedError as e:
+                result = str(e)
+            else:
+                result = 'Done'
+            finally:
+                task["result"] = result
+                task["worker"] = self.name
+                self.output_queue.put(task)
 
     class WorkerPool(TaskProcessingStage):
 
@@ -423,7 +431,7 @@ def processing_stages_test(num):
     #    tpp.add_tasks(make_tasks_list(num=100))
 
     # tpp.add_tasks(make_tasks_gen(num=500))
-    tpp.add_tasks(make_tasks_gen(num=50))
+    tpp.add_tasks(make_tasks_gen(num=500))
 
     tpp.wait_for_finish(source="client")
 
@@ -432,4 +440,4 @@ def processing_stages_test(num):
 
 
 if __name__ == "__main__":
-    processing_stages_test(num=1)
+    processing_stages_test(num=15)
