@@ -75,7 +75,6 @@ def processing_stages_test(num):
                         return True
             return False
 
-
         def wait_for_finish(self):
             self.wait_for_finish_event.set()
 
@@ -90,9 +89,6 @@ def processing_stages_test(num):
             self.sleep_time = sleep_time
             self.name = name
 
-        # def event(self):
-        #    return self.shutdown_event
-
         def put(self, task):
             is_full = False
             while True:
@@ -100,11 +96,13 @@ def processing_stages_test(num):
                     self.queue.put(task, block=True, timeout=self.sleep_time)
                 except queue.Full as e:
                     if not is_full:
-                        print("[" + str(self.name) + "] is full!, unable to add task!")
+                        #print("[" + str(self.name) + "] is full!, unable to add task!")
+                        pass
                     is_full = True
                     if not self.events.wait_for_put():
-                        print("Not waiting to put task to [" + str(self.name) + "]")
-                        #raise GracefulShutdownException("Not waiting to put task to [" + str(self.name) + "]")
+                        pass
+                        #print("Not waiting to put task to [" + str(self.name) + "]")
+                        #raise GracefulShutdownException("Not waiting to put task to [" + str(self.name) + "]") #This prevents it from clearing out the input queueu
                 else:
                     print("Added task " + str(task) + " to [" + str(self.name) + "]")
                     break
@@ -121,10 +119,11 @@ def processing_stages_test(num):
                             task = self.queue.get(block=True, timeout=self.sleep_time)
                         except queue.Empty as e:
                             if not is_empty:
-                                print("No task in [" + str(self.name) + "]!")
+                                #print("No task in [" + str(self.name) + "]!")
+                                pass
                             is_empty = True
                             if not self.events.wait_for_get():
-                                raise GracefulShutdownException("Not waiting to get task from [" + str(self.name) + "]")
+                                raise GracefulShutdownException("Done getting tasks from [" + str(self.name) + "]")
                         else:
                             print("Got task " + str(task) + " from [" + str(self.name) + "]!")
                             return task
@@ -154,7 +153,8 @@ def processing_stages_test(num):
             self.task_exec = mp.Process(target=self.run, daemon=False) if self.use_mp else threading.Thread(
                 target=self.run, daemon=False)
 
-            self.have_shutdown = False
+            self.num_processed = mp.Value('i', 0)
+            self.num_ignored = mp.Value('i', 0)
 
         def set_global_events(self, global_events):
             self.events.set_global_events(global_events=global_events)
@@ -193,30 +193,18 @@ def processing_stages_test(num):
         def handle_task(self, task):
             if self.events.process_next():
                 self.process_task(task=task)
+                self.num_processed.value += 1
             else:
                 self.ignore_task(task=task)
+                self.num_ignored.value += 1
 
         def process_task(self, task):
             print(self.name + ": You must implement 'process_task' in your processing stage!")
             raise NotImplementedError("You must implement 'process_task'!")
 
         def ignore_task(self, task):
-            print(self.name + ": Ignoring task " + str(task))
-
-        # def shutdown(self, source="Unknown", req_shutdown_type=ShutdownType.NOW):
-        #     #if self.have_shutdown:
-        #     #    print(self.name + ": Why are we shutting down again? [" + str(source) + "]")
-        #     #    pass
-        #     #self.have_shutdown = True
-        #     if self.events.is_finished():
-        #         if self.next_stage is not None:
-        #             self.next_stage.shutdown(source=(source + "=>" + self.name), req_shutdown_type=req_shutdown_type)
-        #     elif self.events.waiting_to_finish():
-        #         self.events.shutdown(req_shutdown_type=req_shutdown_type)
-        #     else:
-        #         self.events.future_shutdown(req_shutdown_type=req_shutdown_type)
-        #     #self.wait_for_finish(source=source, req_shutdown_type=req_shutdown_type)
-        #     #self.events.wait_for_finish()
+            if self.num_ignored.value == 0:
+                print(self.name + ": Ignoring this and all following tasks " + str(task))
 
         def join_input(self):
             self.events.wait_for_finish()
@@ -226,7 +214,8 @@ def processing_stages_test(num):
 
         def join_exec(self):
             self.task_exec.join()
-            print(self.name + ": Joined exec " + ('Thread' if not self.use_mp else 'Process'))
+            print(self.name + ": Joined exec " + ('Thread' if not self.use_mp else 'Process') + ', processed: ' +
+                  str(self.num_processed.value) + ', ignored: ' + str(self.num_ignored.value))
 
         def wait_for_finish(self, source="Unknown"):
             start_t = time.time()
@@ -307,6 +296,7 @@ def processing_stages_test(num):
             while j < i and not j % denom == 0:
                 s += j
                 j += 1
+            print("value of j when checking if current " + str(j) + ": state of flag= " + str(events.process_current()))
             s += j
             j += 1
         if j < i:
@@ -323,14 +313,14 @@ def processing_stages_test(num):
     class Worker(TaskProcessingStage):
 
         def __init__(self, task_queue, num):
-            super(Worker, self).__init__(name="Worker_" + str(num), use_mp=False, run_conditions=RunConditions.NONE)
+            super(Worker, self).__init__(name="Worker_" + str(num), use_mp=True, run_conditions=RunConditions.NONE)
             self.input_queue = task_queue
 
         def process_task(self, task):
             msg = "[" + str(self.name) + "]: Do some work (" + str(task) + ")"
             print(msg)
             # busy_work(i=1e8)
-            interruptible_work(events=self.events, i=1e7, denom=1000)
+            interruptible_work(events=self.events, i=1e8, denom=1e6)
             task["result"] = 'Done'
             task["worker"] = self.name
             self.output_queue.put(task)
@@ -339,7 +329,7 @@ def processing_stages_test(num):
 
         def __init__(self, num_workers=1):
             super(WorkerPool, self).__init__(name="Worker Pool", use_mp=False, run_conditions=RunConditions.NONE)
-            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=3), shutdown_events=self.events,
+            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=num_workers+1), shutdown_events=self.events,
                                                          sleep_time=1,
                                                          name="Task Queue")
             self.workers = [Worker(task_queue=self.input_queue, num=i) for i in range(num_workers)]
@@ -366,7 +356,7 @@ def processing_stages_test(num):
 
         def __init__(self):
             self.wait_for_put_event = mp.Event()
-            self.wait_for_get_event = mp.Event()
+            #self.wait_for_get_event = mp.Event()
             self.process_next_event = mp.Event()
             self.process_current_event = mp.Event()
 
@@ -376,13 +366,14 @@ def processing_stages_test(num):
 
         def signal_handler(self, signum, frame):
             print("Main process received signal " + str(signum))
-            # print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
-            # tpp.shutdown(source=("signal_" + str(signum)))
             #cmd = RunConditions.PROCESS_CURRENT
-            self.wait_for_put_event.set()
-            self.wait_for_get_event.set()
-            self.process_next_event.set()
+            self.shutdown()
 
+        def shutdown(self, conditions=RunConditions):
+            self.wait_for_put_event.set()
+            #self.wait_for_get_event.set()
+            self.process_next_event.set()
+            self.process_current_event.set()
 
     class TaskProcessingPipeline(object):
 
