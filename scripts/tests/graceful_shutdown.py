@@ -6,11 +6,10 @@ import time
 def do_stuff():
     s = 0
     for i in range(int(1e6)):
-        s+=i
+        s += i
 
 
 def run_basic_test(num):
-
     class Worker(mp.Process):
 
         def __init__(self, num=0):
@@ -24,7 +23,6 @@ def run_basic_test(num):
                 do_stuff()
             print("[" + str(self.num) + "]: Exiting!")
 
-
     class Coordinator(object):
         shutdown_event = mp.Event()
 
@@ -33,7 +31,6 @@ def run_basic_test(num):
 
         def shutdown(self):
             Coordinator.shutdown_event.set()
-
 
     coord = Coordinator()
     processes = [Worker(i) for i in range(num)]
@@ -55,17 +52,14 @@ def run_basic_test(num):
     print("All Done")
 
 
-
 def run_queue_test(num):
-
     import threading
     import queue
     import types
 
-
     class TaskCommunication(object):
 
-        #Takes in lists (or generators) of tasks and transfers them, in order, to the task queue
+        # Takes in lists (or generators) of tasks and transfers them, in order, to the task queue
         class TaskQueuer(queue.Queue):
 
             def __init__(self, task_queue, shutdown_event):
@@ -125,7 +119,8 @@ def run_queue_test(num):
             self.task_queue = mp.JoinableQueue(maxsize=5)
             self.result_queue = mp.JoinableQueue(maxsize=5)
             self.shutdown_event = mp.Event()
-            self.task_adder = TaskCommunication.TaskQueuer(task_queue=self.task_queue, shutdown_event=self.shutdown_event)
+            self.task_adder = TaskCommunication.TaskQueuer(task_queue=self.task_queue,
+                                                           shutdown_event=self.shutdown_event)
 
         def shutdown(self):
             self.shutdown_event.set()
@@ -136,7 +131,6 @@ def run_queue_test(num):
         def add_tasks(self, tasks):
             self.task_adder.add_tasks(tasks=tasks)
 
-
     class Worker(mp.Process):
 
         def __init__(self, tc, num=0):
@@ -144,7 +138,6 @@ def run_queue_test(num):
 
             self.tc = tc
             self.num = num
-
 
         def run(self):
             is_empty = False
@@ -161,7 +154,7 @@ def run_queue_test(num):
                     msg = "[" + str(self.num) + "]: Do some work (" + str(task["index"])
                     print(msg)
                     do_stuff()
-                    #self.tc.result_queue.put
+                    # self.tc.result_queue.put
                     self.tc.task_queue.task_done()
 
             print("[" + str(self.num) + "]: Exiting!")
@@ -172,7 +165,6 @@ def run_queue_test(num):
 
     def make_tasks_list(num):
         return [i for i in make_tasks_gen(num=num)]
-
 
     tc = TaskCommunication()
 
@@ -198,17 +190,14 @@ def run_queue_test(num):
     print("All Done")
 
 
-
-
 def run_queue_wrapper_test(num):
-
     import threading
     import queue
     import types
     import signal
 
-
-    class GracefulShutdownException(BaseException): pass
+    class GracefulShutdownException(BaseException):
+        pass
 
     class InterruptibleQueueWrapper(object):
 
@@ -254,7 +243,7 @@ def run_queue_wrapper_test(num):
                     raise GracefulShutdownException()
 
                 def __exit__(myself, exc_type, exc_val, exc_tb):
-                    #if exc_type is not None and issubclass(exc_type, NextGetter.DoneException):
+                    # if exc_type is not None and issubclass(exc_type, NextGetter.DoneException):
                     #    return True
                     self.queue.task_done()
 
@@ -265,13 +254,14 @@ def run_queue_wrapper_test(num):
 
     class TaskCommunication(object):
 
-        #Takes in lists (or generators) of tasks and transfers them, in order, to the task queue
+        # Takes in lists (or generators) of tasks and transfers them, in order, to the task queue
         class TaskQueuer(object):
 
             def __init__(self, task_queue, shutdown_event):
-                self.task_queue = task_queue #InterruptibleQueueWrapper(queue=task_queue, shutdown_event=shutdown_event, sleep_time=1, name="Task Queue")
+                self.task_queue = task_queue  # InterruptibleQueueWrapper(queue=task_queue, shutdown_event=shutdown_event, sleep_time=1, name="Task Queue")
                 self.thread = threading.Thread(target=self.run)
-                self.task_input_queue = InterruptibleQueueWrapper(queue=queue.Queue(10), shutdown_event=shutdown_event, sleep_time=1, name="Task Input Queue")
+                self.task_input_queue = InterruptibleQueueWrapper(queue=queue.Queue(10), shutdown_event=shutdown_event,
+                                                                  sleep_time=1, name="Task Input Queue")
                 self.shutdown_event = shutdown_event
                 self.thread.start()
 
@@ -280,8 +270,9 @@ def run_queue_wrapper_test(num):
                 try:
                     while True:
                         with self.task_input_queue.get() as task_obj:
-                            task_it = task_obj if isinstance(task_obj, types.GeneratorType) else task_obj if isinstance(task_obj, list) else None
-                            #Only pass tasks on if not trying to shutdown
+                            task_it = task_obj if isinstance(task_obj, types.GeneratorType) else task_obj if isinstance(
+                                task_obj, list) else None
+                            # Only pass tasks on if not trying to shutdown
                             if not self.shutdown_event.is_set():
                                 for t in task_it:
                                     self.task_queue.put(t)
@@ -293,7 +284,6 @@ def run_queue_wrapper_test(num):
 
                 print("Shutting down task queuer!")
 
-
             def add_tasks(self, tasks):
                 self.task_input_queue.put(task=tasks)
 
@@ -302,15 +292,16 @@ def run_queue_wrapper_test(num):
                 self.task_input_queue.queue.join()
                 print("Task input queue joined!")
 
-
         def __init__(self):
             self.shutdown_event = mp.Event()
 
-            self.task_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10), shutdown_event=self.shutdown_event, sleep_time=1,
+            self.task_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10),
+                                                        shutdown_event=self.shutdown_event, sleep_time=1,
                                                         name="Task Queue")
 
             self.result_queue = mp.JoinableQueue(maxsize=10)
-            self.task_adder = TaskCommunication.TaskQueuer(task_queue=self.task_queue, shutdown_event=self.shutdown_event)
+            self.task_adder = TaskCommunication.TaskQueuer(task_queue=self.task_queue,
+                                                           shutdown_event=self.shutdown_event)
 
         def shutdown(self):
             self.shutdown_event.set()
@@ -326,7 +317,6 @@ def run_queue_wrapper_test(num):
         def add_tasks(self, tasks):
             self.task_adder.add_tasks(tasks=tasks)
 
-
     class Worker(mp.Process):
 
         def __init__(self, tc, num=0):
@@ -335,14 +325,14 @@ def run_queue_wrapper_test(num):
             self.num = num
 
         def signal_handler(self, signum, frame):
-            print("[" + str(self.num) + "]: Received signal " + str(signum)) # + "\n\n" + str(frame))
+            print("[" + str(self.num) + "]: Received signal " + str(signum))  # + "\n\n" + str(frame))
 
         def run(self):
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             try:
-                while True: #not self.tc.shutdown_event.is_set():
+                while True:  # not self.tc.shutdown_event.is_set():
                     with self.tc.task_queue.get() as task:
                         if not self.tc.shutdown_event.is_set():
                             msg = "[" + str(self.num) + "]: Do some work (" + str(task)
@@ -363,7 +353,6 @@ def run_queue_wrapper_test(num):
     def make_tasks_list(num):
         return [i for i in make_tasks_gen(num=num)]
 
-
     tc = TaskCommunication()
 
     processes = [Worker(tc=tc, num=i) for i in range(num)]
@@ -374,13 +363,13 @@ def run_queue_wrapper_test(num):
 
     def signal_handler(signum, frame):
         print("Main process received signal " + str(signum))
-        #print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
+        # print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
         shutdown()
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    #tc.add_tasks(make_tasks_list(num=30))
+    # tc.add_tasks(make_tasks_list(num=30))
     for _ in range(5):
         tc.add_tasks(make_tasks_list(num=100))
 
@@ -389,7 +378,6 @@ def run_queue_wrapper_test(num):
     print("Started Workers")
 
     tc.add_tasks(make_tasks_gen(num=500))
-
 
     if False:
         time.sleep(20)
@@ -405,17 +393,14 @@ def run_queue_wrapper_test(num):
     print("All Done")
 
 
-
-
 def processing_stages_test(num):
-
     import threading
     import queue
     import types
     import signal
 
-
-    class GracefulShutdownException(BaseException): pass
+    class GracefulShutdownException(BaseException):
+        pass
 
     def InterruptibleQueue(maxsize=0):
         import multiprocessing as mp
@@ -431,21 +416,110 @@ def processing_stages_test(num):
         '''Returns a queue object'''
         return InterruptibleQueueImpl(maxsize, ctx=mp.get_context())
 
+    import enum
+    @enum.unique
+    class ShutdownType(enum.IntEnum):
+        NONE = -1
+        AFTER_ALL = 0
+        AFTER_CURRENT = 1
+        NOW = 2
+
+    class ShutdownEventInterface(object):
+
+        def __init__(self, name, shutdown_type):
+            self.name = name
+            self.shutdown_type = shutdown_type
+            self.done_adding_tasks = mp.Event()
+            self.ignore_remaining = mp.Event()
+            self.stop_now = mp.Event()
+            self.finished_event = mp.Event()
+            self.map = {ShutdownType.AFTER_ALL: self.done_adding_tasks,
+                        ShutdownType.AFTER_CURRENT: self.ignore_remaining, ShutdownType.NOW: self.stop_now}
+            self.current_state = None
+            self.req_shutdown_type = None
+
+            self.updating_thread = threading.Thread(target=self.updating_loop, daemon=True)
+
+            # self.updating_thread.start()
+
+        def updating_loop(self):
+            def update_shutdown():
+                with GlobalShutdownState.cur_state.get_lock():
+                    cmd = GlobalShutdownState.cur_state.value
+                    cmd = ShutdownType(cmd)
+                    self.shutdown(req_shutdown_type=cmd)
+
+            update_shutdown()
+
+            while not self.finished():
+                with GlobalShutdownState.update_condition:
+                    pass
+                    if GlobalShutdownState.update_condition.wait(timeout=1):
+                        update_shutdown()
+
+        def shutdown_now(self):
+            pass
+
+        def shutdown_after_current(self):
+            pass
+
+        def shutdown_after_all(self):
+            pass
+
+        def shutdown(self, req_shutdown_type):
+            shutdown_type = min(self.shutdown_type, req_shutdown_type)
+            if shutdown_type >= ShutdownType.AFTER_ALL:
+                if not self.updating_thread.is_alive():
+                    self.updating_thread.start()
+
+            if self.current_state is None or shutdown_type > self.current_state:
+                self.current_state = shutdown_type
+                print(self.name + " shutdown interface: requested: " + str(req_shutdown_type) + ", performing: " + str(
+                    shutdown_type))
+                self.map[shutdown_type].set()
+
+        # def shutdown_impl(self):
+        #     pass
+        #
+        # def future_shutdown(self, req_shutdown_type):
+        #     self.req_shutdown_type = req_shutdown_type
+        #
+        # def update(self):
+        #     if self.req_shutdown_type is not None:
+        #         self.shutdown(req_shutdown_type=self.req_shutdown_type)
+        #
+        # def wait_for_finish(self):
+        #     self.finished_event.wait()
+
+        def finished(self):
+            self.finished_event.set()
+
+        def is_finished(self):
+            return self.finished_event.is_set()
+
+        def stopping_now(self):
+            return self.stop_now.is_set()
+
+        def still_processing(self):
+            return not (self.ignore_remaining.is_set() or self.stop_now.is_set())
+
+        def waiting_to_finish(self):
+            return self.done_adding_tasks.is_set()
 
     class InterruptibleQueueWrapper(object):
 
-        def __init__(self, queue, shutdown_event, sleep_time=1, name="queue"):
+        def __init__(self, queue, shutdown_events, sleep_time=1, name="queue"):
             self.queue = queue
-            self.shutdown_event = shutdown_event
+            self.events = shutdown_events
             self.sleep_time = sleep_time
             self.name = name
 
-        #def event(self):
+        # def event(self):
         #    return self.shutdown_event
 
         def put(self, task):
             is_full = False
-            while not self.shutdown_event.is_set():
+            while not self.events.stopping_now():
                 try:
                     self.queue.put(task, block=True, timeout=self.sleep_time)
                 except queue.Full as e:
@@ -470,15 +544,14 @@ def processing_stages_test(num):
                             if not is_empty:
                                 print("No task in [" + str(self.name) + "]!")
                             is_empty = True
-                            if self.shutdown_event.is_set():
+                            if self.events.waiting_to_finish():
                                 raise GracefulShutdownException()
                         else:
                             print("Got task " + str(task) + " from [" + str(self.name) + "]!")
                             return task
 
-
                 def __exit__(myself, exc_type, exc_val, exc_tb):
-                    #if exc_type is not None and issubclass(exc_type, NextGetter.DoneException):
+                    # if exc_type is not None and issubclass(exc_type, NextGetter.DoneException):
                     #    return True
                     self.queue.task_done()
 
@@ -487,29 +560,29 @@ def processing_stages_test(num):
         def join(self):
             return self.queue.join()
 
-
-
     class TaskProcessingStage(object):
 
-        def __init__(self, name, use_mp=False):
-            self.name=name
-            self.use_mp=use_mp
-            self.shutdown_now = mp.Event()
-            self.shutdown_when_ready = mp.Event()
-            self.waiting_for_finish = mp.Event()
+        def __init__(self, name, use_mp=False, shutdown_type=ShutdownType.NOW):
+            self.name = name
+            self.use_mp = use_mp
+            self.events = ShutdownEventInterface(name=name,
+                                                 shutdown_type=shutdown_type)  # defines whether- and how much- stage processes after receiving shutdown request
+            # self.shutdown_now = mp.Event()
+            # self.shutdown_when_ready = mp.Event()
+            # self.waiting_for_finish = mp.Event()
             self.input_queue = None
             self.output_queue = None
-            self.prev_stage =  None
+            self.prev_stage = None
             self.next_stage = None
-            self.task_exec = mp.Process(target=self.run, daemon=False) if self.use_mp else threading.Thread(target=self.run, daemon=False)
+            self.task_exec = mp.Process(target=self.run, daemon=False) if self.use_mp else threading.Thread(
+                target=self.run, daemon=False)
 
             self.have_shutdown = False
-
 
         def set_input_stage(self, stage):
             if stage is not None:
                 stage.set_next_stage(self)
-                #stage.output_queue = self.input_queue
+                # stage.output_queue = self.input_queue
 
         def set_next_stage(self, stage):
             self.next_stage = stage
@@ -534,11 +607,11 @@ def processing_stages_test(num):
             self.done()
 
         def signal_handler(self, signum, frame):
-            #print("[" + str(self.name) + "]: Received signal " + str(signum))
+            # print("[" + str(self.name) + "]: Received signal " + str(signum))
             pass
 
         def handle_task(self, task):
-            if not self.shutdown_now.is_set():
+            if self.events.still_processing():
                 self.process_task(task=task)
             else:
                 self.ignore_task(task=task)
@@ -550,16 +623,23 @@ def processing_stages_test(num):
         def ignore_task(self, task):
             print(self.name + ": Ignoring task " + str(task))
 
-        def shutdown(self, source="Unknown"):
-            if self.have_shutdown:
-                print(self.name + ": Why are we shutting down again? [" + str(source) + "]")
-                pass
-            self.have_shutdown = True
-            self.shutdown_now.set()
-            self.wait_for_finish(source=source)
+        # def shutdown(self, source="Unknown", req_shutdown_type=ShutdownType.NOW):
+        #     #if self.have_shutdown:
+        #     #    print(self.name + ": Why are we shutting down again? [" + str(source) + "]")
+        #     #    pass
+        #     #self.have_shutdown = True
+        #     if self.events.is_finished():
+        #         if self.next_stage is not None:
+        #             self.next_stage.shutdown(source=(source + "=>" + self.name), req_shutdown_type=req_shutdown_type)
+        #     elif self.events.waiting_to_finish():
+        #         self.events.shutdown(req_shutdown_type=req_shutdown_type)
+        #     else:
+        #         self.events.future_shutdown(req_shutdown_type=req_shutdown_type)
+        #     #self.wait_for_finish(source=source, req_shutdown_type=req_shutdown_type)
+        #     #self.events.wait_for_finish()
 
         def join_input(self):
-            self.input_queue.shutdown_event.set()
+            self.events.shutdown(req_shutdown_type=ShutdownType.AFTER_ALL)
             print(self.name + ": Waiting to join queue [" + str(self.input_queue.name) + "]")
             self.input_queue.join()
             print(self.name + ": Emptied input queue [" + str(self.input_queue.name) + "]")
@@ -573,39 +653,33 @@ def processing_stages_test(num):
             print(self.name + ": Waiting for finish [" + str(source) + "]")
             self.join_input()
             self.join_exec()
+            self.events.finished()
 
-            if self.waiting_for_finish.is_set():
-                print(self.name + ": Already waiting for finish [" + str(source) + "]")
-                #return
-            print(self.name + ": took " + str(time.time()-start_t) + "s to join input and exec [" + str(source) + "]")
+            print(self.name + ": took " + str(time.time() - start_t) + "s to join input and exec [" + str(source) + "]")
 
             if self.next_stage is not None:
-                if self.shutdown_now.is_set():
-                    self.next_stage.shutdown(source=(source + "=>" + self.name))
-                else:
-                    self.next_stage.wait_for_finish(source=(source + "=>" + self.name))
+                self.next_stage.wait_for_finish(source=(source + "=>" + self.name))
 
-        #Not needed?
+        # Not needed?
         def done(self):
             print(self.name + ": Finished processing")
-
-
 
     # Takes in lists (or generators) of tasks and transfers them, in order, to the task queue
     class TaskInput(TaskProcessingStage):
 
         def __init__(self):
-            super(TaskInput,self).__init__(name="Task Input", use_mp=False)
-            self.input_queue = InterruptibleQueueWrapper(queue=queue.Queue(10), shutdown_event=self.shutdown_when_ready, sleep_time=1,
-                                                              name="Task Input Queue")
+            super(TaskInput, self).__init__(name="Task Input", use_mp=False, shutdown_type=ShutdownType.NOW)
+            self.input_queue = InterruptibleQueueWrapper(queue=queue.Queue(10), shutdown_events=self.events,
+                                                         sleep_time=1,
+                                                         name="Task Input Queue")
 
         def handle_task(self, task):
-            task_it = task #if isinstance(task, types.GeneratorType) else task if isinstance(task, list) else None
+            task_it = task  # if isinstance(task, types.GeneratorType) else task if isinstance(task, list) else None
             for t in task_it:
                 super(TaskInput, self).handle_task(task=t)
 
         def process_task(self, task):
-            #NOTE: This can end up blocking indefinitely, because the event that would make it return early is only set.... I don't understand
+            # NOTE: This can end up blocking indefinitely, because the event that would make it return early is only set.... I don't understand
             self.output_queue.put(task)
 
         def add_tasks(self, tasks):
@@ -614,31 +688,53 @@ def processing_stages_test(num):
     class ResultRecorder(TaskProcessingStage):
 
         def __init__(self):
-            super(ResultRecorder, self).__init__(name="Result Recorder", use_mp=False)
-            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10), shutdown_event=self.shutdown_when_ready, sleep_time=1,
-                                                        name="Result Queue")
+            super(ResultRecorder, self).__init__(name="Result Recorder", use_mp=False,
+                                                 shutdown_type=ShutdownType.AFTER_ALL)
+            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10),
+                                                         shutdown_events=self.events, sleep_time=1,
+                                                         name="Result Queue")
 
         def run(self):
-            #with filewriter
+            # with filewriter
             super(ResultRecorder, self).run()
             print(self.name + ": Finished processing all current results")
 
         def process_task(self, task):
             print(self.name + ": Processed result " + str(task))
 
-
     """
     When each component should stop and how it should be told:
         Task source: task_input_queue
             wait_for_finish: sets task_input_queue's shutdown signal and calls join on it; (also join the input thread)
             once joined, calls wait_for_finish on workers
-            
+
         Worker pool: task_queue: 
             wait_for_finish: sets task_queue's shutdown signal and calls join on it, then on workers themselves
-                        
-            
-                      
+
+
+
     """
+
+    # class Job(object):
+    #     def __init__(self, i=1e6, step=1e4):
+    #
+    #         self.target = i
+    #         self.step = step
+    #
+
+    def interruptible_work(events, i=1e6, denom=1000):
+        s = 0
+        j = 0
+        while j < i and not events.stopping_now():
+            while j < i and not j % denom == 0:
+                s += j
+                j += 1
+            s += j
+            j += 1
+        if j < i:
+            raise GracefulShutdownException("Task interrupted!")
+
+        return s
 
     def busy_work(i=1e6):
         s = 0
@@ -649,27 +745,28 @@ def processing_stages_test(num):
     class Worker(TaskProcessingStage):
 
         def __init__(self, task_queue, num):
-            super(Worker, self).__init__(name="Worker_" + str(num), use_mp=True)
+            super(Worker, self).__init__(name="Worker_" + str(num), use_mp=True, shutdown_type=ShutdownType.NOW)
             self.input_queue = task_queue
 
         def process_task(self, task):
             msg = "[" + str(self.name) + "]: Do some work (" + str(task) + ")"
             print(msg)
-            busy_work(i=1e8)
+            # busy_work(i=1e8)
+            interruptible_work(events=self.events, i=1e7, denom=1000)
             task["result"] = 'Done'
+            task["worker"] = self.name
             self.output_queue.put(task)
-
 
     class WorkerPool(TaskProcessingStage):
 
         def __init__(self, num_workers=1):
-            super(WorkerPool,self).__init__(name="Worker Pool", use_mp=False)
-            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=3), shutdown_event=self.shutdown_when_ready, sleep_time=1,
-                                                        name="Task Queue")
+            super(WorkerPool, self).__init__(name="Worker Pool", use_mp=False)
+            self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=3), shutdown_events=self.events,
+                                                         sleep_time=1,
+                                                         name="Task Queue")
             self.workers = [Worker(task_queue=self.input_queue, num=i) for i in range(num_workers)]
             for w in self.workers:
-                w.shutdown_now = self.shutdown_now
-                w.shutdown_when_ready = self.shutdown_when_ready
+                w.events = self.events
 
         def start(self):
             print(self.name + ": Starting workers")
@@ -677,7 +774,7 @@ def processing_stages_test(num):
                 w.start()
 
         def set_next_stage(self, stage):
-            super(WorkerPool,self).set_next_stage(stage=stage)
+            super(WorkerPool, self).set_next_stage(stage=stage)
             for w in self.workers:
                 w.set_next_stage(stage=stage)
 
@@ -687,7 +784,29 @@ def processing_stages_test(num):
                 w.join_exec()
             print(self.name + ": Joined all workers")
 
+    class GlobalShutdownState(object):
+        cur_state = mp.Value('i', )
+        update_condition = mp.Condition()
 
+        def __init__(self):
+            signal.signal(signal.SIGINT, self.signal_handler)
+            signal.signal(signal.SIGTERM, self.signal_handler)
+            pass
+
+        def signal_handler(self, signum, frame):
+            print("Main process received signal " + str(signum))
+            # print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
+            # tpp.shutdown(source=("signal_" + str(signum)))
+            cmd = ShutdownType.AFTER_CURRENT
+            GlobalShutdownState.update_state(shutdown_type=cmd)
+
+        @staticmethod
+        def update_state(shutdown_type):
+            with GlobalShutdownState.update_condition:
+                with GlobalShutdownState.cur_state.get_lock():
+                    if shutdown_type > GlobalShutdownState.cur_state.value:
+                        GlobalShutdownState.cur_state.value = shutdown_type
+                GlobalShutdownState.update_condition.notify_all()
 
     class TaskProcessingPipeline(object):
 
@@ -695,13 +814,14 @@ def processing_stages_test(num):
             self.task_input = TaskInput()
             self.workers = WorkerPool(num_workers=num_workers)
             self.result_recorder = ResultRecorder()
+            self.global_shutdown_state = GlobalShutdownState()
 
             self.stages = [self.task_input, self.workers, self.result_recorder]
-            for ind in range(1,len(self.stages)):
-                self.stages[ind].set_input_stage(self.stages[ind-1])
+            for ind in range(1, len(self.stages)):
+                self.stages[ind].set_input_stage(self.stages[ind - 1])
 
-            #self.workers.set_input_stage(stage=self.task_input)
-            #self.result_recorder.set_input_stage(stage=self.workers)
+            # self.workers.set_input_stage(stage=self.task_input)
+            # self.result_recorder.set_input_stage(stage=self.workers)
 
         def start(self):
             for stage in self.stages:
@@ -714,8 +834,10 @@ def processing_stages_test(num):
             self.stages[0].wait_for_finish(source=(str(source) + "=>tpp"))
 
         def shutdown(self, source="Unknown"):
-            self.stages[0].shutdown(source=(str(source) + "=>tpp"))
-
+            # for s in self.stages:
+            #    s.shutdown(str(source) + "=>tpp")
+            # self.stages[0].shutdown(source=(str(source) + "=>tpp"))
+            pass
 
     def make_tasks_gen(num):
         for i in range(num):
@@ -724,30 +846,27 @@ def processing_stages_test(num):
     def make_tasks_list(num):
         return [i for i in make_tasks_gen(num=num)]
 
-
     tpp = TaskProcessingPipeline(num_workers=num)
     tpp.start()
 
-    def signal_handler(signum, frame):
-        print("Main process received signal " + str(signum))
-        #print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
-        tpp.shutdown(source=("signal_" + str(signum)))
+    # def signal_handler(signum, frame):
+    #     print("Main process received signal " + str(signum))
+    #     #print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
+    #     tpp.shutdown(source=("signal_" + str(signum)))
+    #
+    # signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    #tc.add_tasks(make_tasks_list(num=30))
-    #for _ in range(5):
+    # tc.add_tasks(make_tasks_list(num=30))
+    # for _ in range(5):
     #    tpp.add_tasks(make_tasks_list(num=100))
 
-    #tpp.add_tasks(make_tasks_gen(num=500))
-    tpp.add_tasks(make_tasks_gen(num=6))
+    # tpp.add_tasks(make_tasks_gen(num=500))
+    tpp.add_tasks(make_tasks_gen(num=100))
 
     tpp.wait_for_finish(source="client")
 
     print("All Done")
-
-
 
 
 def interruptible_queue_object_test():
@@ -771,7 +890,7 @@ def interruptible_queue_object_test():
 
     class Worker(mp.Process):
         def __init__(self, queue):
-            super(Worker,self).__init__()
+            super(Worker, self).__init__()
             self.queue = queue
             self.daemon = True
 
@@ -790,10 +909,10 @@ def interruptible_queue_object_test():
 
     def add_tasks():
         i = 0
-        #while True:
+        # while True:
         for i in range(int(500)):
-            task = {'i':i}
-            i+=1
+            task = {'i': i}
+            i += 1
             print("Adding task: " + str(task))
             queue.put(obj=task, block=True, timeout=0)
 
@@ -803,10 +922,9 @@ def interruptible_queue_object_test():
     print("Waiting to join thread...")
     task_thread.join()
     print("Joined thread\nWaiting to join queue...")
-    #queue.join(timeout=100)
+    # queue.join(timeout=100)
     queue.interruptible_join()
     print("Joined queue\nExiting?")
-
 
 
 def interruptible_queue_keyboard_interrupt():
@@ -830,7 +948,7 @@ def interruptible_queue_keyboard_interrupt():
 
     class Worker(mp.Process):
         def __init__(self, queue):
-            super(Worker,self).__init__()
+            super(Worker, self).__init__()
             self.queue = queue
             self.daemon = True
 
@@ -852,10 +970,10 @@ def interruptible_queue_keyboard_interrupt():
 
     def add_tasks():
         i = 0
-        #while True:
+        # while True:
         for i in range(int(500)):
-            task = {'i':i}
-            i+=1
+            task = {'i': i}
+            i += 1
             print("Adding task: " + str(task))
             queue.put(obj=task, block=True, timeout=None)
 
@@ -866,18 +984,17 @@ def interruptible_queue_keyboard_interrupt():
         print("Waiting to join thread...")
         task_thread.join()
         print("Joined thread\nWaiting to join queue...")
-        #queue.join(timeout=100)
+        # queue.join(timeout=100)
         queue.interruptible_join()
         print("Joined queue\nExiting?")
     except KeyboardInterrupt as e:
         print("Main process caught exception: " + str(e))
 
 
-
 if __name__ == "__main__":
-    #run_basic_test(2)
-    #run_queue_test(1)
-    #run_queue_wrapper_test(5)
-    #interruptible_queue_object_test()
-    #interruptible_queue_keyboard_interrupt()
+    # run_basic_test(2)
+    # run_queue_test(1)
+    # run_queue_wrapper_test(5)
+    # interruptible_queue_object_test()
+    # interruptible_queue_keyboard_interrupt()
     processing_stages_test(num=1)
