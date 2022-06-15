@@ -444,7 +444,7 @@ def processing_stages_test(num):
 
         def wait_for_get(self):
             #return self.evaluate_condition(condition=RunConditions.WAIT_FOR_GET)
-            return self.waiting_for_finish()
+            return not self.waiting_for_finish()
 
         def process_next(self):
             return self.evaluate_condition(condition=RunConditions.PROCESS_NEXT)
@@ -470,7 +470,7 @@ def processing_stages_test(num):
             self.wait_for_finish_event.set()
 
         def waiting_for_finish(self):
-            return not self.wait_for_finish_event.is_set()
+            return self.wait_for_finish_event.is_set()
 
     class InterruptibleQueueWrapper(object):
 
@@ -493,7 +493,8 @@ def processing_stages_test(num):
                         print("[" + str(self.name) + "] is full!, unable to add task!")
                     is_full = True
                     if not self.events.wait_for_put():
-                        raise GracefulShutdownException("Not waiting to put task to [" + str(self.name) + "]")
+                        print("Not waiting to put task to [" + str(self.name) + "]")
+                        #raise GracefulShutdownException("Not waiting to put task to [" + str(self.name) + "]")
                 else:
                     print("Added task " + str(task) + " to [" + str(self.name) + "]")
                     break
@@ -712,7 +713,7 @@ def processing_stages_test(num):
     class Worker(TaskProcessingStage):
 
         def __init__(self, task_queue, num):
-            super(Worker, self).__init__(name="Worker_" + str(num), use_mp=True, run_conditions=RunConditions.NONE)
+            super(Worker, self).__init__(name="Worker_" + str(num), use_mp=False, run_conditions=RunConditions.NONE)
             self.input_queue = task_queue
 
         def process_task(self, task):
@@ -788,8 +789,6 @@ def processing_stages_test(num):
             for ind in range(1, len(self.stages)):
                 self.stages[ind].set_input_stage(self.stages[ind - 1])
 
-            # self.workers.set_input_stage(stage=self.task_input)
-            # self.result_recorder.set_input_stage(stage=self.workers)
 
         def start(self):
             for stage in self.stages:
@@ -817,13 +816,6 @@ def processing_stages_test(num):
     tpp = TaskProcessingPipeline(num_workers=num)
     tpp.start()
 
-    # def signal_handler(signum, frame):
-    #     print("Main process received signal " + str(signum))
-    #     #print("Main process: \n\n" + str(signum) + "\n\n" + str(frame))
-    #     tpp.shutdown(source=("signal_" + str(signum)))
-    #
-    # signal.signal(signal.SIGINT, signal_handler)
-    # signal.signal(signal.SIGTERM, signal_handler)
 
     # tc.add_tasks(make_tasks_list(num=30))
     # for _ in range(5):
@@ -837,132 +829,6 @@ def processing_stages_test(num):
     print("All Done")
 
 
-def interruptible_queue_object_test():
-    def InterruptibleQueue(maxsize=0):
-        import multiprocessing as mp
-        import multiprocessing.queues
-
-        class InterruptibleQueueImpl(multiprocessing.queues.JoinableQueue):
-
-            def join(self, timeout=None):
-                with self._cond:
-                    if not self._unfinished_tasks._semlock._is_zero():
-                        return self._cond.wait(timeout=timeout)
-
-            def interruptible_join(self):
-                while True:
-                    self.join(timeout=1)
-
-        '''Returns a queue object'''
-        return InterruptibleQueueImpl(maxsize, ctx=mp.get_context())
-
-    class Worker(mp.Process):
-        def __init__(self, queue):
-            super(Worker, self).__init__()
-            self.queue = queue
-            self.daemon = True
-
-        def run(self):
-            while True:
-                task = self.queue.get(block=True, timeout=None)
-                do_stuff()
-                self.queue.task_done()
-                print("Got task: " + str(task))
-
-    queue = InterruptibleQueue(1000)
-
-    worker = Worker(queue=queue)
-    print("Created worker")
-    worker.start()
-
-    def add_tasks():
-        i = 0
-        # while True:
-        for i in range(int(500)):
-            task = {'i': i}
-            i += 1
-            print("Adding task: " + str(task))
-            queue.put(obj=task, block=True, timeout=0)
-
-    task_thread = threading.Thread(target=add_tasks)
-    task_thread.start()
-
-    print("Waiting to join thread...")
-    task_thread.join()
-    print("Joined thread\nWaiting to join queue...")
-    # queue.join(timeout=100)
-    queue.interruptible_join()
-    print("Joined queue\nExiting?")
-
-
-def interruptible_queue_keyboard_interrupt():
-    def InterruptibleQueue(maxsize=0):
-        import multiprocessing as mp
-        import multiprocessing.queues
-
-        class InterruptibleQueueImpl(multiprocessing.queues.JoinableQueue):
-
-            def join(self, timeout=None):
-                with self._cond:
-                    if not self._unfinished_tasks._semlock._is_zero():
-                        return self._cond.wait(timeout=timeout)
-
-            def interruptible_join(self):
-                while True:
-                    self.join(timeout=1)
-
-        '''Returns a queue object'''
-        return InterruptibleQueueImpl(maxsize, ctx=mp.get_context())
-
-    class Worker(mp.Process):
-        def __init__(self, queue):
-            super(Worker, self).__init__()
-            self.queue = queue
-            self.daemon = True
-
-        def run(self):
-            try:
-                while True:
-                    task = self.queue.get(block=True, timeout=None)
-                    do_stuff()
-                    self.queue.task_done()
-                    print("Got task: " + str(task))
-            except KeyboardInterrupt as e:
-                print("Worker caught exception: " + str(e))
-
-    queue = InterruptibleQueue(1000)
-
-    worker = Worker(queue=queue)
-    print("Created worker")
-    worker.start()
-
-    def add_tasks():
-        i = 0
-        # while True:
-        for i in range(int(500)):
-            task = {'i': i}
-            i += 1
-            print("Adding task: " + str(task))
-            queue.put(obj=task, block=True, timeout=None)
-
-    task_thread = threading.Thread(target=add_tasks)
-    task_thread.start()
-
-    try:
-        print("Waiting to join thread...")
-        task_thread.join()
-        print("Joined thread\nWaiting to join queue...")
-        # queue.join(timeout=100)
-        queue.interruptible_join()
-        print("Joined queue\nExiting?")
-    except KeyboardInterrupt as e:
-        print("Main process caught exception: " + str(e))
-
 
 if __name__ == "__main__":
-    # run_basic_test(2)
-    # run_queue_test(1)
-    # run_queue_wrapper_test(5)
-    # interruptible_queue_object_test()
-    # interruptible_queue_keyboard_interrupt()
     processing_stages_test(num=1)
