@@ -138,6 +138,14 @@ class InterruptibleQueueWrapper(object):
     def join(self):
         return self.queue.join()
 
+    def close(self):
+        self.queue.join()
+        try:
+            self.queue.close()
+            self.queue.join_thread()
+        except AttributeError as e: #TypeError?
+            pass
+
 class TaskProcessingStage(object):
 
     def __init__(self, name, use_mp=False, run_conditions=RunConditions.NONE):
@@ -222,6 +230,7 @@ class TaskProcessingStage(object):
         print(self.name + ": Waiting for finish [" + str(source) + "]")
         self.join_input()
         self.join_exec()
+        self.input_queue.close()
 
         print(self.name + ": took " + str(time.time() - start_t) + "s to join input and exec [" + str(source) + "]")
 
@@ -380,6 +389,7 @@ class TaskProcessingPipeline(object):
 
 
 def interruptible_work(events, i=1e6, denom=1000):
+    denom = int(denom)
     s = 0
     j = 0
     while j < i and events.process_current():
@@ -407,7 +417,8 @@ class DemoWorker(Worker):
         super(DemoWorker, self).__init__(num=num)
 
     def task_result_func(self, task):
-        return interruptible_work(events=self.events, i=1e8, denom=1e6)
+        i = task.get('size', 1e7)
+        return interruptible_work(events=self.events, i=i, denom=1e6)
 
 class DemoResultRecorder(ResultRecorder):
 
@@ -433,19 +444,21 @@ class DemoTaskProcessingPipeline(TaskProcessingPipeline):
 def processing_stages_test(num=1):
     tpp = DemoTaskProcessingPipeline(num_workers=num)
     tpp.start()
+    import random
+
 
     def make_tasks_gen(num):
         for i in range(num):
-            yield {"index": i}
+            yield {"index": i, 'size': random.randint(int(1e5), int(1e8))}
 
     def make_tasks_list(num):
         return [i for i in make_tasks_gen(num=num)]
 
     tpp.add_tasks(make_tasks_list(num=30))
     for _ in range(5):
-       tpp.add_tasks(make_tasks_list(num=100))
+       tpp.add_tasks(make_tasks_list(num=15))
 
-    tpp.add_tasks(make_tasks_gen(num=500))
+    tpp.add_tasks(make_tasks_gen(num=20))
 
     tpp.wait_for_finish(source="client")
 
