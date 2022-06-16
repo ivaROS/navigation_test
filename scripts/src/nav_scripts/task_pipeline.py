@@ -247,7 +247,6 @@ class TaskInput(TaskProcessingStage):
             super(TaskInput, self).handle_task(task=t)
 
     def process_task(self, task):
-        # NOTE: This can end up blocking indefinitely, because the event that would make it return early is only set.... I don't understand
         self.output_queue.put(task)
 
     def add_tasks(self, tasks):
@@ -255,74 +254,49 @@ class TaskInput(TaskProcessingStage):
 
 class ResultRecorder(TaskProcessingStage):
 
-    def __init__(self):
+    def __init__(self, queue_size=10, sleep_time=1):
+
         super(ResultRecorder, self).__init__(name="Result Recorder", use_mp=False, run_conditions=RunConditions.ALL)
-        self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=10),
-                                                     shutdown_events=self.events, sleep_time=1,
+        self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=queue_size),
+                                                     shutdown_events=self.events, sleep_time=sleep_time,
                                                      name="Result Queue")
 
-    def run(self):
-        # with filewriter
-        super(ResultRecorder, self).run()
-        #print(self.name + ": Finished processing all current results")
-
     def process_task(self, task):
-        print(self.name + ": Processed result " + str(task))
-
-
-def interruptible_work(events, i=1e6, denom=1000):
-    s = 0
-    j = 0
-    while j < i and events.process_current():
-        while j < i and not j % denom == 0:
-            s += j
-            j += 1
-        #print("value of j when checking if current " + str(j) + ": state of flag= " + str(events.process_current()))
-        s += j
-        j += 1
-    if j < i:
-        #raise GracefulShutdownException("Task interrupted!")   #This doesn't empty out the input_queue, might be ok for instant shutdown if have interruptible joings
-        raise InterruptedError("Task interrupted!")
-        #print("Task interrupted!")
-    return s
-
-def busy_work(i=1e6):
-    s = 0
-    for i in range(int(i)):
-        s += i
-    return s
+        raise NotImplementedError("You must override 'process_task'!")
 
 class Worker(TaskProcessingStage):
 
-    def __init__(self, task_queue, num):
-        super(Worker, self).__init__(name="Worker_" + str(num), use_mp=True, run_conditions=RunConditions.NONE)
-        self.input_queue = task_queue
+    def __init__(self, num, run_conditions=RunConditions.NONE):
+        super(Worker, self).__init__(name="Worker_" + str(num), use_mp=True, run_conditions=run_conditions)
 
     def process_task(self, task):
         msg = "[" + str(self.name) + "]: Do some work (" + str(task) + ")"
         print(msg)
-        # busy_work(i=1e8)
         try:
-            interruptible_work(events=self.events, i=1e8, denom=1e6)
+            result = self.task_result_func(task)
         except InterruptedError as e:
             result = str(e)
-        else:
-            result = 'Done'
         finally:
             task["result"] = result
             task["worker"] = self.name
             self.output_queue.put(task)
 
+    def task_result_func(self, task):
+        raise NotImplementedError("You must either implement 'task_result_func' or override 'process_task'!")
+
+
 class WorkerPool(TaskProcessingStage):
 
-    def __init__(self, num_workers=1):
+    def __init__(self, workers):
         super(WorkerPool, self).__init__(name="Worker Pool", use_mp=False, run_conditions=RunConditions.NONE)
-        self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=num_workers+1), shutdown_events=self.events,
+        self.workers = workers
+
+        self.input_queue = InterruptibleQueueWrapper(queue=mp.JoinableQueue(maxsize=len(workers)+1), shutdown_events=self.events,
                                                      sleep_time=1,
                                                      name="Task Queue")
-        self.workers = [Worker(task_queue=self.input_queue, num=i) for i in range(num_workers)]
         for w in self.workers:
             w.events = self.events
+            w.input_queue = self.input_queue
 
     def start(self):
         print(self.name + ": Starting workers")
@@ -350,14 +324,13 @@ class GlobalShutdownState(object):
 
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
-        pass
 
     def signal_handler(self, signum, frame):
         print("Main process received signal " + str(signum))
         #cmd = RunConditions.PROCESS_CURRENT
         self.shutdown()
 
-    def shutdown(self, conditions=RunConditions):
+    def shutdown(self, conditions=RunConditions.NONE):
         self.wait_for_put_event.set()
         #self.wait_for_get_event.set()
         self.process_next_event.set()
@@ -366,10 +339,13 @@ class GlobalShutdownState(object):
 class TaskProcessingPipeline(object):
 
     def __init__(self, num_workers):
-        self.task_input = TaskInput()
-        self.workers = WorkerPool(num_workers=num_workers)
-        self.result_recorder = ResultRecorder()
         self.global_shutdown_state = GlobalShutdownState()
+
+        self.task_input = self.get_task_input()
+        workers = [self.get_worker(num=i) for i in range(num_workers)]
+
+        self.workers = WorkerPool(workers=workers)
+        self.result_recorder = self.get_result_recorder()
 
         self.stages = [self.task_input, self.workers, self.result_recorder]
         for s in self.stages:
@@ -389,16 +365,73 @@ class TaskProcessingPipeline(object):
     def wait_for_finish(self, source="Unknown"):
         self.stages[0].wait_for_finish(source=(str(source) + "=>tpp"))
 
-    def shutdown(self, source="Unknown"):
-        # for s in self.stages:
-        #    s.shutdown(str(source) + "=>tpp")
-        # self.stages[0].shutdown(source=(str(source) + "=>tpp"))
-        pass
+    def shutdown(self, source="Unknown", conditions=RunConditions.NONE):
+        self.global_shutdown_state.shutdown(conditions=conditions)
 
+    def get_task_input(self):
+        return TaskInput()
+
+    def get_worker(self, num):
+        raise NotImplementedError("You must override 'get_worker'!")
+
+    def get_result_recorder(self):
+        raise NotImplementedError("You must override 'get_result_recorder'!")
+
+
+
+def interruptible_work(events, i=1e6, denom=1000):
+    s = 0
+    j = 0
+    while j < i and events.process_current():
+        while j < i and not j % denom == 0:
+            s += j
+            j += 1
+        #print("value of j when checking if current " + str(j) + ": state of flag= " + str(events.process_current()))
+        s += j
+        j += 1
+    if j < i:
+        #raise GracefulShutdownException("Task interrupted!")   #This doesn't empty out the input_queue, might be ok for instant shutdown if have interruptible joings
+        raise InterruptedError("Task interrupted!")
+        #print("Task interrupted!")
+    return s
+
+def busy_work(i=1e6):
+    s = 0
+    for i in range(int(i)):
+        s += i
+    return s
+
+class DemoWorker(Worker):
+
+    def __init__(self, num):
+        super(DemoWorker, self).__init__(num=num)
+
+    def task_result_func(self, task):
+        return interruptible_work(events=self.events, i=1e8, denom=1e6)
+
+class DemoResultRecorder(ResultRecorder):
+
+    def __init__(self):
+        super(DemoResultRecorder, self).__init__()
+
+    def process_task(self, task):
+        print(self.name + ": Processed result " + str(task))
+
+class DemoTaskProcessingPipeline(TaskProcessingPipeline):
+
+    def __init__(self, num_workers=1):
+        super(DemoTaskProcessingPipeline, self).__init__(num_workers=num_workers)
+
+    def get_worker(self, num):
+        worker = DemoWorker(num=num)
+        return worker
+
+    def get_result_recorder(self):
+        return DemoResultRecorder()
 
 
 def processing_stages_test(num=1):
-    tpp = TaskProcessingPipeline(num_workers=num)
+    tpp = DemoTaskProcessingPipeline(num_workers=num)
     tpp.start()
 
     def make_tasks_gen(num):
