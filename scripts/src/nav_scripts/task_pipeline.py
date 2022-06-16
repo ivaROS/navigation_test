@@ -347,9 +347,10 @@ class GlobalShutdownState(object):
 
 class TaskProcessingPipeline(object):
 
-    def __init__(self, num_workers):
+    def __init__(self):
         self.global_shutdown_state = GlobalShutdownState()
 
+    def setup_stages(self, num_workers):
         self.task_input = self.get_task_input()
         workers = [self.get_worker(num=i) for i in range(num_workers)]
 
@@ -358,11 +359,10 @@ class TaskProcessingPipeline(object):
 
         self.stages = [self.task_input, self.workers, self.result_recorder]
         for s in self.stages:
-            s.set_global_events(global_events = self.global_shutdown_state)
+            s.set_global_events(global_events=self.global_shutdown_state)
 
         for ind in range(1, len(self.stages)):
             self.stages[ind].set_input_stage(self.stages[ind - 1])
-
 
     def start(self):
         for stage in self.stages:
@@ -431,7 +431,8 @@ class DemoResultRecorder(ResultRecorder):
 class DemoTaskProcessingPipeline(TaskProcessingPipeline):
 
     def __init__(self, num_workers=1):
-        super(DemoTaskProcessingPipeline, self).__init__(num_workers=num_workers)
+        super(DemoTaskProcessingPipeline, self).__init__()
+        super(DemoTaskProcessingPipeline, self).setup_stages(num_workers=num_workers)
 
     def get_worker(self, num):
         worker = DemoWorker(num=num)
