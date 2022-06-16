@@ -47,6 +47,7 @@ class ShutdownEventInterface(object):
                     #RunConditions.WAIT_FOR_GET: global_events.wait_for_get_event,
                     RunConditions.PROCESS_NEXT: global_events.process_next_event,
                     RunConditions.PROCESS_CURRENT: global_events.process_next_event}
+        self.events = global_events
 
     def wait_for_put(self):
         return self.evaluate_condition(condition=RunConditions.WAIT_FOR_PUT)
@@ -167,6 +168,7 @@ class TaskProcessingStage(object):
 
     def set_global_events(self, global_events):
         self.events.set_global_events(global_events=global_events)
+        self.interrupt_monitor = global_events.get_monitor()
 
     def set_input_stage(self, stage):
         if stage is not None:
@@ -313,6 +315,11 @@ class WorkerPool(TaskProcessingStage):
         for w in self.workers:
             w.start()
 
+    def set_global_events(self, global_events):
+        for w in self.workers:
+            w.set_global_events(global_events=global_events)
+
+
     def set_next_stage(self, stage):
         super(WorkerPool, self).set_next_stage(stage=stage)
         for w in self.workers:
@@ -332,19 +339,60 @@ class GlobalShutdownState(object):
         self.process_next_event = mp.Event()
         self.process_current_event = mp.Event()
 
+        self.map = {RunConditions.WAIT_FOR_PUT: self.wait_for_put_event,
+                    # RunConditions.WAIT_FOR_GET: global_events.wait_for_get_event,
+                    RunConditions.PROCESS_NEXT: self.process_next_event,
+                    RunConditions.PROCESS_CURRENT: self.process_next_event}
+
+        self.sig_int_counter = 0
+
+        sigint_cond = RunConditions.PROCESS_CURRENT
+        sigterm_cond = RunConditions.NONE
+        self.shutdown_conditions =  [sigint_cond, sigterm_cond]
+
+
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
     def signal_handler(self, signum, frame):
         print("Main process received signal " + str(signum))
+        if signum == signal.SIGINT.value:
+            self.sig_int_counter+=1
+            print("SIGINT " + str(self.sig_int_counter))
+
+            if self.sig_int_counter > 1:
+                conditions = self.shutdown_conditions[1]
+            else:
+                conditions = self.shutdown_conditions[0]
+        elif signum == signal.SIGTERM.value:
+            conditions = self.shutdown_conditions[1]
+
         #cmd = RunConditions.PROCESS_CURRENT
-        self.shutdown()
+        self.shutdown(conditions=conditions)
 
     def shutdown(self, conditions=RunConditions.NONE):
-        self.wait_for_put_event.set()
-        #self.wait_for_get_event.set()
-        self.process_next_event.set()
-        self.process_current_event.set()
+        for cond,event in self.map.items():
+            #For each run condition that isn't active, activate the associated event
+            if not (cond & conditions):
+                event.set()
+
+        ##previous method for shutting down
+        # self.wait_for_put_event.set()
+        # #self.wait_for_get_event.set()
+        # self.process_next_event.set()
+        # self.process_current_event.set()
+
+    def get_monitor(self):
+        class InterruptMonitor(object):
+            def __init__(myself):
+                pass
+
+            def update(myself):
+                if self.process_current_event.is_set():
+                    raise InterruptedError("Task interrupted!")
+
+        m = InterruptMonitor()
+        return m
 
 class TaskProcessingPipeline(object):
 

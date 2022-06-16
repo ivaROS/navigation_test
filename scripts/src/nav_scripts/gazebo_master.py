@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 from future import standard_library
@@ -180,7 +180,6 @@ class GazeboMaster(Worker):
         self.robot_launcher = RobotLauncher()
         self.gazebo_launcher = GazeboLauncher(robot_launcher=self.robot_launcher)
         self.controller_launcher = ControllerLauncher()
-
         self.monitor = RosLauncherMonitor(launchers=[self.roscore, self.robot_launcher, self.gazebo_launcher, self.controller_launcher])
 
         self.gui = True
@@ -199,10 +198,12 @@ class GazeboMaster(Worker):
 
 
     def run(self):
+        self.monitor.append(self.interrupt_monitor)
+
         #Starts roscore if needed; does not launch anything else, but ensures they all get shutdown properly
         with self.roscore, self.gazebo_launcher, self.robot_launcher:
             rospy.set_param('/use_sim_time', 'True')
-            rospy.init_node('test_driver', anonymous=True, disable_signals=True)
+            rospy.init_node('test_driver', anonymous=True, disable_signals=True, disable_rosout=True)
             # rospy.on_shutdown(self.shutdown)
             self.scenarios = TestingScenarios()
             self.had_error = False

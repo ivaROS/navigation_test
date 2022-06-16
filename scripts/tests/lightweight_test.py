@@ -2,8 +2,8 @@ from nav_scripts.gazebo_master import MultiMasterCoordinator
 import time
 
 start_time = time.time()
-num_instances = 3
-master = MultiMasterCoordinator(num_instances, save_results=True)
+num_instances = 1
+master = MultiMasterCoordinator(num_instances, save_results=False)
 master.fieldnames.extend(
     ['max_number_classes', 'laser_fov', 'ec_radius', 'cost_factor', 'selection_obst_cost_scale',
      'enable_standard_costs', 'selection_alternative_time_cost', 'repeat', 'sim_speed', 'gap_criteria',
@@ -20,8 +20,8 @@ master.start()
 
 
 def getTasks():
-    for seed in range(500):
-        task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot'}
+    for seed in range(3):
+        task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot', 'world_args': {'gazebo_gui': True}}
         yield task
 
 

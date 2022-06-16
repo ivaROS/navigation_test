@@ -454,6 +454,9 @@ class RosLauncherMonitor(object):
     def __init__(self, launchers):
         self.launchers = launchers
 
+    def append(self, monitor):
+        self.launchers.append(monitor)
+
     def update(self):
         for l in self.launchers:
             l.update()
