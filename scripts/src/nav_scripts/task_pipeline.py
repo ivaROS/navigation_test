@@ -139,6 +139,7 @@ class InterruptibleQueueWrapper(object):
         return self.queue.join()
 
     def close(self):
+        print("Shutting down [" + str(self.name) + "]")
         self.queue.join()
         try:
             self.queue.close()
