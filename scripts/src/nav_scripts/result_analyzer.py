@@ -453,7 +453,9 @@ class ResultAnalyzer(object):
             if entry[seed_keyname] not in path_lengths[conditionset]:
                 path_lengths[conditionset][entry[seed_keyname]] = []
 
+            entry['time'] = 0 if len(entry['time'])==0 else entry['time']
             path_times[conditionset][entry[seed_keyname]] += [int(entry["time"])]
+            entry['path_length'] = 0 if len(entry['path_length']) == 0 else entry['path_length']
             path_lengths[conditionset][entry[seed_keyname]] += [float(entry["path_length"])]
 
             for key, value in list(condition.items()):
@@ -539,8 +541,8 @@ class ResultAnalyzer(object):
                     path_length = np.mean(path_lengthx)
                     path_length_std = np.std(path_lengthx)
 
-                    print(("| " + "{0:.1f}".format(path_length) + "(" + str(path_time_std) + ") |" + "{0:.1f}".format(
-                        path_time) + "(" + str(path_length_std) + ")"), end=' ')
+                    print(("| " + "{0:.1f}".format(path_length) + "(" + "{0:.1f}".format(path_time_std) + ") |" + "{0:.1f}".format(
+                        path_time) + "(" + "{0:.1f}".format(path_length_std) + ")"), end=' ')
 
                     # Now print the averages of shared successful cases
                     if shared_safe_keys is not None and len(shared_safe_keys) > 0:
