@@ -314,6 +314,7 @@ class WorkerPool(TaskProcessingStage):
         print(self.name + ": Starting workers")
         for w in self.workers:
             w.start()
+            time.sleep(30)
 
     def set_global_events(self, global_events):
         for w in self.workers:
@@ -416,6 +417,7 @@ class TaskProcessingPipeline(object):
     def start(self):
         for stage in self.stages:
             stage.start()
+            time.sleep(1)
 
     def add_tasks(self, tasks):
         self.task_input.add_tasks(tasks=tasks)

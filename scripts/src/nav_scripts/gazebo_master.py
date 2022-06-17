@@ -176,28 +176,33 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
 class GazeboMaster(Worker):
     def __init__(self, num, use_existing_roscore):
         super(GazeboMaster, self).__init__(num=num)
-        self.roscore = RoscoreLauncher(use_existing_roscore=use_existing_roscore)
+        self.use_existing_roscore = use_existing_roscore
+
+    ##NOTE: Due to the use of certain class variables and writing of environment variables, this needs to happen in the new process and can't be done in __init__
+    def setup(self):
+        self.roscore = RoscoreLauncher(use_existing_roscore=self.use_existing_roscore)
         self.robot_launcher = RobotLauncher()
         self.gazebo_launcher = GazeboLauncher(robot_launcher=self.robot_launcher)
         self.controller_launcher = ControllerLauncher()
-        self.monitor = RosLauncherMonitor(launchers=[self.roscore, self.robot_launcher, self.gazebo_launcher, self.controller_launcher])
+        self.monitor = RosLauncherMonitor(
+            launchers=[self.roscore, self.robot_launcher, self.gazebo_launcher, self.controller_launcher])
 
         self.gui = True
 
         print("New master")
 
-        #if 'SIMULATION_RESULTS_DIR' in os.environ:
+        # if 'SIMULATION_RESULTS_DIR' in os.environ:
 
         # Disabling all GUI elements of Gazebo decreases simulation load, but also disables cameras. However, it is not currently clear if worlds without cameras benefit
-        if self.gui==False:
+        if self.gui == False:
             if 'DISPLAY' in os.environ:
-                del os.environ['DISPLAY']   #To ensure that no GUI elements of gazebo activated
+                del os.environ['DISPLAY']  # To ensure that no GUI elements of gazebo activated
         else:
             if 'DISPLAY' not in os.environ:
-                os.environ['DISPLAY']=':0'
-
+                os.environ['DISPLAY'] = ':0'
 
     def run(self):
+        self.setup()
         self.monitor.append(self.interrupt_monitor)
 
         #Starts roscore if needed; does not launch anything else, but ensures they all get shutdown properly

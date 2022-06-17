@@ -207,10 +207,13 @@ class RosEnv(object):
         RosEnv.set_ros_port(ros_port=ros_port)
         RosEnv.port = ros_port
 
+        print("\nGot ROSMASTER port: " + str(RosEnv.port))
+
     @staticmethod
     def set_ros_port(ros_port):
         ros_master_uri = "http://localhost:" + str(ros_port)
         os.environ["ROS_MASTER_URI"] = ros_master_uri
+        print("\nSet ros_master_uri port: " + str(ros_master_uri))
 
     @staticmethod
     def get_ros_port():
@@ -243,6 +246,7 @@ class LauncherErrorCatcher(object):
         if exc_type is not None and issubclass(exc_type, type(self.launcher).exc_type):
             print("Caught error from " + str(self.launcher.name) + ", shutting it down")
             self.launcher.shutdown()
+            return True
         pass
 
 
@@ -331,7 +335,7 @@ class RosLauncherHelper(object):
             launch_files = self.get_launch_files(launch_info=launch_info, rospack=rospack)
             #TODO: verify that all files exist?
 
-            print("Launching Process [" + self.name + "] with pid: " + str(os.getpid()))
+            print("Launching [" + self.name + "] with pid: " + str(os.getpid()))
             print("Launch files=" + str(launch_files) + "\nargs=" + str(args) + "\nbash_source_file=" + str(bash_source_file))
 
             uuid = roslaunch.rlutil.get_or_generate_uuid(None, not self.is_core)
@@ -341,6 +345,8 @@ class RosLauncherHelper(object):
                 value = str(value)
                 os.environ[var_name] = value
                 print("Setting environment variable [" + var_name + "] to '" + value + "'")
+
+            print("\n\n\nPORT selected: " + str(RosEnv.port) + ",     PID: " + str(os.getpid()))
 
             with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
                 with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
@@ -462,6 +468,8 @@ class RosLauncherMonitor(object):
             l.update()
 
 class RoscoreLauncher(RosLauncherHelper):
+    roscore_launch_mutex = mp.Lock()
+
     def __init__(self, use_existing_roscore):
         super(RoscoreLauncher, self).__init__(name="core", hide_stdout=False, use_mp=False, profile=False, is_core=True)
         RosEnv.init(use_existing_roscore=use_existing_roscore)
@@ -469,7 +477,8 @@ class RoscoreLauncher(RosLauncherHelper):
 
     def __enter__(self):
         if not self.use_existing_roscore:
-            self.launch()
+            with RoscoreLauncher.roscore_launch_mutex:
+                self.launch()
         else:
             print("Not starting a new ROS Core")
             #TODO: Verify that the port number specified by environment variables matches that given by RosPort
