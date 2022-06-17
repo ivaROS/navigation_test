@@ -8,6 +8,7 @@ import queue
 import types
 import signal
 
+
 class GracefulShutdownException(BaseException):
     pass
 
@@ -314,7 +315,6 @@ class WorkerPool(TaskProcessingStage):
         print(self.name + ": Starting workers")
         for w in self.workers:
             w.start()
-            time.sleep(30)
 
     def set_global_events(self, global_events):
         for w in self.workers:
@@ -343,7 +343,7 @@ class GlobalShutdownState(object):
         self.map = {RunConditions.WAIT_FOR_PUT: self.wait_for_put_event,
                     # RunConditions.WAIT_FOR_GET: global_events.wait_for_get_event,
                     RunConditions.PROCESS_NEXT: self.process_next_event,
-                    RunConditions.PROCESS_CURRENT: self.process_next_event}
+                    RunConditions.PROCESS_CURRENT: self.process_current_event}
 
         self.sig_int_counter = 0
 
@@ -359,16 +359,18 @@ class GlobalShutdownState(object):
         print("Main process received signal " + str(signum))
         if signum == signal.SIGINT.value:
             self.sig_int_counter+=1
-            print("SIGINT " + str(self.sig_int_counter))
+            print("SIGINT " + str(self.sig_int_counter), )
 
             if self.sig_int_counter > 1:
                 conditions = self.shutdown_conditions[1]
+                print("Received more than 1 Ctrl+C/SIGINT, shutting down now!!")
             else:
                 conditions = self.shutdown_conditions[0]
+                print("Program will exit after completing in-progress tasks. Pressing Ctrl+C again will initiate immediate shutdown")
         elif signum == signal.SIGTERM.value:
             conditions = self.shutdown_conditions[1]
+            print("Received SIGTERM, shutting down now!!")
 
-        #cmd = RunConditions.PROCESS_CURRENT
         self.shutdown(conditions=conditions)
 
     def shutdown(self, conditions=RunConditions.NONE):
@@ -417,7 +419,6 @@ class TaskProcessingPipeline(object):
     def start(self):
         for stage in self.stages:
             stage.start()
-            time.sleep(1)
 
     def add_tasks(self, tasks):
         self.task_input.add_tasks(tasks=tasks)

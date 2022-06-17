@@ -206,14 +206,13 @@ class RosEnv(object):
         ros_port = RosEnv.get_ros_port() if use_existing_roscore else RosPort.port()
         RosEnv.set_ros_port(ros_port=ros_port)
         RosEnv.port = ros_port
-
-        print("\nGot ROSMASTER port: " + str(RosEnv.port))
+        #print("\nGot ROSMASTER port: " + str(RosEnv.port))
 
     @staticmethod
     def set_ros_port(ros_port):
         ros_master_uri = "http://localhost:" + str(ros_port)
         os.environ["ROS_MASTER_URI"] = ros_master_uri
-        print("\nSet ros_master_uri port: " + str(ros_master_uri))
+        #print("\nSet ros_master_uri port: " + str(ros_master_uri))
 
     @staticmethod
     def get_ros_port():
@@ -346,7 +345,7 @@ class RosLauncherHelper(object):
                 os.environ[var_name] = value
                 print("Setting environment variable [" + var_name + "] to '" + value + "'")
 
-            print("\n\n\nPORT selected: " + str(RosEnv.port) + ",     PID: " + str(os.getpid()))
+            #print("\n\n\nPORT selected: " + str(RosEnv.port) + ",     PID: " + str(os.getpid()))
 
             with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
                 with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
@@ -468,7 +467,7 @@ class RosLauncherMonitor(object):
             l.update()
 
 class RoscoreLauncher(RosLauncherHelper):
-    roscore_launch_mutex = mp.Lock()
+    #roscore_launch_mutex = mp.Lock()
 
     def __init__(self, use_existing_roscore):
         super(RoscoreLauncher, self).__init__(name="core", hide_stdout=False, use_mp=False, profile=False, is_core=True)
@@ -477,14 +476,15 @@ class RoscoreLauncher(RosLauncherHelper):
 
     def __enter__(self):
         if not self.use_existing_roscore:
-            with RoscoreLauncher.roscore_launch_mutex:
-                self.launch()
+            #with RoscoreLauncher.roscore_launch_mutex:
+            self.launch()
         else:
             print("Not starting a new ROS Core")
             #TODO: Verify that the port number specified by environment variables matches that given by RosPort
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print("GazeboMaster shutdown: killing core...")
+        if not self.use_existing_roscore:
+            print("GazeboMaster shutdown: killing core...")
         super(RoscoreLauncher, self).__exit__(exc_type, exc_val, exc_tb)
 
     def launch(self):
@@ -585,7 +585,7 @@ class RobotLauncher(RosLauncherHelper):
         odom_topic = "/odom"
         if 'odom_topic' in robot_args:
             odom_topic = robot_args['odom_topic']
-        # Wait for gazebo simulation to be running
+        # Wait for robot to be loaded
         try:
             msg = rospy.wait_for_message(odom_topic, Odometry, 30)
         except rospy.exceptions.ROSException as e:

@@ -4,7 +4,7 @@ from nav_scripts.gazebo_master import MultiMasterCoordinator
 import time
 
 start_time = time.time()
-num_instances = 2
+num_instances = 3
 master = MultiMasterCoordinator(num_instances, save_results=False)
 master.fieldnames.extend(
     ['max_number_classes', 'laser_fov', 'ec_radius', 'cost_factor', 'selection_obst_cost_scale',
