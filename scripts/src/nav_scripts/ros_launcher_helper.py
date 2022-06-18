@@ -19,6 +19,7 @@ from nav_msgs.msg import Odometry
 import os
 import sys
 import cProfile
+import nav_scripts.patch_roslaunch
 
 #TODO: Move the actual launching part into separate process and use queus to send commands and retrieve results
 
