@@ -356,20 +356,21 @@ class GlobalShutdownState(object):
         signal.signal(signal.SIGTERM, self.signal_handler)
 
     def signal_handler(self, signum, frame):
-        print("Main process received signal " + str(signum))
+        maybeprint = lambda c: 2
+        maybeprint("Main process received signal " + str(signum))
         if signum == signal.SIGINT.value:
             self.sig_int_counter+=1
-            print("SIGINT " + str(self.sig_int_counter), )
+            maybeprint("SIGINT " + str(self.sig_int_counter), )
 
             if self.sig_int_counter > 1:
                 conditions = self.shutdown_conditions[1]
-                print("Received more than 1 Ctrl+C/SIGINT, shutting down now!!")
+                maybeprint("Received more than 1 Ctrl+C/SIGINT, shutting down now!!")
             else:
                 conditions = self.shutdown_conditions[0]
-                print("Program will exit after completing in-progress tasks. Pressing Ctrl+C again will initiate immediate shutdown")
+                maybeprint("Program will exit after completing in-progress tasks. Pressing Ctrl+C again will initiate immediate shutdown")
         elif signum == signal.SIGTERM.value:
             conditions = self.shutdown_conditions[1]
-            print("Received SIGTERM, shutting down now!!")
+            maybeprint("Received SIGTERM, shutting down now!!")
 
         self.shutdown(conditions=conditions)
 

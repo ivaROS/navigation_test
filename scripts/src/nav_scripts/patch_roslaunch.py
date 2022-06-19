@@ -65,9 +65,12 @@ def start(self):
         def preexec_function():
             if close_file_descriptor:
                 os.setsid()
+            def raise_keyboard_int():
+                raise KeyboardInterrupt("SIGTERM received")
+
             #from https://stackoverflow.com/a/5050521
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            signal.signal(signal.SIGTERM, raise_keyboard_int)
 
         try:
             self.popen = subprocess.Popen(self.args, cwd=cwd, stdout=logfileout, stderr=logfileerr, env=full_env, close_fds=close_file_descriptor, preexec_fn=preexec_function)

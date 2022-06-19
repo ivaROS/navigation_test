@@ -348,13 +348,16 @@ class RosLauncherHelper(object):
 
             #print("\n\n\nPORT selected: " + str(RosEnv.port) + ",     PID: " + str(os.getpid()))
 
+            sigterm_timeout = 2 if self.is_core else 15
+
             with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
                 with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
                     with StdOutputHider(enabled=self.hide_stdout):
                         try:
                             self.roslaunch_object = RoslaunchShutdownWrapper(
                                 run_id=uuid, roslaunch_files=launch_files,
-                                is_core=self.is_core, port=RosEnv.port
+                                is_core=self.is_core, port=RosEnv.port,
+                                sigterm_timeout=sigterm_timeout
                             )
                             self.roslaunch_object.start()
                         except roslaunch.core.RLException as e:
