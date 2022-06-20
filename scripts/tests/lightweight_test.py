@@ -3,13 +3,6 @@
 from nav_scripts.gazebo_master import MultiMasterCoordinator
 import time
 
-import signal
-#signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-def do_nothing(signum, frame):
-    print("Ignoring signal " + str(signum))
-
-signal.signal(signal.SIGINT, do_nothing)
 
 
 start_time = time.time()
@@ -31,7 +24,7 @@ master.start()
 
 
 def getTasks():
-    for seed in range(6):
+    for seed in range(30):
         task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot', 'world_args': {'gazebo_gui': False}}
         yield task
 

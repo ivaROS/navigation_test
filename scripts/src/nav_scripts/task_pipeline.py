@@ -351,8 +351,6 @@ class GlobalShutdownState(object):
         sigterm_cond = RunConditions.PROCESS_CURRENT #RunConditions.NONE
         self.shutdown_conditions =  [sigint_cond, sigterm_cond]
 
-        #self.enable_signals()
-
 
     def enable_signals(self):
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -421,9 +419,10 @@ class TaskProcessingPipeline(object):
             self.stages[ind].set_input_stage(self.stages[ind - 1])
 
     def start(self):
+        self.disable_signals()
         for stage in self.stages:
             stage.start()
-        self.global_shutdown_state.enable_signals() #Here, or can it be right after workers are created?
+        self.global_shutdown_state.enable_signals() #Must be done AFTER worker processes have been created
 
     def add_tasks(self, tasks):
         self.task_input.add_tasks(tasks=tasks)
@@ -443,6 +442,13 @@ class TaskProcessingPipeline(object):
     def get_result_recorder(self):
         raise NotImplementedError("You must override 'get_result_recorder'!")
 
+    def disable_signals(self):
+        def do_nothing(signum, frame):
+            #print("Ignoring signal " + str(signum))
+            pass
+
+        signal.signal(signal.SIGINT, do_nothing)
+        signal.signal(signal.SIGTERM, do_nothing)
 
 
 def interruptible_work(events, i=1e6, denom=1000):
