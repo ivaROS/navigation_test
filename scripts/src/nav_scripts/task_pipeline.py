@@ -348,15 +348,18 @@ class GlobalShutdownState(object):
         self.sig_int_counter = 0
 
         sigint_cond = RunConditions.PROCESS_CURRENT
-        sigterm_cond = RunConditions.NONE
+        sigterm_cond = RunConditions.PROCESS_CURRENT #RunConditions.NONE
         self.shutdown_conditions =  [sigint_cond, sigterm_cond]
 
+        #self.enable_signals()
 
+
+    def enable_signals(self):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
     def signal_handler(self, signum, frame):
-        maybeprint = lambda c: 2
+        maybeprint = lambda c: print(c)
         maybeprint("Main process received signal " + str(signum))
         if signum == signal.SIGINT.value:
             self.sig_int_counter+=1
@@ -420,6 +423,7 @@ class TaskProcessingPipeline(object):
     def start(self):
         for stage in self.stages:
             stage.start()
+        self.global_shutdown_state.enable_signals() #Here, or can it be right after workers are created?
 
     def add_tasks(self, tasks):
         self.task_input.add_tasks(tasks=tasks)

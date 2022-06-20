@@ -63,17 +63,12 @@ def start(self):
             close_file_descriptor = False
 
         def preexec_function():
+            os.setpgrp() #put child in new process group so it won't receive signals from the parent
             if close_file_descriptor:
                 os.setsid()
-            def raise_keyboard_int():
-                raise KeyboardInterrupt("SIGTERM received")
-
-            #from https://stackoverflow.com/a/5050521
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            signal.signal(signal.SIGTERM, raise_keyboard_int)
 
         try:
-            self.popen = subprocess.Popen(self.args, cwd=cwd, stdout=logfileout, stderr=logfileerr, env=full_env, close_fds=close_file_descriptor, preexec_fn=preexec_function)
+            self.popen = subprocess.Popen(self.args, cwd=cwd, stdout=logfileout, stderr=logfileerr, env=full_env, close_fds=close_file_descriptor, start_new_session=True) #, preexec_fn=os.setpgrp)
         except OSError as e:
             self.started = True # must set so is_alive state is correct
             _logger.error("OSError(%d, %s)", e.errno, e.strerror)
@@ -113,7 +108,7 @@ from roslaunch.loader import convert_value, Loader
 import sys
 
 def param_value(self, verbose, name, ptype, value, textfile, binfile, command):
-    print("MY PARAM CODE IS ALSO CALLED")
+    #print("MY PARAM CODE IS ALSO CALLED")
     """
     Parse text representation of param spec into Python value
     @param name: param name, for error message use only
@@ -193,11 +188,9 @@ def param_value(self, verbose, name, ptype, value, textfile, binfile, command):
                             command[0] = executable_command
 
             def preexec_function():
-                # from https://stackoverflow.com/a/5050521
-                signal.signal(signal.SIGINT, signal.SIG_IGN)
-                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+                os.setpgrp()  # put child in new process group so it won't receive signals from the parent
 
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, preexec_fn=preexec_function)
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, start_new_session=True) # preexec_fn=preexec_function)
             c_value = p.communicate()[0]
             if not isinstance(c_value, str):
                 c_value = c_value.decode('utf-8')
@@ -216,3 +209,7 @@ def param_value(self, verbose, name, ptype, value, textfile, binfile, command):
 
 #p = subprocess.Popen(command, stdout=subprocess.PIPE)
 Loader.param_value = param_value
+
+
+from roslaunch.pmon import _signal_list
+_signal_list.clear()

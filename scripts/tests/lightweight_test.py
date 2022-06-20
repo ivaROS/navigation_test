@@ -25,7 +25,7 @@ master.start()
 
 
 def getTasks():
-    for seed in range(300):
+    for seed in range(1):
         task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot', 'world_args': {'gazebo_gui': False}}
         yield task
 
