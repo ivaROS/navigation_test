@@ -348,7 +348,7 @@ class GlobalShutdownState(object):
         self.sig_int_counter = 0
 
         sigint_cond = RunConditions.PROCESS_CURRENT
-        sigterm_cond = RunConditions.PROCESS_CURRENT #RunConditions.NONE
+        sigterm_cond = RunConditions.NONE
         self.shutdown_conditions =  [sigint_cond, sigterm_cond]
 
 
