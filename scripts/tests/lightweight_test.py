@@ -4,10 +4,16 @@ from nav_scripts.gazebo_master import MultiMasterCoordinator
 import time
 
 import signal
-signal.signal(signal.SIGINT, signal.SIG_IGN)
+#signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+def do_nothing(signum, frame):
+    print("Ignoring signal " + str(signum))
+
+signal.signal(signal.SIGINT, do_nothing)
+
 
 start_time = time.time()
-num_instances = 1
+num_instances = 3
 master = MultiMasterCoordinator(num_instances, save_results=False)
 master.fieldnames.extend(
     ['max_number_classes', 'laser_fov', 'ec_radius', 'cost_factor', 'selection_obst_cost_scale',
@@ -25,7 +31,7 @@ master.start()
 
 
 def getTasks():
-    for seed in range(1):
+    for seed in range(6):
         task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot', 'world_args': {'gazebo_gui': False}}
         yield task
 
