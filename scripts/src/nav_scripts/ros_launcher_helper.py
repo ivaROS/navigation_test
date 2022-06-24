@@ -279,49 +279,22 @@ class RosLauncherHelper(object):
         cls.exc_type_runtime = RosLauncherRuntimeException
 
 
-    def __init__(self, name, hide_stdout=False, use_mp=False, profile=False, is_core=False):
-        #self.ros_port=ros_port
+    def __init__(self, name, hide_stdout=False, profile=False, is_core=False):
         self.roslaunch_object = None
         self.hide_stdout=hide_stdout
-        self.use_mp = use_mp
         self.name = name
         self.profile = profile
         self.is_core = is_core
         self.current_value = None
         self.current_args = None
 
-        #self.ros_master_uri = "http://localhost:" + str(self.ros_port)
-        #os.environ["ROS_MASTER_URI"] = self.ros_master_uri
-
         self.monitor_event = mp.Event()
 
-        if self.use_mp:
-            self.startup_event = mp.Event()
-            self.launcher_status = PipeHelper(enabled=True)
-            self.pipe_input, self.pipe_output = mp.Pipe(duplex=True)
-            self.launcher_process = mp.Process(target=self.launch_process)
-            self.launcher_process.daemon=True
-            print("Starting roslaunch process")
-            self.launcher_process.start()
-            self.pipe_output.close()
-            print("Waiting for roslaunch process to finish initializing")
-            self.startup_event.wait()
-            print("Roslaunch process event satisfied!")
-        else:
-            self.launcher_status = PipeHelper(enabled=False)
-            self.launcher_status.set_target_function(func=self.status_func)
-            self.profiling = cProfile.Profile()
-            self.profiling.disable()
+        self.profiling = cProfile.Profile()
+        self.profiling.disable()
 
     def launch(self, launch_info):
-        if self.use_mp:
-            print("Process " + str(os.getpid()) + " Requested launch of " + str(launch_info.info) + " with args: " + str(launch_info.args))
-            self.pipe_input.send(launch_info)
-            res=self.pipe_input.recv()
-        else:
-            res = self.launch_impl(launch_info=launch_info)
-
-        return res
+        return self.launch_impl(launch_info=launch_info)
 
     def launch_impl(self, launch_info):
         if self.roslaunch_object is not None:
@@ -348,7 +321,7 @@ class RosLauncherHelper(object):
 
             #print("\n\n\nPORT selected: " + str(RosEnv.port) + ",     PID: " + str(os.getpid()))
 
-            sigterm_timeout = 2 if self.is_core else 15
+            sigterm_timeout = 15 #2 if self.is_core else 15
 
             with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
                 with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
@@ -400,58 +373,29 @@ class RosLauncherHelper(object):
     def get_launch_files(self, launch_info, rospack):
         print("Error! 'get_launch_file' has not been implemented for this launcher!")
         raise NotImplementedError()
-    
 
-    def status_func(self, cmd):
-        if cmd is None:
-            return self.roslaunch_object._shutting_down if self.roslaunch_object is not None else False
-        elif cmd =="profile":
-            self.profiling.enable()
-        elif cmd=="noprofile":
-            self.profiling.disable()
-            self.profiling.print_stats('cumulative')
-        elif cmd is True:
-            if self.roslaunch_object is not None:
-                res = self.roslaunch_object.shutdown()
-                self.roslaunch_object = None
-                return res
-            else:
-                return True
-
-
-    def launch_process(self):
-        self.pipe_input.close()
-
-        #status = lambda c : self.roslaunch_object._shutting_down
-        self.launcher_status.set_target_function(func=self.status_func)
-        self.startup_event.set()
-
-        self.profiling = cProfile.Profile()
-        self.profiling.disable()
-
-        print("Finished setting up roslaunch process!")
-
-        keep_going = True
-        while keep_going:
-            launch_info = self.pipe_output.recv()
-            res=self.launch_impl(launch_info=launch_info)
-            self.pipe_output.send(res)
 
     #TODO: shutdown 'dependent' launchers as well?
     def shutdown(self):
-        self.launcher_status.call(True)
         print("Shut down [" +str(self.name) + ']')
         self.current_value=None
         self.current_args=None
+        if self.roslaunch_object is not None:
+            res = self.roslaunch_object.shutdown()
+            self.roslaunch_object = None
+            return res
+        else:
+            return True
 
     def shutting_down(self):
-        return self.launcher_status.call(None)
+        return self.roslaunch_object._shutting_down if self.roslaunch_object is not None else False
 
     def enable_profiling(self):
-        return self.launcher_status.call("profile")
+        self.profiling.enable()
 
     def disable_profiling(self):
-        return self.launcher_status.call("noprofile")
+        self.profiling.disable()
+        self.profiling.print_stats('cumulative')
 
     def __enter__(self):
         pass
@@ -474,7 +418,7 @@ class RoscoreLauncher(RosLauncherHelper):
     #roscore_launch_mutex = mp.Lock()
 
     def __init__(self, use_existing_roscore):
-        super(RoscoreLauncher, self).__init__(name="core", hide_stdout=False, use_mp=False, profile=False, is_core=True)
+        super(RoscoreLauncher, self).__init__(name="core", hide_stdout=False, profile=False, is_core=True)
         RosEnv.init(use_existing_roscore=use_existing_roscore)
         self.use_existing_roscore = use_existing_roscore
 
@@ -513,7 +457,7 @@ class GazeboLauncher(RosLauncherHelper):
     gazebo_launch_mutex = mp.Lock()
 
     def __init__(self, robot_launcher=None):
-        super(GazeboLauncher, self).__init__(name="gazebo", hide_stdout=False, use_mp=False, profile=False, is_core=False)
+        super(GazeboLauncher, self).__init__(name="gazebo", hide_stdout=False, profile=False, is_core=False)
 
         gazebo_port = GazeboPort.port()
         gazebo_master_uri = "http://localhost:" + str(gazebo_port)
@@ -566,8 +510,7 @@ GazeboLauncher.init()
 
 class RobotLauncher(RosLauncherHelper):
     def __init__(self):
-        super(RobotLauncher, self).__init__(name="gazebo", hide_stdout=False, use_mp=False,
-                                             profile=False, is_core=False)
+        super(RobotLauncher, self).__init__(name="gazebo", hide_stdout=False, profile=False, is_core=False)
         self.current_value = None
         self.current_args = None
 
