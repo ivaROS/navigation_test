@@ -84,6 +84,8 @@ class ShutdownEventInterface(object):
         return self.wait_for_finish_event.is_set()
 
 class InterruptibleQueueWrapper(object):
+    #class Exception(BaseException): pass
+    #class NoMoreTasksException(Exception): pass
 
     def __init__(self, queue, shutdown_events, sleep_time=1, name="queue"):
         self.queue = queue
@@ -104,7 +106,6 @@ class InterruptibleQueueWrapper(object):
                 if not self.events.wait_for_put():
                     pass
                     #print("Not waiting to put task to [" + str(self.name) + "]")
-                    #raise GracefulShutdownException("Not waiting to put task to [" + str(self.name) + "]") #This prevents it from clearing out the input queueu
             else:
                 print("Added task " + str(task) + " to [" + str(self.name) + "]")
                 break
@@ -174,7 +175,6 @@ class TaskProcessingStage(object):
     def set_input_stage(self, stage):
         if stage is not None:
             stage.set_next_stage(self)
-            # stage.output_queue = self.input_queue
 
     def set_next_stage(self, stage):
         self.next_stage = stage
@@ -196,6 +196,7 @@ class TaskProcessingStage(object):
         except GracefulShutdownException as e:
             print(str(e))
 
+        #TODO: Maybe rename this 'cleanup' or something and make it 'final'?
         self.done()
 
     def signal_handler(self, signum, frame):
@@ -277,6 +278,9 @@ class ResultRecorder(TaskProcessingStage):
     def process_task(self, task):
         raise NotImplementedError("You must override 'process_task'!")
 
+class TaskProcessingException(BaseException): pass
+
+
 class Worker(TaskProcessingStage):
 
     def __init__(self, num, run_conditions=RunConditions.NONE):
@@ -287,7 +291,7 @@ class Worker(TaskProcessingStage):
         print(msg)
         try:
             result = self.task_result_func(task)
-        except InterruptedError as e:
+        except TaskProcessingException as e:
             result = str(e)
         finally:
             task["result"] = result

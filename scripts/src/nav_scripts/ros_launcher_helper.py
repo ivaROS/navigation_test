@@ -20,8 +20,8 @@ import os
 import sys
 import cProfile
 import nav_scripts.patch_roslaunch
+from nav_scripts.task_pipeline import TaskProcessingException
 
-#TODO: Move the actual launching part into separate process and use queus to send commands and retrieve results
 
 class PipeHelper(object):
 
@@ -244,10 +244,12 @@ class LauncherErrorCatcher(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None and issubclass(exc_type, type(self.launcher).exc_type):
-            print("Caught error from " + str(self.launcher.name) + ", shutting it down")
+            print("Caught error from [" + str(self.launcher.name) + "], shutting it down. Error was:\n" + str(exc_val))
             self.launcher.shutdown()
-            return True
+            #Shutdown the malfunctioning launcher but let the exception continue upwards
         pass
+
+
 
 
 class NavBenchException(BaseException):
@@ -261,7 +263,7 @@ class FatalNavBenchException(NavBenchException):
 class NonFatalNavBenchException(NavBenchException):
     pass
 
-class RosLauncherException(NonFatalNavBenchException):
+class RosLauncherException(TaskProcessingException):
     pass
 
 
@@ -352,8 +354,9 @@ class RosLauncherHelper(object):
     def update(self):
         try:
             if self.roslaunch_object.pm.is_shutdown:
+                #self.shutdown()
                 raise self.exc_type_runtime
-        except AttributeError as e:
+        except AttributeError as e: #If any of those don't exist, something is wrong
             print(str(e))
             raise self.exc_type_runtime from e
 
@@ -377,10 +380,10 @@ class RosLauncherHelper(object):
 
     #TODO: shutdown 'dependent' launchers as well?
     def shutdown(self):
-        print("Shut down [" +str(self.name) + ']')
         self.current_value=None
         self.current_args=None
         if self.roslaunch_object is not None:
+            print("Shut down [" + str(self.name) + ']')
             res = self.roslaunch_object.shutdown()
             self.roslaunch_object = None
             return res
@@ -510,7 +513,7 @@ GazeboLauncher.init()
 
 class RobotLauncher(RosLauncherHelper):
     def __init__(self):
-        super(RobotLauncher, self).__init__(name="gazebo", hide_stdout=False, profile=False, is_core=False)
+        super(RobotLauncher, self).__init__(name="robot", hide_stdout=False, profile=False, is_core=False)
         self.current_value = None
         self.current_args = None
 

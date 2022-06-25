@@ -25,7 +25,7 @@ import contextlib
 from nav_scripts.testing_scenarios import TestingScenarios
 from nav_scripts.controller_launcher import ControllerLauncher
 from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher, LauncherErrorCatcher, NonFatalNavBenchException, RosLauncherMonitor
-from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker
+from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker, TaskProcessingException
 
 import rospy
 import csv
@@ -202,6 +202,7 @@ class GazeboMaster(Worker):
                 os.environ['DISPLAY'] = ':0'
 
     def run(self):
+        #TODO: Add top level loop to allow restarting if roscore dies or something like that
         self.setup()
         self.monitor.append(self.interrupt_monitor)
 
@@ -221,9 +222,7 @@ class GazeboMaster(Worker):
         rospy.loginfo("Got next task [" + str(task) + "]")
         try:
             result = self.task_result_func(task=task)
-        except InterruptedError as e:   #TODO: Clean this up and replace InterruptedError with a custom version derived from FatalNavBenchException
-            result = {"result": "ERROR", "error_details": str(e)}
-        except NonFatalNavBenchException as e:
+        except TaskProcessingException as e:
             result = {"result": "ERROR", "error_details": str(e)}
         finally:
             task["worker"] = self.name
