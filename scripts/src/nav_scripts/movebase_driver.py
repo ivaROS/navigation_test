@@ -24,6 +24,9 @@ import threading
 import time
 import angles
 from std_msgs.msg import Int16 as Int16msg
+from nav_scripts.interruptible import Rate, InterruptedSleepException
+
+
 
 class BumperChecker(object):
     def __init__(self):
@@ -264,40 +267,6 @@ class OdomAccumulator(object):
         return self.accum_rotation
 
 
-def run_testImpl(pose):
-    client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-    print("waiting for server")
-    client.wait_for_server()
-    print("Done!")
-
-    # Create the goal point
-    goal = MoveBaseGoal()
-    goal.target_pose.pose.position.x = pose[0]
-    goal.target_pose.pose.position.y = pose[1]
-    goal.target_pose.pose.position.z = pose[2]
-    quaternion = tf.transformations.quaternion_from_euler(pose[3], pose[4], pose[5])
-    
-    goal.target_pose.pose.orientation.x = quaternion[0]
-    goal.target_pose.pose.orientation.y = quaternion[1]
-    goal.target_pose.pose.orientation.z = quaternion[2]
-    goal.target_pose.pose.orientation.w = quaternion[3]
-    goal.target_pose.header.frame_id = 'map'
-    goal.target_pose.header.stamp = rospy.Time.now()
-
-    # Send the goal!
-    print("sending goal")
-    client.send_goal(goal)
-    print("waiting for result")
-    client.wait_for_result(rospy.Duration(300))
-    print("done!")
-
-    # 3 means success, according to the documentation
-    # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
-    print("getting goal status")
-    print(client.get_goal_status_text())
-    print("done!")
-    print("returning state number")
-    return client.get_state() == 3
 
 def reset_costmaps():
     service = rospy.ServiceProxy("move_base/clear_costmaps", std_srvs.Empty)
@@ -380,7 +349,7 @@ def run_test(goal_pose, record=False, timeout=None, monitor=None):
 
     print("waiting for result")
 
-    r = rospy.Rate(5)
+    r = Rate(hz=5, timeout=1)
 
     start_time = rospy.Time.now()
 
@@ -388,8 +357,6 @@ def run_test(goal_pose, record=False, timeout=None, monitor=None):
 
     keep_waiting = True
     while keep_waiting:
-        if monitor is not None:
-            monitor.update()
         state = client.get_state()
         #print "State: " + str(state)
         if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
@@ -407,7 +374,15 @@ def run_test(goal_pose, record=False, timeout=None, monitor=None):
             keep_waiting = False
             result = "TIMED_OUT"
         else:
-            r.sleep()
+            try:
+                r.sleep()
+            except InterruptedSleepException as e:
+                print("Interrupted sleep")
+                pass
+            finally:
+                if monitor is not None:
+                    monitor.update()
+
         rospy.loginfo_throttle(period=5, msg="Waiting for result...")
 
     task_time = str(rospy.Time.now() - start_time)
