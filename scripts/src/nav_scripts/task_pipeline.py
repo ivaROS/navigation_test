@@ -162,8 +162,8 @@ class TaskProcessingStage(object):
         self.output_queue = None
         self.prev_stage = None
         self.next_stage = None
-        self.task_exec = mp.Process(target=self.run, daemon=False) if self.use_mp else threading.Thread(
-            target=self.run, daemon=False)
+        #self.task_exec = mp.Process(target=self.run, daemon=False) if self.use_mp else threading.Thread(target=self.run, daemon=False)
+        self.task_exec = (mp.Process if self.use_mp else threading.Thread)(target=self.run, daemon=False, name=name)
 
         self.num_processed = mp.Value('i', 0)
         self.num_ignored = mp.Value('i', 0)
@@ -186,6 +186,7 @@ class TaskProcessingStage(object):
 
     def run(self):
         if self.use_mp:
+            threading.current_thread().setName(self.name + "MainThread")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
         try:
@@ -278,8 +279,17 @@ class ResultRecorder(TaskProcessingStage):
     def process_task(self, task):
         raise NotImplementedError("You must override 'process_task'!")
 
-class TaskProcessingException(BaseException): pass
+class TaskProcessingException(Exception):
+    def __init__(self, msg="", task=None):
+        super(TaskProcessingException, self).__init__()
+        self.msg = msg
+        self.task = task
 
+    def __str__(self):
+        return str(self.msg) + ": task=" + str(self.task) if self.task is not None else ""
+
+    def __repr__(self):
+        return self.__str__()
 
 class Worker(TaskProcessingStage):
 
@@ -398,7 +408,7 @@ class GlobalShutdownState(object):
 
             def update(myself):
                 if self.process_current_event.is_set():
-                    raise InterruptedError("Task interrupted!")
+                    raise TaskProcessingException("Task interrupted!")
 
         m = InterruptMonitor()
         return m

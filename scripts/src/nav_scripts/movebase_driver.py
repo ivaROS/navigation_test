@@ -3,7 +3,7 @@ from __future__ import print_function
 from builtins import str
 from builtins import object
 import rospy
-import actionlib
+#import actionlib
 from move_base_msgs.msg import *
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, PoseArray
 from pprint import pprint
@@ -24,8 +24,8 @@ import threading
 import time
 import angles
 from std_msgs.msg import Int16 as Int16msg
-from nav_scripts.interruptible import Rate, InterruptedSleepException
-
+from nav_scripts.interruptible import Rate, InterruptedSleepException, SimpleActionClient
+from nav_scripts.task_pipeline import TaskProcessingException
 
 
 class BumperChecker(object):
@@ -311,16 +311,21 @@ def run_test(goal_pose, record=False, timeout=None, monitor=None):
     if record:
         result_recorder = ResultRecorder()
 
-    client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+    client = SimpleActionClient('move_base', MoveBaseAction)
     print("waiting for server")
     rospy.loginfo("Waiting for MoveBaseActionServer...")
-    if client.wait_for_server(timeout=rospy.Duration(secs=20)):
-        print("Done!")
-        rospy.loginfo("Found MoveBaseActionServer!")
-    else:
-        rospy.logerr("MoveBaseActionServer not found!")
-        return "MoveBaseActionServer not found!"
-
+    while True:
+        try:
+            if client.wait_for_server(timeout=rospy.Duration(secs=20), wall_timeout=1):
+                print("Done!")
+                rospy.loginfo("Found MoveBaseActionServer!")
+                break
+            else:
+                rospy.logerr("MoveBaseActionServer not found!")
+                return TaskProcessingException("MoveBaseActionServer not found!")
+        except InterruptedSleepException as e:
+            if monitor is not None:
+                monitor.update()
 
     # Create the goal point
     goal = MoveBaseGoal()

@@ -21,6 +21,7 @@ import sys
 import cProfile
 import nav_scripts.patch_roslaunch
 from nav_scripts.task_pipeline import TaskProcessingException
+import traceback
 
 
 class PipeHelper(object):
@@ -244,7 +245,7 @@ class LauncherErrorCatcher(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None and issubclass(exc_type, type(self.launcher).exc_type):
-            print("Caught error from [" + str(self.launcher.name) + "], shutting it down. Error was:\n" + str(exc_val))
+            print("Caught error from [" + str(self.launcher.name) + "], shutting it down. Error was:\n" + ''.join(traceback.format_exception(None, value=exc_val, tb=exc_tb)))
             self.launcher.shutdown()
             #Shutdown the malfunctioning launcher but let the exception continue upwards
         pass
@@ -264,7 +265,8 @@ class NonFatalNavBenchException(NavBenchException):
     pass
 
 class RosLauncherException(TaskProcessingException):
-    pass
+    def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", task=None):
+        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " Error " + str(msg), task=task)
 
 
 
@@ -272,9 +274,17 @@ class RosLauncherHelper(object):
 
     @classmethod
     def init(cls):
-        class RosLauncherTypeException(RosLauncherException): pass
-        class RosLauncherRuntimeException(RosLauncherTypeException): pass
-        class RosLauncherLaunchException(RosLauncherTypeException): pass
+        class RosLauncherTypeException(RosLauncherException):
+            def __init__(self, exc_type="", launch_files="", msg="", task=None):
+                super(RosLauncherTypeException, self).__init__(launcher_type=cls, exc_type=exc_type, msg=msg, task=task, launch_files=launch_files)
+
+        class RosLauncherRuntimeException(RosLauncherTypeException):
+            def __init__(self, msg="", launch_files="", task=None):
+                super(RosLauncherRuntimeException, self).__init__(exc_type="Runtime", msg=msg, task=task, launch_files=launch_files)
+
+        class RosLauncherLaunchException(RosLauncherTypeException):
+            def __init__(self, msg="", launch_files= "", task=None):
+                super(RosLauncherLaunchException, self).__init__(exc_type="Launch", msg="while launching files " + str(launch_files) + str(msg), task=task, launch_files=launch_files)
 
         cls.exc_type = RosLauncherTypeException
         cls.exc_type_launch = RosLauncherLaunchException
@@ -336,7 +346,7 @@ class RosLauncherHelper(object):
                             )
                             self.roslaunch_object.start()
                         except roslaunch.core.RLException as e:
-                            raise type(self).exc_type_launch from e
+                            raise type(self).exc_type_launch(msg="launching error") from e
 
 
         return True
@@ -355,10 +365,10 @@ class RosLauncherHelper(object):
         try:
             if self.roslaunch_object.pm.is_shutdown:
                 #self.shutdown()
-                raise self.exc_type_runtime
+                raise self.exc_type_runtime(msg="Monitor update failed")
         except AttributeError as e: #If any of those don't exist, something is wrong
             print(str(e))
-            raise self.exc_type_runtime from e
+            raise self.exc_type_runtime(msg="Monitor update failed") from e
 
 
 

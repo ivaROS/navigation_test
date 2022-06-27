@@ -41,6 +41,98 @@ class Rate(rospy.Rate):
             self.last_time = curr_time
 
 
+class HybridTimeout(object):
+
+    def __init__(self, ros_timeout, wall_timeout=None):
+
+        self.ros_timeout_time = rospy.get_rostime() + ros_timeout
+        self.wall_timeout_time = time.time() + wall_timeout if wall_timeout is not None else None
+
+    def is_time(self):
+        rem_ros, rem_wall = self.time_remaining()
+        if rem_ros <= 0:
+            return True
+        if rem_wall <= 0:
+            raise InterruptedSleepException
+        return False
+
+    def time_remaining(self):
+        rem_ros = self.ros_timeout_time - rospy.get_rostime()
+        rem_wall = self.wall_timeout_time - time.time() if self.wall_timeout_time is not None else .001
+        return (rem_ros, rem_wall)
+
+    #Sleep for the shorter of the specified ros and wall timeouts
+    def sleep(self):
+        pass
+
+
+import actionlib.action_client
+class ActionClient(actionlib.action_client.ActionClient):
+    ## @brief Waits for the ActionServer to connect to this client
+    ##
+    ## Often, it can take a second for the action server & client to negotiate
+    ## a connection, thus, risking the first few goals to be dropped. This call lets
+    ## the user wait until the network connection to the server is negotiated
+    def wait_for_server(self, timeout=rospy.Duration(0.0), wall_timeout=None):
+        # return super(SimpleActionClient,self).wait_for_server(timeout=timeout)
+
+        started = False
+        ros_timeout_time = rospy.get_rostime() + timeout
+        wall_timeout_time = time.time() + wall_timeout if wall_timeout is not None else None
+        while not rospy.is_shutdown():
+            if self.last_status_msg:
+                server_id = self.last_status_msg._connection_header['callerid']
+
+                if self.pub_goal.impl.has_connection(server_id) and \
+                        self.pub_cancel.impl.has_connection(server_id):
+                    # We'll also check that all of the subscribers have at least
+                    # one publisher, this isn't a perfect check, but without
+                    # publisher callbacks... it'll have to do
+                    status_num_pubs = 0
+                    for stat in self.status_sub.impl.get_stats()[1]:
+                        if stat[4]:
+                            status_num_pubs += 1
+
+                    result_num_pubs = 0
+                    for stat in self.result_sub.impl.get_stats()[1]:
+                        if stat[4]:
+                            result_num_pubs += 1
+
+                    feedback_num_pubs = 0
+                    for stat in self.feedback_sub.impl.get_stats()[1]:
+                        if stat[4]:
+                            feedback_num_pubs += 1
+
+                    if status_num_pubs > 0 and result_num_pubs > 0 and feedback_num_pubs > 0:
+                        started = True
+                        break
+
+            if timeout != rospy.Duration(0.0) and rospy.get_rostime() >= ros_timeout_time:
+                break
+            elif wall_timeout_time is not None and time.time() >= wall_timeout_time:
+                raise InterruptedSleepException
+
+            time.sleep(0.01)
+
+        return started
+
+
+import threading
+
+import actionlib.simple_action_client
+class SimpleActionClient(actionlib.simple_action_client.SimpleActionClient):
+
+    def __init__(self, ns, ActionSpec):
+        self.action_client = ActionClient(ns, ActionSpec)
+        self.simple_state = actionlib.simple_action_client.SimpleGoalState.DONE
+        self.gh = None
+        self.done_condition = threading.Condition()
+
+    def wait_for_server(self, timeout=rospy.Duration(0.0), wall_timeout=None):
+        return self.action_client.wait_for_server(timeout, wall_timeout)
+
+
+
 def sleep(duration, timeout=None):
     """
     sleep for the specified duration in ROS time. If duration
@@ -103,3 +195,4 @@ def sleep(duration, timeout=None):
             raise rospy.exceptions.ROSTimeMovedBackwardsException(time_jump)
         if rospy.core.is_shutdown():
             raise rospy.exceptions.ROSInterruptException("ROS shutdown request")
+

@@ -303,5 +303,8 @@ class GazeboMaster(Worker):
                 result = "bad_scenario"
         except NonFatalNavBenchException as e:
             result = {"result": "ERROR", "error_details": str(e)}
+        except Exception as e:
+            print(e)
+            raise
 
         return result
