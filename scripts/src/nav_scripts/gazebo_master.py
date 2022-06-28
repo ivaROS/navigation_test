@@ -279,24 +279,9 @@ class GazeboMaster(Worker):
                                         result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record, timeout=timeout, monitor=self.monitor)
 
                                     scenario.cleanup()
-                                #TODO: check if there are any other relevant exceptions to catch
-                                except rospy.ROSException as e:
+                                #TODO: more granular handling
+                                except (rospy.ROSException, rospy.ServiceException) as e:
                                     raise GazeboLauncher.exc_type from e
-
-                                # except rospy.ROSException as e:
-                                #     result = "ROSException: " + str(e)
-                                #     task["error"]= True
-                                #     self.had_error = True
-                                # except roslaunch.RLException as e:  #These are launch-specific exceptions, and probably shouldn't be caught anyway
-                                #     result = "RLException: " + str(e)
-
-                                #finally?
-                                #self.controller_launcher.shutdown()
-
-                            # else:
-                            #     result = "gazebo_crash"
-                            #     task["error"] = True
-                            #     self.had_error = True
                     else:
                         result = "bad_robot"
             else:

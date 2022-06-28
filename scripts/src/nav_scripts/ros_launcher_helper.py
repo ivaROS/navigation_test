@@ -20,7 +20,7 @@ import os
 import sys
 import cProfile
 import nav_scripts.patch_roslaunch
-from nav_scripts.task_pipeline import TaskProcessingException
+from nav_scripts.task_pipeline import TaskProcessingException, ExceptionLevels
 import traceback
 
 
@@ -120,7 +120,10 @@ class RoslaunchEnvironmentSourcer(EnvironmentSourcer):
     roslaunch_rospack_mutex = threading.Lock()
 
     def __init__(self, bash_source_file=None):
-        super(RoslaunchEnvironmentSourcer, self).__init__(bash_source_file=bash_source_file)
+        try:
+            super(RoslaunchEnvironmentSourcer, self).__init__(bash_source_file=bash_source_file)
+        except FileNotFoundError as e:
+            raise TaskProcessingException(msg="Unable to source specified environment: " + str(e), exc_level=ExceptionLevels.BAD_CONFIG)
         self.roslaunch_rospack_bak = None
 
     def __enter__(self):
@@ -222,7 +225,7 @@ class RosEnv(object):
             ros_master_uri = os.environ["ROS_MASTER_URI"]
         except KeyError as e:
             print("No ROS_MASTER_URI specified!")
-            raise e
+            raise TaskProcessingException(msg=str(e), exc_level=ExceptionLevels.BAD_CONFIG) from e
         else:
             port_ind = ros_master_uri.rindex(":")
             port_str = ros_master_uri[port_ind+1:]
@@ -265,8 +268,8 @@ class NonFatalNavBenchException(NavBenchException):
     pass
 
 class RosLauncherException(TaskProcessingException):
-    def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", task=None):
-        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " Error " + str(msg), task=task)
+    def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", **kwargs):
+        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " Error " + str(msg), kwargs=kwargs)
 
 
 
@@ -275,16 +278,16 @@ class RosLauncherHelper(object):
     @classmethod
     def init(cls):
         class RosLauncherTypeException(RosLauncherException):
-            def __init__(self, exc_type="", launch_files="", msg="", task=None):
-                super(RosLauncherTypeException, self).__init__(launcher_type=cls, exc_type=exc_type, msg=msg, task=task, launch_files=launch_files)
+            def __init__(self, exc_type="", launch_files="", msg="", **kwargs):
+                super(RosLauncherTypeException, self).__init__(launcher_type=cls, exc_type=exc_type, msg=msg, launch_files=launch_files, kwargs=kwargs)
 
         class RosLauncherRuntimeException(RosLauncherTypeException):
-            def __init__(self, msg="", launch_files="", task=None):
-                super(RosLauncherRuntimeException, self).__init__(exc_type="Runtime", msg=msg, task=task, launch_files=launch_files)
+            def __init__(self, msg="", launch_files="", **kwargs):
+                super(RosLauncherRuntimeException, self).__init__(exc_type="Runtime", msg=msg, launch_files=launch_files, exc_level=ExceptionLevels.FLUKE, kwargs=kwargs)
 
         class RosLauncherLaunchException(RosLauncherTypeException):
-            def __init__(self, msg="", launch_files= "", task=None):
-                super(RosLauncherLaunchException, self).__init__(exc_type="Launch", msg="while launching files " + str(launch_files) + str(msg), task=task, launch_files=launch_files)
+            def __init__(self, msg="", launch_files= "", **kwargs):
+                super(RosLauncherLaunchException, self).__init__(exc_type="Launch", msg="while launching files " + str(launch_files) + str(msg), launch_files=launch_files, exc_level=ExceptionLevels.BAD_CONFIG, kwargs=kwargs)
 
         cls.exc_type = RosLauncherTypeException
         cls.exc_type_launch = RosLauncherLaunchException

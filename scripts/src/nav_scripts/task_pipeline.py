@@ -279,11 +279,18 @@ class ResultRecorder(TaskProcessingStage):
     def process_task(self, task):
         raise NotImplementedError("You must override 'process_task'!")
 
+class ExceptionLevels(enum.IntEnum):
+    FLUKE = enum.auto()
+    BAD_CONFIG = enum.auto()
+    FATAL = enum.auto()
+
+
 class TaskProcessingException(Exception):
-    def __init__(self, msg="", task=None):
+    def __init__(self, msg="", task=None, exc_level=ExceptionLevels.FLUKE, **kwargs):
         super(TaskProcessingException, self).__init__()
         self.msg = msg
         self.task = task
+        self.exc_level = exc_level
 
     def __str__(self):
         return str(self.msg) + ": task=" + str(self.task) if self.task is not None else ""
@@ -299,6 +306,7 @@ class Worker(TaskProcessingStage):
     def process_task(self, task):
         msg = "[" + str(self.name) + "]: Do some work (" + str(task) + ")"
         print(msg)
+        #TODO: Allow repeating task in the event of an error
         try:
             result = self.task_result_func(task)
         except TaskProcessingException as e:
@@ -408,7 +416,7 @@ class GlobalShutdownState(object):
 
             def update(myself):
                 if self.process_current_event.is_set():
-                    raise TaskProcessingException("Task interrupted!")
+                    raise TaskProcessingException("Task interrupted!", exc_level=ExceptionLevels.FATAL)
 
         m = InterruptMonitor()
         return m

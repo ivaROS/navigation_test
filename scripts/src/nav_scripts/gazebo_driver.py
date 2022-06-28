@@ -40,6 +40,7 @@ import std_msgs.msg as std_msgs
 #Copied from pips_test: gazebo_driver.py
 # Load model xml from file
 def load_model_xml(filename):
+  #TODO: raise exceptions rather than exiting
   if os.path.exists(filename):
       if os.path.isdir(filename):
           print("Error: file name is a path?", filename)
@@ -52,8 +53,8 @@ def load_model_xml(filename):
       print("Error: file does not exist", filename)
       sys.exit(0)
 
-  f = open(filename,'r')
-  model_xml = f.read()
+  with open(filename,'r') as f:
+      model_xml = f.read()
   if model_xml == "":
       print("Error: file is empty", filename)
       sys.exit(0)
@@ -242,8 +243,9 @@ class GazeboDriver(object):
                              gazebo_namespace):
     def init_service_client():
       rospy.loginfo("Waiting for service %s/spawn_sdf_model" % gazebo_namespace)
-      rospy.wait_for_service(gazebo_namespace + '/spawn_sdf_model')
+      #rospy.wait_for_service(gazebo_namespace + '/spawn_sdf_model')
       self.spawn_sdf_model = rospy.ServiceProxy(gazebo_namespace + '/spawn_sdf_model', SpawnModel, persistent=True)
+      self.spawn_sdf_model.wait_for_service(timeout=self.timeout)
 
     def call_service():
       rospy.loginfo("Calling service %s/spawn_sdf_model" % gazebo_namespace)
@@ -254,14 +256,19 @@ class GazeboDriver(object):
     if self.spawn_sdf_model is None:
       init_service_client()
 
-    for attempt in range(3):
+    num_attempts = 3
+
+    for attempt in range(num_attempts):
       try:
         rospy.loginfo("custom spawn model function")
         return call_service()
       except rospy.ServiceException as e:
         print("Service call failed: %s" % e)
-        print("Reinitializing service client...")
-        init_service_client()
+        if attempt < num_attempts - 1:
+          print("Reinitializing service client...")
+          init_service_client()
+        else:
+          raise
 
 
 
@@ -499,7 +506,7 @@ class GazeboDriver(object):
   def updateModels(self, timeout=2):
     self.models = rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=timeout)
 
-  #TODO: make return value depend on results of checks
+  #Raises ROSException if timeout reached
   def checkServicesTopics(self, timeout=2):
     self.updateModels(timeout)
     rospy.wait_for_service(self.get_model_state_service_name, timeout=timeout)
@@ -539,7 +546,7 @@ class GazeboDriver(object):
     self.odom_pub = rospy.Publisher(
       '/mobile_base/commands/reset_odometry', std_msgs.Empty, queue_size=1)
 
-    self.rospack = rospkg.RosPack()
+    self.rospack = rospkg.RosPack() #TODO: allow specifying environment
 
     self.models = None
     
