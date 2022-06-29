@@ -22,15 +22,15 @@ import itertools
 import socket
 import contextlib
 
-from nav_scripts.testing_scenarios import TestingScenarios
+from nav_scripts.testing_scenarios import TestingScenarios, TestingScenarioError
 from nav_scripts.controller_launcher import ControllerLauncher
-from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher, LauncherErrorCatcher, NonFatalNavBenchException, RosLauncherMonitor
-from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker, TaskProcessingException
+from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher, LauncherErrorCatcher, RosLauncherMonitor
+from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker, TaskProcessingException, ExceptionLevels
 
 import rospy
 import csv
 import datetime
-
+import traceback
 
 class ConsoleResultRecorder(ResultRecorder):
     def __init__(self):
@@ -224,6 +224,9 @@ class GazeboMaster(Worker):
             result = self.task_result_func(task=task)
         except TaskProcessingException as e:
             result = {"result": "ERROR", "error_details": str(e)}
+        except Exception as e:
+            print(str(e))
+            result = {"result": "UNEXPECTED_ERROR", "error_details": str(e)}
         finally:
             task["worker"] = self.name
 
@@ -236,60 +239,142 @@ class GazeboMaster(Worker):
             self.output_queue.put(task)
 
 
+
     def task_result_func(self, task):
-        try:
-            scenario = self.scenarios.getScenario(task)
-            #TODO: Replace this kind of logic with custom exceptions
-            if scenario is not None:
+        with get_scenario_helper(self, task) as scenario: #Currently no reason to use as context manager
+            with scenario.launch_gazebo() as gazebo:  #start it if needed, close it if error
+                gazebo.launch()
+                with scenario.launch_robot() as robot: #same here
+                    robot.launch()
+                    with scenario.setup():
+                        with scenario.launch_controller() as controller:
+                            controller.launch()
+                            with scenario.setup():
+                                result = scenario.run()
+                                return result
 
-                with LauncherErrorCatcher(self.gazebo_launcher):
-                    #TODO: handle failure to launch gazebo
-                    world_args = task["world_args"] if "world_args" in task else {}
-                    world_args.update(scenario.getWorldArgs())
-                    self.gazebo_launcher.launch(world=scenario.getGazeboLaunchFile(), world_args=world_args) #pass in world info
-                    if world_args is not None:
-                        task.update(world_args)
-                    if "robot" in task and task['robot'] is not None:
-                        with LauncherErrorCatcher(self.robot_launcher):
-                            robot_args = task["robot_args"] if "robot_args" in task else {}
-                            self.robot_launcher.launch(robot=task["robot"], robot_args=robot_args)
-                            task.update(robot_args)
 
-                            if task["controller"] is None:
-                                result = "nothing"
-                            else:
-                                self.gazebo_launcher.update()
+def get_scenario_helper(self, task):
+    class LauncherArgHelper(object):
+        def __init__(myself):
+            myself.name = type(myself).name
+            myself.launcher = type(myself).launcher
+            myself.init_value()
+            myself.init_args()
+            myself.update_task_args()
 
-                                controller_args = task["controller_args"] if "controller_args" in task else {}
+        def init_value(myself):
+            try:
+                myself.value = task[myself.name]
+            except KeyError as e:
+                raise TestingScenarioError(msg="Task is missing required key! " + str(e), exc_level=ExceptionLevels.BAD_CONFIG) from e
 
-                                try:
-                                    #TODO: Catch exceptions that don't necessarily indicate a fatal problem
-                                    scenario.setupScenario()
+        def init_args(myself):
+            myself.arg_name = myself.name + "_args"
+            try:
+                myself.args = task[myself.arg_name]
+            except KeyError:
+                myself.args = {}
 
-                                    #Ensure controller shutdown immediately following experiment
-                                    with self.controller_launcher:
-                                        self.controller_launcher.launch(robot=task["robot"], controller_name=task["controller"], controller_args=controller_args)
-                                        task.update(controller_args)    #Adding controller arguments to main task dict for easy logging
+        def update_task_args(myself):
+            try:
+                task[myself.arg_name].update(myself.args)
+            except KeyError:
+                task[myself.arg_name] = myself.args
 
-                                        print("Running test...")
+        def launch(myself, **kwargs):
+            base_kwargs = {myself.name: myself.value, myself.arg_name: myself.args}
+            base_kwargs.update(kwargs)
+            myself.launcher.launch(**base_kwargs)
+            #myself.launcher.launch(myself.value, myself.args)
 
-                                        record = task["record"] if "record" in task else False
-                                        timeout = task["timeout"] if "timeout" in task else None
-                                        #TODO: make this a more informative type
-                                        result = test_driver.run_test(goal_pose=scenario.getGoalMsg(), record=record, timeout=timeout, monitor=self.monitor)
+        def __enter__(myself):
+            #myself.launcher.__enter__()
+            return myself
 
-                                    scenario.cleanup()
-                                #TODO: more granular handling
-                                except (rospy.ROSException, rospy.ServiceException) as e:
-                                    raise GazeboLauncher.exc_type from e
-                    else:
-                        result = "bad_robot"
-            else:
-                result = "bad_scenario"
-        except NonFatalNavBenchException as e:
-            result = {"result": "ERROR", "error_details": str(e)}
-        except Exception as e:
-            print(e)
-            raise
+        #The way using this system, don't want to close launchers on exit
+        def __exit__(myself, exc_type, exc_val, exc_tb):
+            if exc_type is not None and issubclass(exc_type, type(myself.launcher).exc_type):
+                print("Caught error from [" + str(myself.launcher.name) + "], shutting it down. Error was:\n" + str(exc_val) + "\n" + ''.join(
+                    traceback.format_exception(None, value=exc_val, tb=exc_tb)))
+                myself.launcher.shutdown()
 
-        return result
+    class ScenarioHelper(object):
+
+        def __init__(myself):
+            myself.scenario = self.scenarios.getScenario(task)
+
+        def __enter__(myself):
+            return myself
+
+        def __exit__(myself, exc_type, exc_val, exc_tb):
+            pass
+
+        def launch_gazebo(myself):
+            class GazeboHelper(LauncherArgHelper):
+                name = "world"
+                launcher = self.gazebo_launcher
+
+                def init_value(gzself):
+                    try:
+                        gzself.value = myself.scenario.getGazeboLaunchFile()
+                    except Exception as e:
+                        raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=task)
+
+            myself.gazebo = GazeboHelper()
+            return myself.gazebo
+
+        def launch_robot(myself):
+            class RobotHelper(LauncherArgHelper):
+                name = "robot"
+                launcher = self.robot_launcher
+
+            myself.robot = RobotHelper()
+            return myself.robot
+
+        def launch_controller(myself):
+            class ControllerHelper(LauncherArgHelper):
+                name = "controller"
+                launcher = self.controller_launcher
+
+                def launch(gzself):
+                    gzself.launcher.launch(robot=myself.robot.value, controller_name=gzself.value, controller_args=gzself.args)
+
+                def __exit__(gzself, exc_type, exc_val,
+                             exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
+                    gzself.launcher.__exit__(exc_type=exc_type, exc_val=exc_val, exc_tb=exc_tb)
+
+            myself.controller = ControllerHelper()
+            return myself.controller
+
+        def setup(myself):
+            class ScenarioSetup(object):
+
+                def __enter__(gzself):
+                    myself.scenario.setupScenario()
+
+                def __exit__(gzself, exc_type, exc_val, exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
+                    if isinstance(exc_val, (rospy.ROSException, rospy.ServiceException)):
+                        raise TestingScenarioError(str(exc_val)) from exc_val
+                    elif exc_val is None:
+                        try:
+                            myself.scenario.cleanup()
+                        except (rospy.ROSException, rospy.ServiceException) as e:
+                            """
+                            NOTE: In this situation, we would ideally shut some things down, but we don't want to 
+                            lose the result. One option might be to place the result in the exception, 
+                            and check for it when handling the exception
+                            """
+                            #raise TestingScenarioError(str(e)) from e
+                            print(str(e))
+
+            return ScenarioSetup()
+
+        def run(myself):
+            timeout = task["timeout"] if "timeout" in task else None
+            record = task["record"] if "record" in task else False
+            result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(), record=record, timeout=timeout,
+                                          monitor=self.monitor)
+            return result
+
+    return ScenarioHelper()

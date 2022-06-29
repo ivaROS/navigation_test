@@ -269,7 +269,7 @@ class NonFatalNavBenchException(NavBenchException):
 
 class RosLauncherException(TaskProcessingException):
     def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", **kwargs):
-        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " Error " + str(msg), kwargs=kwargs)
+        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " error: " + str(msg), kwargs=kwargs)
 
 
 
@@ -320,7 +320,11 @@ class RosLauncherHelper(object):
         args = launch_info.args
 
         with RoslaunchEnvironmentSourcer(bash_source_file=bash_source_file) as rospack:
-            launch_files = self.get_launch_files(launch_info=launch_info, rospack=rospack)
+            try:
+                launch_files = self.get_launch_files(launch_info=launch_info, rospack=rospack)
+            except FileNotFoundError as e:
+                raise type(self).exc_type_launch(msg="launch file error") from e
+
             #TODO: verify that all files exist?
 
             print("Launching [" + self.name + "] with pid: " + str(os.getpid()))
@@ -336,7 +340,7 @@ class RosLauncherHelper(object):
 
             #print("\n\n\nPORT selected: " + str(RosEnv.port) + ",     PID: " + str(os.getpid()))
 
-            sigterm_timeout = 15 #2 if self.is_core else 15
+            sigterm_timeout = 5
 
             with open(os.devnull, "w") if self.hide_stdout else contextlib.nullcontext() as error_out:
                 with contextlib.redirect_stderr(error_out) if self.hide_stdout else contextlib.nullcontext():
@@ -481,7 +485,7 @@ class GazeboLauncher(RosLauncherHelper):
 
         self.robot_launcher=robot_launcher
 
-    def launch(self, world, world_args=None):
+    def launch(self, *, world, world_args=None):
         if world == self.current_value and world_args == self.current_args:
             if not self.shutting_down():
                 print("No need to launch gazebo world, already running!")
@@ -530,7 +534,7 @@ class RobotLauncher(RosLauncherHelper):
         self.current_value = None
         self.current_args = None
 
-    def launch(self, robot, robot_args=None):
+    def launch(self, *, robot, robot_args=None):
         rospy.loginfo("Launching Gazebo Robot [" + robot + "] with args [" + str(robot_args) + "]")
 
         if robot == self.current_value and robot_args == self.current_args:

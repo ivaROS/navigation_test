@@ -293,7 +293,7 @@ class TaskProcessingException(Exception):
         self.exc_level = exc_level
 
     def __str__(self):
-        return str(self.msg) + ": task=" + str(self.task) if self.task is not None else ""
+        return str(self.msg) + (": task=" + str(self.task) if self.task is not None else "")
 
     def __repr__(self):
         return self.__str__()
