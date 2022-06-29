@@ -245,7 +245,7 @@ class GazeboDriver(object):
       rospy.loginfo("Waiting for service %s/spawn_sdf_model" % gazebo_namespace)
       #rospy.wait_for_service(gazebo_namespace + '/spawn_sdf_model')
       self.spawn_sdf_model = rospy.ServiceProxy(gazebo_namespace + '/spawn_sdf_model', SpawnModel, persistent=True)
-      self.spawn_sdf_model.wait_for_service(timeout=self.timeout)
+      self.spawn_sdf_model.wait_for_service(timeout=self.service_timeout)
 
     def call_service():
       rospy.loginfo("Calling service %s/spawn_sdf_model" % gazebo_namespace)
