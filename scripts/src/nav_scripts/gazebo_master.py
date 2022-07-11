@@ -223,7 +223,10 @@ class GazeboMaster(Worker):
         try:
             result = self.task_result_func(task=task)
         except TaskProcessingException as e:
-            result = {"result": "ERROR", "error_details": str(e)}
+            if e.result is not None:
+                result=e.result
+            else:
+                result = {"result": "ERROR", "error_details": str(e)}
         except Exception as e:
             print(str(e))
             result = {"result": "UNEXPECTED_ERROR", "error_details": str(e)}
@@ -249,9 +252,8 @@ class GazeboMaster(Worker):
                     with scenario.setup():
                         with scenario.launch_controller() as controller:
                             controller.launch()
-                            with scenario.setup():
-                                result = scenario.run()
-                                return result
+                            result = scenario.run()
+                            return result
 
 
 def get_scenario_helper(self, task):
@@ -303,6 +305,7 @@ def get_scenario_helper(self, task):
 
         def __init__(myself):
             myself.scenario = self.scenarios.getScenario(task)
+
 
         def __enter__(myself):
             return myself
@@ -365,16 +368,16 @@ def get_scenario_helper(self, task):
                             lose the result. One option might be to place the result in the exception, 
                             and check for it when handling the exception
                             """
-                            #raise TestingScenarioError(str(e)) from e
                             print(str(e))
+                            raise type(myself.gazebo).launcher.exc_type(msg="Error during cleanup, but still have result", result=myself.result, task=task) from e
 
             return ScenarioSetup()
 
         def run(myself):
             timeout = task["timeout"] if "timeout" in task else None
             record = task["record"] if "record" in task else False
-            result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(), record=record, timeout=timeout,
+            myself.result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(), record=record, timeout=timeout,
                                           monitor=self.monitor)
-            return result
+            return myself.result
 
     return ScenarioHelper()

@@ -163,6 +163,7 @@ class GazeboDriver(object):
       except rospy.ServiceException as e:
         rospy.logwarn("Error setting pose: " + str(e))
         retval = False
+        #TODO: raise TaskProcessingException
 
     #time.sleep(.01)
     return retval

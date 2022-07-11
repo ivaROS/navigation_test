@@ -286,11 +286,12 @@ class ExceptionLevels(enum.IntEnum):
 
 
 class TaskProcessingException(Exception):
-    def __init__(self, msg="", task=None, exc_level=ExceptionLevels.FLUKE, **kwargs):
+    def __init__(self, msg="", task=None, exc_level=ExceptionLevels.FLUKE, result=None, **kwargs):
         super(TaskProcessingException, self).__init__()
         self.msg = msg
         self.task = task
         self.exc_level = exc_level
+        self.result = result
 
     def __str__(self):
         return str(self.msg) + (": task=" + str(self.task) if self.task is not None else "")

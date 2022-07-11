@@ -19,7 +19,7 @@ from nav_scripts.task_pipeline import TaskProcessingException, ExceptionLevels
 
 class TestingScenarioError(TaskProcessingException):
     def __init__(self, msg="", **kwargs):
-        super(TestingScenarioError, self).__init__(msg, kwargs)
+        super(TestingScenarioError, self).__init__(msg=msg, **kwargs)
 
 
 

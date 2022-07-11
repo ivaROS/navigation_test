@@ -269,7 +269,7 @@ class NonFatalNavBenchException(NavBenchException):
 
 class RosLauncherException(TaskProcessingException):
     def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", **kwargs):
-        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " error: " + str(msg), kwargs=kwargs)
+        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " error: " + str(msg), **kwargs)
 
 
 
@@ -279,15 +279,15 @@ class RosLauncherHelper(object):
     def init(cls):
         class RosLauncherTypeException(RosLauncherException):
             def __init__(self, exc_type="", launch_files="", msg="", **kwargs):
-                super(RosLauncherTypeException, self).__init__(launcher_type=cls, exc_type=exc_type, msg=msg, launch_files=launch_files, kwargs=kwargs)
+                super(RosLauncherTypeException, self).__init__(launcher_type=cls, exc_type=exc_type, msg=msg, launch_files=launch_files, **kwargs)
 
         class RosLauncherRuntimeException(RosLauncherTypeException):
             def __init__(self, msg="", launch_files="", **kwargs):
-                super(RosLauncherRuntimeException, self).__init__(exc_type="Runtime", msg=msg, launch_files=launch_files, exc_level=ExceptionLevels.FLUKE, kwargs=kwargs)
+                super(RosLauncherRuntimeException, self).__init__(exc_type="Runtime", msg=msg, launch_files=launch_files, exc_level=ExceptionLevels.FLUKE, **kwargs)
 
         class RosLauncherLaunchException(RosLauncherTypeException):
             def __init__(self, msg="", launch_files= "", **kwargs):
-                super(RosLauncherLaunchException, self).__init__(exc_type="Launch", msg="while launching files " + str(launch_files) + str(msg), launch_files=launch_files, exc_level=ExceptionLevels.BAD_CONFIG, kwargs=kwargs)
+                super(RosLauncherLaunchException, self).__init__(exc_type="Launch", msg="while launching files " + str(launch_files) + str(msg), launch_files=launch_files, exc_level=ExceptionLevels.BAD_CONFIG, **kwargs)
 
         cls.exc_type = RosLauncherTypeException
         cls.exc_type_launch = RosLauncherLaunchException
