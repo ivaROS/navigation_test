@@ -272,145 +272,111 @@ def reset_costmaps():
     service = rospy.ServiceProxy("move_base/clear_costmaps", std_srvs.Empty)
     service()
 
-def run_test(goal_pose, record=False, timeout=None, monitor=None):
-    if timeout is None:
-        timeout = 300
 
-    rospy.loginfo("Beginning navigation test with timeout [" + str(timeout) + "]")
 
-    # Get a node handle and start the move_base action server
-    # init_pub = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=1)
+class MoveBaseTask:
+    #TODO: Add recording capability
 
-    # init_pose = PoseWithCovarianceStamped()
-    # init_pose.header.frame_id = 'map'
-    # init_pose.header.stamp = rospy.Time.now()
-    # init_pose.pose.pose.position.x = 0.0
-    # init_pose.pose.pose.position.y = 0.0
-    # init_pose.pose.pose.position.z = 0.0
-    # init_pose.pose.pose.orientation.x = 0.0
-    # init_pose.pose.pose.orientation.y = 0.0
-    # init_pose.pose.pose.orientation.z = 0.0
-    # init_pose.pose.pose.orientation.w = 1.0
-    # init_pose.pose.covariance[0] = 0.1; # pos.x
-    # init_pose.pose.covariance[7] = 0.1; # pos.y
-    # init_pose.pose.covariance[14] = 1000000.0;
-    # init_pose.pose.covariance[21] = 1000000.0;
-    # init_pose.pose.covariance[28] = 1000000.0;
-    # init_pose.pose.covariance[35] = 0.05; # orientation.z
+    def __init__(self, goal_pose, monitor, timeout=None, task=None):
+        self.monitor = monitor
+        self.goal_pose = goal_pose
+        self.timeout = 300 if timeout is None else timeout
+        rospy.loginfo("Beginning navigation test with timeout [" + str(timeout) + "]")
 
-    #init_pub.publish(init_pose)
+    def run(self):
+        self.setup_checkers()
+        self.initialize_action_client()
+        self.send_goal()
+        self.wait_for_finish()
+        self.fill_result()
+        return self.get_result()
 
-    # Action client for sending position commands
-    bumper_checker = BumperChecker()
-    odom_checker = OdomChecker()
-    odom_accumulator = OdomAccumulator()
-    #traj_recorder = TrajTypeRecorder()
 
-    #record = False
+    def setup_checkers(self):
+        self.bumper_checker = BumperChecker()
+        #self.odom_checker = OdomChecker()
+        self.odom_accumulator = OdomAccumulator()
 
-    if record:
-        result_recorder = ResultRecorder()
+    def initialize_action_client(self):
+        self.client = SimpleActionClient('move_base', MoveBaseAction)
+        print("waiting for server")
+        rospy.loginfo("Waiting for MoveBaseActionServer...")
+        while True:
+            try:
+                if self.client.wait_for_server(timeout=rospy.Duration(secs=20), wall_timeout=1):
+                    print("Done!")
+                    rospy.loginfo("Found MoveBaseActionServer!")
+                    break
+                else:
+                    rospy.logerr("MoveBaseActionServer not found!")
+                    return TaskProcessingException("MoveBaseActionServer not found!")
+            except InterruptedSleepException as e:
+                if self.monitor is not None:
+                    self.monitor.update()
 
-    client = SimpleActionClient('move_base', MoveBaseAction)
-    print("waiting for server")
-    rospy.loginfo("Waiting for MoveBaseActionServer...")
-    while True:
-        try:
-            if client.wait_for_server(timeout=rospy.Duration(secs=20), wall_timeout=1):
-                print("Done!")
-                rospy.loginfo("Found MoveBaseActionServer!")
+
+    def send_goal(self):
+        # Create the goal point
+        goal = MoveBaseGoal()
+        goal.target_pose = self.goal_pose
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        self.client.send_goal(goal)
+
+
+    def stop_waiting(self):
+        state = self.client.get_state()
+        # print "State: " + str(state)
+        if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
+            return self.get_goal_status()
+        elif self.bumper_checker.collided:
+            return "BUMPER_COLLISION"
+        #elif self.odom_checker.collided:
+        #    return "OTHER_COLLISION"
+        #elif self.odom_checker.not_moving:
+        #    return "STUCK"
+        elif (rospy.Time.now() - self.start_time > rospy.Duration(self.timeout)):
+            return "TIMED_OUT"
+
+        return False
+
+
+    def wait_for_finish(self):
+        r = Rate(hz=5, timeout=1)
+
+        self.result={}
+        self.start_time = rospy.Time.now()
+
+        #TODO: move failure conditions to classes and just iterate over a list of them
+        while True:
+            result = self.stop_waiting()
+            if result:
                 break
             else:
-                rospy.logerr("MoveBaseActionServer not found!")
-                return TaskProcessingException("MoveBaseActionServer not found!")
-        except InterruptedSleepException as e:
-            if monitor is not None:
-                monitor.update()
+                try:
+                    r.sleep()
+                except InterruptedSleepException as e:
+                    print("Interrupted sleep")
+                    pass
+                finally:
+                    if self.monitor is not None:
+                        self.monitor.update()
 
-    # Create the goal point
-    goal = MoveBaseGoal()
-    goal.target_pose = goal_pose
-    goal.target_pose.header.stamp = rospy.Time.now()
+            rospy.loginfo_throttle(period=5, msg="Waiting for result...")
 
-    end_pose = None
-    def set_cur_pose(data):
-        end_pose = data.feedback.base_position.pose
+        self.result["time"]= str(rospy.Time.now() - self.start_time)
+        self.result["result"] = result
 
-        if record:
-            result_recorder.feedback_cb(data)
-
-
-
-    if record:
-        result_recorder.setGoal(goal)
-
-    # Send the goal!
-    print("sending goal")
-    rospy.loginfo("Sending goal...")
-    if record:
-        client.send_goal(goal, feedback_cb=set_cur_pose)
-    else:
-        client.send_goal(goal)
-
-    print("waiting for result")
-
-    r = Rate(hz=5, timeout=1)
-
-    start_time = rospy.Time.now()
-
-    result = None
-
-    keep_waiting = True
-    while keep_waiting:
-        state = client.get_state()
-        #print "State: " + str(state)
-        if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
-            keep_waiting = False
-        elif bumper_checker.collided:
-            keep_waiting = False
-            result = "BUMPER_COLLISION"
-        elif odom_checker.collided:
-            keep_waiting = False
-            result = "OTHER_COLLISION"
-        elif odom_checker.not_moving:
-            keep_waiting = False
-            result = "STUCK"
-        elif (rospy.Time.now() - start_time > rospy.Duration(timeout)):
-            keep_waiting = False
-            result = "TIMED_OUT"
-        else:
-            try:
-                r.sleep()
-            except InterruptedSleepException as e:
-                print("Interrupted sleep")
-                pass
-            finally:
-                if monitor is not None:
-                    monitor.update()
-
-        rospy.loginfo_throttle(period=5, msg="Waiting for result...")
-
-    task_time = str(rospy.Time.now() - start_time)
-
-    if record:
-        result_recorder.done()
-
-    path_length = str(odom_accumulator.getPathLength())
-    total_rotation = str(odom_accumulator.getTotalRotation())
-
-    if result is None:
-        #client.wait_for_result(rospy.Duration(45))
+    def get_goal_status(self):
         print("done!")
-
 
         # 3 means success, according to the documentation
         # http://docs.ros.org/api/actionlib_msgs/html/msg/GoalStatus.html
         print("getting goal status")
-        print(client.get_goal_status_text())
+        print(self.client.get_goal_status_text())
         print("done!")
         print("returning state number")
-        #return client.get_state() == 3
-        state = client.get_state()
+        state = self.client.get_state()
         if state == GoalStatus.SUCCEEDED:
             result = "SUCCEEDED"
         elif state == GoalStatus.ABORTED:
@@ -421,19 +387,24 @@ def run_test(goal_pose, record=False, timeout=None, monitor=None):
             result = "REJECTED"
         elif state == GoalStatus.ACTIVE:
             result = "TIMED_OUT"
-
         else:
             result = "UNKNOWN"
+        return result
 
-    rospy.loginfo("Got result [" + str(result) + "]")
-    res = {'result': result, 'time': task_time, 'path_length': path_length, 'end_pose': poseToString(end_pose), 'total_rotation': total_rotation}
+    def fill_result(self):
+        self.result['path_length'] = str(self.odom_accumulator.getPathLength())
+        self.result['total_rotation'] = str(self.odom_accumulator.getTotalRotation())
+        # 'end_pose': poseToString(self.end_pose),
 
-    #res.update(traj_recorder.get_results())
+    def get_result(self):
+        rospy.loginfo("Got result [" + str(self.result) + "]")
+        return self.result
 
-    if record:
-        res.update({'bag_file_path': result_recorder.bagfilepath})
 
-    return res
+def run_test(goal_pose, record=False, timeout=None, monitor=None):
+    mt = MoveBaseTask(goal_pose=goal_pose, monitor=monitor, timeout=timeout)
+    return mt.run()
+
 
 if __name__ == "__main__":
     try:
