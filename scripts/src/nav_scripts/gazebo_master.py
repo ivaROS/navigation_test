@@ -124,6 +124,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
                 print("Adding tasks...")
                 self.add_tasks_impl(tasks=tasks)
 
+    #TODO: handle cases where tasks are in the form of a generator
     def add_tasks_impl(self, tasks):
         warned_keys = set()
         num_skipped = 0
@@ -150,8 +151,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
 
         print("Finished adding tasks. Skipped [" + str(num_skipped) + "] tasks.")
 
-    #TODO:
-    # tasks must be iterable and finite length
+    #TODO: ensure that an infinite iterator does not cause us to hang here
     def add_task_fieldnames(self, tasks):
         if self.started:
             print("Warning! You cannot add task fieldnames once the MultiMasterCoordinator has been started! No fieldnames will be added!", file=sys.stderr)
@@ -167,6 +167,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
                     if key not in added_keys:
                         added_keys.add(key)
 
+        #TODO: set max number of tasks to evaluate
         for task in tasks:
             add_keys(task)
 
@@ -363,11 +364,6 @@ def get_scenario_helper(self, task):
                         try:
                             myself.scenario.cleanup()
                         except (rospy.ROSException, rospy.ServiceException) as e:
-                            """
-                            NOTE: In this situation, we would ideally shut some things down, but we don't want to 
-                            lose the result. One option might be to place the result in the exception, 
-                            and check for it when handling the exception
-                            """
                             print(str(e))
                             raise type(myself.gazebo).launcher.exc_type(msg="Error during cleanup, but still have result", result=myself.result, task=task) from e
 
