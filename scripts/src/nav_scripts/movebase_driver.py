@@ -277,11 +277,13 @@ def reset_costmaps():
 class MoveBaseTask:
     #TODO: Add recording capability
 
-    def __init__(self, goal_pose, monitor, timeout=None, task=None):
+    def __init__(self, *, task, goal_pose, monitor, **kwargs):
         self.monitor = monitor
         self.goal_pose = goal_pose
-        self.timeout = 300 if timeout is None else timeout
-        rospy.loginfo("Beginning navigation test with timeout [" + str(timeout) + "]")
+        self.timeout = task["timeout"] if "timeout" in task else 300
+        #record = task["record"] if "record" in task else False
+        rospy.logwarn("Unrecognized args passed to MoveBaseTask!: " + str(kwargs))
+        rospy.loginfo("Beginning navigation test with timeout [" + str(self.timeout) + "]")
 
     def run(self):
         self.setup_checkers()
@@ -404,11 +406,3 @@ class MoveBaseTask:
 def run_test(goal_pose, record=False, timeout=None, monitor=None):
     mt = MoveBaseTask(goal_pose=goal_pose, monitor=monitor, timeout=timeout)
     return mt.run()
-
-
-if __name__ == "__main__":
-    try:
-        rospy.init_node('pips_test', anonymous=True)
-        run_test()
-    except rospy.ROSInterruptException:
-        print("Keyboard Interrupt")

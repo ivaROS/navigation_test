@@ -428,7 +428,10 @@ class RosLauncherMonitor(object):
         self.launchers = launchers
 
     def append(self, monitor):
-        self.launchers.append(monitor)
+        if isinstance(monitor, list):
+            self.launchers.extend(monitor)
+        else:
+            self.launchers.append(monitor)
 
     def update(self):
         for l in self.launchers:

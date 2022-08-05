@@ -213,7 +213,6 @@ class GazeboMaster(Worker):
             rospy.init_node('test_driver', anonymous=True, disable_signals=True, disable_rosout=True)
             # rospy.on_shutdown(self.shutdown)
             self.scenarios = TestingScenarios()
-            self.had_error = False
             super(GazeboMaster, self).run()
 
         print("Run totally done")
@@ -256,51 +255,57 @@ class GazeboMaster(Worker):
                             result = scenario.run()
                             return result
 
+    #def get_scenario_helper(self):
+
+class LauncherArgHelper(object):
+    def __init__(self, task):
+        self.name = type(self).name
+        self.launcher = type(self).launcher
+        self.task = task
+        self.init_value()
+        self.init_args()
+        self.update_task_args()
+
+    def init_value(self):
+        try:
+            self.value = self.task[self.name]
+        except KeyError as e:
+            raise TestingScenarioError(msg="Task is missing required key! " + str(e),
+                                       exc_level=ExceptionLevels.BAD_CONFIG) from e
+
+    def init_args(self):
+        self.arg_name = self.name + "_args"
+        try:
+            self.args = self.task[self.arg_name]
+        except KeyError:
+            self.args = {}
+
+    def update_task_args(self):
+        try:
+            self.task[self.arg_name].update(self.args)
+        except KeyError:
+            self.task[self.arg_name] = self.args
+
+    def launch(self, **kwargs):
+        base_kwargs = {self.name: self.value, self.arg_name: self.args}
+        base_kwargs.update(kwargs)
+        self.launcher.launch(**base_kwargs)
+        # self.launcher.launch(self.value, self.args)
+
+    def __enter__(self):
+        # self.launcher.__enter__()
+        return self
+
+    # The way using this system, don't want to close launchers on exit
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None and issubclass(exc_type, type(self.launcher).exc_type):
+            print("Caught error from [" + str(self.launcher.name) + "], shutting it down. Error was:\n" + str(
+                exc_val) + "\n" + ''.join(
+                traceback.format_exception(None, value=exc_val, tb=exc_tb)))
+            self.launcher.shutdown()
 
 def get_scenario_helper(self, task):
-    class LauncherArgHelper(object):
-        def __init__(myself):
-            myself.name = type(myself).name
-            myself.launcher = type(myself).launcher
-            myself.init_value()
-            myself.init_args()
-            myself.update_task_args()
 
-        def init_value(myself):
-            try:
-                myself.value = task[myself.name]
-            except KeyError as e:
-                raise TestingScenarioError(msg="Task is missing required key! " + str(e), exc_level=ExceptionLevels.BAD_CONFIG) from e
-
-        def init_args(myself):
-            myself.arg_name = myself.name + "_args"
-            try:
-                myself.args = task[myself.arg_name]
-            except KeyError:
-                myself.args = {}
-
-        def update_task_args(myself):
-            try:
-                task[myself.arg_name].update(myself.args)
-            except KeyError:
-                task[myself.arg_name] = myself.args
-
-        def launch(myself, **kwargs):
-            base_kwargs = {myself.name: myself.value, myself.arg_name: myself.args}
-            base_kwargs.update(kwargs)
-            myself.launcher.launch(**base_kwargs)
-            #myself.launcher.launch(myself.value, myself.args)
-
-        def __enter__(myself):
-            #myself.launcher.__enter__()
-            return myself
-
-        #The way using this system, don't want to close launchers on exit
-        def __exit__(myself, exc_type, exc_val, exc_tb):
-            if exc_type is not None and issubclass(exc_type, type(myself.launcher).exc_type):
-                print("Caught error from [" + str(myself.launcher.name) + "], shutting it down. Error was:\n" + str(exc_val) + "\n" + ''.join(
-                    traceback.format_exception(None, value=exc_val, tb=exc_tb)))
-                myself.launcher.shutdown()
 
     class ScenarioHelper(object):
 
@@ -370,10 +375,10 @@ def get_scenario_helper(self, task):
             return ScenarioSetup()
 
         def run(myself):
-            timeout = task["timeout"] if "timeout" in task else None
-            record = task["record"] if "record" in task else False
+
             myself.result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(), record=record, timeout=timeout,
                                           monitor=self.monitor)
             return myself.result
 
     return ScenarioHelper()
+
