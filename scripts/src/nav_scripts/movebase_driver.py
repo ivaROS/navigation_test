@@ -277,12 +277,13 @@ def reset_costmaps():
 class MoveBaseTask:
     #TODO: Add recording capability
 
-    def __init__(self, *, task, goal_pose, monitor, **kwargs):
+    def __init__(self, *, goal_pose, monitor, task=None, **kwargs):
         self.monitor = monitor
         self.goal_pose = goal_pose
-        self.timeout = task["timeout"] if "timeout" in task else 300
+        self.timeout = task["timeout"] if task is not None and "timeout" in task else 300
         #record = task["record"] if "record" in task else False
-        rospy.logwarn("Unrecognized args passed to MoveBaseTask!: " + str(kwargs))
+        if len(kwargs) > 0:
+            rospy.logwarn("Unrecognized args passed to MoveBaseTask!: " + str(kwargs))
         rospy.loginfo("Beginning navigation test with timeout [" + str(self.timeout) + "]")
 
     def run(self):
@@ -403,6 +404,8 @@ class MoveBaseTask:
         return self.result
 
 
-def run_test(goal_pose, record=False, timeout=None, monitor=None):
-    mt = MoveBaseTask(goal_pose=goal_pose, monitor=monitor, timeout=timeout)
+def run_test(goal_pose, monitor=None, task=None, timeout=None, record=None):
+    if timeout is not None or record is not None:
+        rospy.logwarn("Passing 'timeout' and 'record' to this function is deprecated, please specify them as entries in 'task'")
+    mt = MoveBaseTask(goal_pose=goal_pose, monitor=monitor, task=task)
     return mt.run()
