@@ -34,13 +34,13 @@ class TestingScenarios(object):
             scenario_type = task["scenario"]
         except KeyError as e:
             rospy.logerr("Error! Task does not specify scenario type [" + str(task) + "]: " + str(e))
-            raise TestingScenarioError("Task does not specify scenario type", exc_level=ExceptionLevels.BAD_CONFIG, task=task)
+            raise TestingScenarioError("Task does not specify scenario type", exc_level=ExceptionLevels.BAD_CONFIG, task=task) from e
         else:
             try:
                 return TestingScenarios.impls[scenario_type](task=task)
             except KeyError as e:
                 rospy.logerr("Error! Unknown scenario type [" + scenario_type + "]: " + str(e))
-                raise TestingScenarioError("Unknown scenario type [" + scenario_type + "]", exc_level=ExceptionLevels.BAD_CONFIG, task=task)
+                raise TestingScenarioError("Unknown scenario type [" + scenario_type + "]", exc_level=ExceptionLevels.BAD_CONFIG, task=task) from e
 
 
     @staticmethod

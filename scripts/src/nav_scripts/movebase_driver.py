@@ -11,7 +11,6 @@ import tf
 import tf.transformations
 from actionlib_msgs.msg import GoalStatus
 from nav_msgs.msg import Odometry
-from kobuki_msgs.msg import BumperEvent
 import tf2_ros
 import math
 import std_srvs.srv as std_srvs
@@ -25,17 +24,70 @@ import time
 import angles
 from std_msgs.msg import Int16 as Int16msg
 from nav_scripts.interruptible import Rate, InterruptedSleepException, SimpleActionClient
-from nav_scripts.task_pipeline import TaskProcessingException
+from nav_scripts.task_pipeline import TaskProcessingException, ExceptionLevels
+
+class RobotImplException(TaskProcessingException):
+    def __init__(self, msg="", **kwargs):
+        super(TaskProcessingException, self).__init__(msg=msg, **kwargs)
+
+class RobotImpl(object):
+    name = "None"
+
+    def __init__(self, task):
+        self.task = task
+
+    def get_terminal_conditions(self):
+        raise NotImplementedError("You must implement 'get_terminal_conditions' for the robot impl!")
+
+class RobotImpls(object):
+    impls = {}
+
+    @staticmethod
+    def get(task):
+        try:
+            robot_impl_type = task["robot_impl"]
+        except KeyError as e:
+            rospy.logwarn("Warning! Task does not specify robot_impl type [" + str(task) + "], using 'turtlebot' as default")
+            robot_impl_type = "turtlebot"
+        except TypeError as e:
+            rospy.logwarn("Warning! Task was not provided, using 'turtlebot' as default")
+            robot_impl_type = "turtlebot"
+
+        try:
+            return RobotImpls.impls[robot_impl_type](task=task)
+        except KeyError as e:
+            rospy.logerr("Error! Unknown RobotImpl type [" + robot_impl_type + "]: " + str(e))
+            raise RobotImplException("Unknown RobotImpl type [" + robot_impl_type + "]", exc_level=ExceptionLevels.BAD_CONFIG, task=task) from e
 
 
-class BumperChecker(object):
-    def __init__(self):
-        self.sub = rospy.Subscriber("mobile_base/events/bumper", BumperEvent, self.bumperCB, queue_size=5)
+    @staticmethod
+    def register(robot):
+        if robot.name not in RobotImpls.impls:
+            RobotImpls.impls[robot.name] = robot
+        elif RobotImpls.impls[robot.name] == robot:
+            rospy.logwarn("Ignoring repeated registration of RobotImpl [" + robot.name + "]")
+        else:
+            rospy.logerr("Error! A robot has already been registered with the given name! [" + robot.name + "]. Current RobotImpl not added")
+
+
+class TerminalCondition(object):
+
+    def __init__(self, name):
+        self.name = name
+        pass
+
+    def eval(self):
+        raise NotImplementedError("Must implement the 'eval' method for each TerminalCondition!")
+
+
+class BaseBumperChecker(TerminalCondition):
+    def __init__(self, name="bumper"):
+        super().__init__(name=name)
         self.collided = False
 
-    def bumperCB(self,data):
-        if data.state == BumperEvent.PRESSED:
-            self.collided = True
+    def eval(self):
+        return "BUMPER_COLLISION" if self.collided else None
+
 
 def quaternionToYaw(q):
     euler = tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
@@ -286,8 +338,13 @@ class MoveBaseTask:
             rospy.logwarn("Unrecognized args passed to MoveBaseTask!: " + str(kwargs))
         rospy.loginfo("Beginning navigation test with timeout [" + str(self.timeout) + "]")
 
+        #robot_impl_type = task["robot_impl_type"] if task is not None and "robot_impl_type" in task else "turtlebot"
+        self.robot_impl = RobotImpls.get(task)
+        self.terminal_conditions = []
+
     def run(self):
-        self.setup_checkers()
+        self.setup_checkers()   #TODO: give more descriptive name
+        self.setup_terminal_conditions()
         self.initialize_action_client()
         self.send_goal()
         self.wait_for_finish()
@@ -296,9 +353,10 @@ class MoveBaseTask:
 
 
     def setup_checkers(self):
-        self.bumper_checker = BumperChecker()
-        #self.odom_checker = OdomChecker()
         self.odom_accumulator = OdomAccumulator()
+
+    def setup_terminal_conditions(self):
+        self.terminal_conditions += self.robot_impl.get_terminal_conditions()
 
     def initialize_action_client(self):
         self.client = SimpleActionClient('move_base', MoveBaseAction)
@@ -327,18 +385,26 @@ class MoveBaseTask:
         self.client.send_goal(goal)
 
 
-    def stop_waiting(self):
+    def check_if_finished(self):
+        # TODO: Move this to a TerminalCondition
         state = self.client.get_state()
         # print "State: " + str(state)
         if state is not GoalStatus.ACTIVE and state is not GoalStatus.PENDING:
             return self.get_goal_status()
-        elif self.bumper_checker.collided:
-            return "BUMPER_COLLISION"
+        else:
+            for condition in self.terminal_conditions:
+                res = condition.eval()
+                if res:
+                    return res
+
+        #elif self.bumper_checker.collided:
+        #    return "BUMPER_COLLISION"
         #elif self.odom_checker.collided:
         #    return "OTHER_COLLISION"
         #elif self.odom_checker.not_moving:
         #    return "STUCK"
-        elif (rospy.Time.now() - self.start_time > rospy.Duration(self.timeout)):
+        #TODO: Move this to a TerminalCondition
+        if (rospy.Time.now() - self.start_time > rospy.Duration(self.timeout)):
             return "TIMED_OUT"
 
         return False
@@ -352,7 +418,7 @@ class MoveBaseTask:
 
         #TODO: move failure conditions to classes and just iterate over a list of them
         while True:
-            result = self.stop_waiting()
+            result = self.check_if_finished()
             if result:
                 break
             else:
@@ -388,7 +454,7 @@ class MoveBaseTask:
             result = "LOST"
         elif state == GoalStatus.REJECTED:
             result = "REJECTED"
-        elif state == GoalStatus.ACTIVE:
+        elif state == GoalStatus.ACTIVE:    #TODO: pretty sure this condition will never happen
             result = "TIMED_OUT"
         else:
             result = "UNKNOWN"
@@ -406,6 +472,13 @@ class MoveBaseTask:
 
 def run_test(goal_pose, monitor=None, task=None, timeout=None, record=None):
     if timeout is not None or record is not None:
-        rospy.logwarn("Passing 'timeout' and 'record' to this function is deprecated, please specify them as entries in 'task'")
+        rospy.logwarn("Passing 'timeout' and 'record' to this function is deprecated; the values will be used for now, but please specify them as entries in 'task'")
+        if timeout is not None:
+            task["timeout"] = timeout
+        if record is not None:
+            task["record"] = record
+
     mt = MoveBaseTask(goal_pose=goal_pose, monitor=monitor, task=task)
     return mt.run()
+
+import nav_scripts.turtlebot_impl

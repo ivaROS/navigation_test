@@ -230,7 +230,9 @@ class GazeboMaster(Worker):
         except Exception as e:
             print(str(e))
             result = {"result": "UNEXPECTED_ERROR", "error_details": str(e)}
-        finally:
+
+        #finally:
+        if True:
             task["worker"] = self.name
 
             if isinstance(result, dict):
@@ -328,9 +330,9 @@ def get_scenario_helper(self, task):
                     try:
                         gzself.value = myself.scenario.getGazeboLaunchFile()
                     except Exception as e:
-                        raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=task)
+                        raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=task) from e
 
-            myself.gazebo = GazeboHelper()
+            myself.gazebo = GazeboHelper(task=task)
             return myself.gazebo
 
         def launch_robot(myself):
@@ -338,7 +340,7 @@ def get_scenario_helper(self, task):
                 name = "robot"
                 launcher = self.robot_launcher
 
-            myself.robot = RobotHelper()
+            myself.robot = RobotHelper(task=task)
             return myself.robot
 
         def launch_controller(myself):
@@ -353,7 +355,7 @@ def get_scenario_helper(self, task):
                              exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
                     gzself.launcher.__exit__(exc_type=exc_type, exc_val=exc_val, exc_tb=exc_tb)
 
-            myself.controller = ControllerHelper()
+            myself.controller = ControllerHelper(task=task)
             return myself.controller
 
         def setup(myself):
@@ -376,8 +378,8 @@ def get_scenario_helper(self, task):
 
         def run(myself):
 
-            myself.result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(), record=record, timeout=timeout,
-                                          monitor=self.monitor)
+            myself.result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(),
+                                          monitor=self.monitor, task=task)
             return myself.result
 
     return ScenarioHelper()

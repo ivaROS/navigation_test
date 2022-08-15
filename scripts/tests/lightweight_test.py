@@ -6,8 +6,8 @@ import time
 
 
 start_time = time.time()
-num_instances = 3
-master = MultiMasterCoordinator(num_instances, save_results=False)
+num_instances = 1
+master = MultiMasterCoordinator(num_instances, save_results=True)
 master.fieldnames.extend(
     ['max_number_classes', 'laser_fov', 'ec_radius', 'cost_factor', 'selection_obst_cost_scale',
      'enable_standard_costs', 'selection_alternative_time_cost', 'repeat', 'sim_speed', 'gap_criteria',
@@ -24,8 +24,8 @@ master.start()
 
 
 def getTasks():
-    for seed in range(30):
-        task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot', 'world_args': {'gazebo_gui': False}}
+    for seed in range(20):
+        task = {'scenario': 'sparse', 'controller': 'teb', 'robot': 'turtlebot', 'world_args': {'gazebo_gui': True}, 'robot_impl': 'turtlebot'}
         yield task
 
 

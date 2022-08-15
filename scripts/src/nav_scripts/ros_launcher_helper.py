@@ -559,7 +559,7 @@ class RobotLauncher(RosLauncherHelper):
         try:
             msg = rospy.wait_for_message(odom_topic, Odometry, 30)
         except rospy.exceptions.ROSException as e:
-            print("Error! /odom not received!")
+            print("Error! Odometry not received on topic [" + str(odom_topic) + "]")
             raise self.exc_type_launch("No message received on odom_topic [" + odom_topic + "]") from e
 
         return res
