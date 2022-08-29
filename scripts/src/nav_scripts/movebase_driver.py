@@ -341,6 +341,7 @@ class MoveBaseTask:
         #robot_impl_type = task["robot_impl_type"] if task is not None and "robot_impl_type" in task else "turtlebot"
         self.robot_impl = RobotImpls.get(task)
         self.terminal_conditions = []
+        self.task = task
 
     def run(self):
         self.setup_checkers()   #TODO: give more descriptive name
@@ -362,9 +363,19 @@ class MoveBaseTask:
         self.client = SimpleActionClient('move_base', MoveBaseAction)
         print("waiting for server")
         rospy.loginfo("Waiting for MoveBaseActionServer...")
-        while True:
+
+        action_server_wait_time = 5
+        try:
+            action_server_wait_time = self.task["action_server_wait_time"]
+        except KeyError as e:
+            rospy.logdebug("action_server_wait_time not specified, using default [" + str(action_server_wait_time) + "]")
+        start_time = rospy.Time.now()
+        end_time = start_time + rospy.Duration(action_server_wait_time)
+        wall_timeout = min(1, action_server_wait_time)
+
+        while rospy.Time.now() < end_time:
             try:
-                if self.client.wait_for_server(timeout=rospy.Duration(secs=20), wall_timeout=1):
+                if self.client.wait_for_server(timeout=rospy.Duration(secs=action_server_wait_time), wall_timeout=wall_timeout):
                     print("Done!")
                     rospy.loginfo("Found MoveBaseActionServer!")
                     break

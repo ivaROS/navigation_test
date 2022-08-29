@@ -205,8 +205,8 @@ class GeneralScenario(TestingScenario):
 
         self.gazebo_driver.pause()
         rospy.loginfo("Moving robot...")
-        self.gazebo_driver.moveRobot(self.getStartingPoseMsg())
-        self.gazebo_driver.resetOdom()
+        self.gazebo_driver.moveRobot(self.getStartingPoseMsg()) #TODO: Use RobotImpl's model_name to specify robot's name
+        self.gazebo_driver.resetOdom() #NOTE: This only affects the real-world turtlebot
         self.gazebo_driver.reset(self.seed)
         rospy.loginfo("Configuring environment...")
         self.setupEnvironment()
