@@ -364,16 +364,21 @@ class MoveBaseTask:
         print("waiting for server")
         rospy.loginfo("Waiting for MoveBaseActionServer...")
 
-        action_server_wait_time = 5
+        action_server_wait_time = 20
         try:
             action_server_wait_time = self.task["action_server_wait_time"]
         except KeyError as e:
             rospy.logdebug("action_server_wait_time not specified, using default [" + str(action_server_wait_time) + "]")
         start_time = rospy.Time.now()
         end_time = start_time + rospy.Duration(action_server_wait_time)
-        wall_timeout = min(1, action_server_wait_time)
 
-        while rospy.Time.now() < end_time:
+        wall_timeout = 1
+        try:
+            wall_timeout = min(wall_timeout, action_server_wait_time)
+        except TypeError as e:
+            pass
+
+        while rospy.Time.now() < end_time or not action_server_wait_time:
             try:
                 if self.client.wait_for_server(timeout=rospy.Duration(secs=action_server_wait_time), wall_timeout=wall_timeout):
                     print("Done!")
