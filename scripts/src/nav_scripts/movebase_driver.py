@@ -367,16 +367,16 @@ class MoveBaseTask:
         action_server_wait_time = 20
         try:
             action_server_wait_time = self.task["action_server_wait_time"]
-        except KeyError as e:
+        except (KeyError, TypeError) as e:
             rospy.logdebug("action_server_wait_time not specified, using default [" + str(action_server_wait_time) + "]")
         start_time = rospy.Time.now()
         end_time = start_time + rospy.Duration(action_server_wait_time)
 
         wall_timeout = 1
-        try:
-            wall_timeout = min(wall_timeout, action_server_wait_time)
-        except TypeError as e:
-            pass
+        # try:
+        #     wall_timeout = min(wall_timeout, action_server_wait_time)
+        # except TypeError as e:
+        #     pass
 
         while rospy.Time.now() < end_time or not action_server_wait_time:
             try:
@@ -390,6 +390,8 @@ class MoveBaseTask:
             except InterruptedSleepException as e:
                 if self.monitor is not None:
                     self.monitor.update()
+
+        time.sleep(3)
 
 
     def send_goal(self):
