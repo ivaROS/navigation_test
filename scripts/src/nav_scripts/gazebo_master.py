@@ -288,6 +288,9 @@ class LauncherArgHelper(object):
         except KeyError:
             self.task[self.arg_name] = self.args
 
+        #Now copy args to task
+        self.task.update(self.task[self.arg_name])
+
     def launch(self, **kwargs):
         base_kwargs = {self.name: self.value, self.arg_name: self.args}
         base_kwargs.update(kwargs)
