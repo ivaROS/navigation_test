@@ -25,7 +25,7 @@ import contextlib
 from nav_scripts.testing_scenarios import TestingScenarios, TestingScenarioError
 from nav_scripts.controller_launcher import ControllerLauncher
 from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher, LauncherErrorCatcher, RosLauncherMonitor
-from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker, TaskProcessingException, ExceptionLevels
+from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker, TaskProcessingException, ExceptionLevels, GracefulShutdownException
 
 import rospy
 import csv
@@ -227,9 +227,15 @@ class GazeboMaster(Worker):
                 result=e.result
             else:
                 result = {"result": "ERROR", "error_details": str(e)}
+            if e.exc_level >= ExceptionLevels.BAD_CONFIG:
+                #raise GracefulShutdownException() from e
+                pass
         except Exception as e:
             print(str(e))
             result = {"result": "UNEXPECTED_ERROR", "error_details": str(e)}
+            import traceback
+            traceback.print_exc()
+            #raise GracefulShutdownException() from e
 
         #finally:
         if True:
