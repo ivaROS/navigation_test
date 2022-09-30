@@ -73,7 +73,7 @@ class CSVResultRecorder(ConsoleResultRecorder):
 
 
 class MultiMasterCoordinator(TaskProcessingPipeline):
-    def __init__(self, num_masters=1, save_results = True, use_existing_roscore=False):
+    def __init__(self, num_masters=1, save_results = True, use_existing_roscore=False, exit_on_error=False):
         super(MultiMasterCoordinator, self).__init__()
 
         self.started = False
@@ -84,6 +84,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
         self.num_masters = num_masters
         self.use_existing_roscore = use_existing_roscore
         self.save_results = save_results
+        self.exit_on_error = exit_on_error
 
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
@@ -100,7 +101,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
         super(MultiMasterCoordinator, self).start()
 
     def get_worker(self, num):
-        return GazeboMaster(num=num, use_existing_roscore=self.use_existing_roscore)
+        return GazeboMaster(num=num, use_existing_roscore=self.use_existing_roscore, exit_on_error=self.exit_on_error)
 
     def get_result_recorder(self):
         return CSVResultRecorder() if self.save_results else ConsoleResultRecorder()
@@ -175,7 +176,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
 
 
 class GazeboMaster(Worker):
-    def __init__(self, num, use_existing_roscore):
+    def __init__(self, num, use_existing_roscore, exit_on_error=False):
         super(GazeboMaster, self).__init__(num=num)
         self.use_existing_roscore = use_existing_roscore
 
@@ -212,7 +213,6 @@ class GazeboMaster(Worker):
             rospy.set_param('/use_sim_time', 'True')
             rospy.init_node('test_driver', anonymous=True, disable_signals=True, disable_rosout=True)
             # rospy.on_shutdown(self.shutdown)
-            self.scenarios = TestingScenarios()
             super(GazeboMaster, self).run()
 
         print("Run totally done")
@@ -235,6 +235,9 @@ class GazeboMaster(Worker):
             result = {"result": "UNEXPECTED_ERROR", "error_details": str(e)}
             import traceback
             traceback.print_exc()
+            if self.exit_on_error:
+                signal.raise_signal(signal.SIGINT)
+
             #raise GracefulShutdownException() from e
 
         #finally:
@@ -252,7 +255,7 @@ class GazeboMaster(Worker):
 
 
     def task_result_func(self, task):
-        with get_scenario_helper(self, task) as scenario: #Currently no reason to use as context manager
+        with self.get_scenario_helper(task) as scenario: #Currently no reason to use as context manager
             with scenario.launch_gazebo() as gazebo:  #start it if needed, close it if error
                 gazebo.launch()
                 with scenario.launch_robot() as robot: #same here
@@ -262,6 +265,11 @@ class GazeboMaster(Worker):
                             controller.launch()
                             result = scenario.run()
                             return result
+
+    #TODO: Move the launchers into ScenarioHelper for better encapsulation
+    def get_scenario_helper(self, task):
+        return ScenarioHelper(task=task, robot_launcher=self.robot_launcher, gazebo_launcher=self.gazebo_launcher,
+                              controller_launcher=self.controller_launcher, monitor=self.monitor)
 
     #def get_scenario_helper(self):
 
@@ -315,81 +323,83 @@ class LauncherArgHelper(object):
                 traceback.format_exception(None, value=exc_val, tb=exc_tb)))
             self.launcher.shutdown()
 
-def get_scenario_helper(self, task):
 
 
-    class ScenarioHelper(object):
+class ScenarioHelper(object):
+    scenarios = TestingScenarios()
 
-        def __init__(myself):
-            myself.scenario = self.scenarios.getScenario(task)
+    def __init__(myself, *, task, controller_launcher, gazebo_launcher, robot_launcher, monitor):
+        myself.task = task
+        myself.scenario = myself.scenarios.getScenario(task)
+        myself.monitor = monitor
+        myself.controller_launcher=controller_launcher
+        myself.gazebo_launcher=gazebo_launcher
+        myself.robot_launcher=robot_launcher
 
 
-        def __enter__(myself):
-            return myself
+    def __enter__(myself):
+        return myself
 
-        def __exit__(myself, exc_type, exc_val, exc_tb):
-            pass
+    def __exit__(myself, exc_type, exc_val, exc_tb):
+        pass
 
-        def launch_gazebo(myself):
-            class GazeboHelper(LauncherArgHelper):
-                name = "world"
-                launcher = self.gazebo_launcher
+    def launch_gazebo(myself):
+        class GazeboHelper(LauncherArgHelper):
+            name = "world"
+            launcher = myself.gazebo_launcher
 
-                def init_value(gzself):
+            def init_value(gzself):
+                try:
+                    gzself.value = myself.scenario.getGazeboLaunchFile()
+                except Exception as e:
+                    raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=self.task) from e
+
+        myself.gazebo = GazeboHelper(task=myself.task)
+        return myself.gazebo
+
+    def launch_robot(myself):
+        class RobotHelper(LauncherArgHelper):
+            name = "robot"
+            launcher = myself.robot_launcher
+
+        myself.robot = RobotHelper(task=myself.task)
+        return myself.robot
+
+    def launch_controller(myself):
+        class ControllerHelper(LauncherArgHelper):
+            name = "controller"
+            launcher = myself.controller_launcher
+
+            def launch(gzself):
+                gzself.launcher.launch(robot=myself.robot.value, controller_name=gzself.value, controller_args=gzself.args)
+
+            def __exit__(gzself, exc_type, exc_val,
+                         exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
+                gzself.launcher.__exit__(exc_type=exc_type, exc_val=exc_val, exc_tb=exc_tb)
+
+        myself.controller = ControllerHelper(task=myself.task)
+        return myself.controller
+
+    def setup(myself):
+        class ScenarioSetup(object):
+
+            def __enter__(gzself):
+                myself.scenario.setupScenario()
+
+            def __exit__(gzself, exc_type, exc_val, exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
+                if isinstance(exc_val, (rospy.ROSException, rospy.ServiceException)):
+                    raise TestingScenarioError(str(exc_val)) from exc_val
+                elif exc_val is None:
                     try:
-                        gzself.value = myself.scenario.getGazeboLaunchFile()
-                    except Exception as e:
-                        raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=task) from e
+                        myself.scenario.cleanup()
+                    except (rospy.ROSException, rospy.ServiceException) as e:
+                        print(str(e))
+                        raise type(myself.gazebo).launcher.exc_type(msg="Error during cleanup, but still have result", result=myself.result, task=self.task) from e
 
-            myself.gazebo = GazeboHelper(task=task)
-            return myself.gazebo
+        return ScenarioSetup()
 
-        def launch_robot(myself):
-            class RobotHelper(LauncherArgHelper):
-                name = "robot"
-                launcher = self.robot_launcher
+    def run(myself):
 
-            myself.robot = RobotHelper(task=task)
-            return myself.robot
-
-        def launch_controller(myself):
-            class ControllerHelper(LauncherArgHelper):
-                name = "controller"
-                launcher = self.controller_launcher
-
-                def launch(gzself):
-                    gzself.launcher.launch(robot=myself.robot.value, controller_name=gzself.value, controller_args=gzself.args)
-
-                def __exit__(gzself, exc_type, exc_val,
-                             exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
-                    gzself.launcher.__exit__(exc_type=exc_type, exc_val=exc_val, exc_tb=exc_tb)
-
-            myself.controller = ControllerHelper(task=task)
-            return myself.controller
-
-        def setup(myself):
-            class ScenarioSetup(object):
-
-                def __enter__(gzself):
-                    myself.scenario.setupScenario()
-
-                def __exit__(gzself, exc_type, exc_val, exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
-                    if isinstance(exc_val, (rospy.ROSException, rospy.ServiceException)):
-                        raise TestingScenarioError(str(exc_val)) from exc_val
-                    elif exc_val is None:
-                        try:
-                            myself.scenario.cleanup()
-                        except (rospy.ROSException, rospy.ServiceException) as e:
-                            print(str(e))
-                            raise type(myself.gazebo).launcher.exc_type(msg="Error during cleanup, but still have result", result=myself.result, task=task) from e
-
-            return ScenarioSetup()
-
-        def run(myself):
-
-            myself.result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(),
-                                          monitor=self.monitor, task=task)
-            return myself.result
-
-    return ScenarioHelper()
-
+        myself.result = test_driver.run_test(goal_pose=myself.scenario.getGoalMsg(),
+                                      monitor=myself.monitor, task=myself.task)
+        return myself.result
