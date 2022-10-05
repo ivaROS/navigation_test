@@ -269,7 +269,7 @@ class NonFatalNavBenchException(NavBenchException):
 
 class RosLauncherException(TaskProcessingException):
     def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", **kwargs):
-        super(RosLauncherException, self).__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " error: " + str(msg), **kwargs)
+        super().__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " error: " + str(msg), **kwargs)
 
 
 
@@ -410,6 +410,14 @@ class RosLauncherHelper(object):
     def shutting_down(self):
         return self.roslaunch_object._shutting_down if self.roslaunch_object is not None else False
 
+    def is_active(self, timeout=30):
+        if self.shutting_down():
+            return False
+        return self.heart_beat_check(timeout=timeout)
+
+    def heart_beat_check(self, timeout):
+        return True
+
     def enable_profiling(self):
         self.profiling.enable()
 
@@ -490,11 +498,19 @@ class GazeboLauncher(RosLauncherHelper):
 
     def launch(self, *, world, world_args=None):
         if world == self.current_value and world_args == self.current_args:
-            if not self.shutting_down():
+            try:
+                self.is_active(timeout=5)
+            except self.exc_type as e:
+                print("Gazebo is not active, restarting")
+            else:
                 print("No need to launch gazebo world, already running!")
                 return True
-            else:
-                print("Gazebo crashed, restarting")
+
+            #if not self.shutting_down():
+            #    print("No need to launch gazebo world, already running!")
+            #    return True
+            #else:
+            #    print("Gazebo crashed, restarting")
 
         print("Launching..." + str(world))
 
@@ -517,16 +533,21 @@ class GazeboLauncher(RosLauncherHelper):
         with GazeboLauncher.gazebo_launch_mutex:
             res = RosLauncherHelper.launch(self=self, launch_info=info)
 
-        try:
-            msg = rospy.wait_for_message("/clock", ClockMsg, 30)
-        except rospy.exceptions.ROSException as e:
-            print("Error! clock not received!")
-            raise self.exc_type_launch("No clock message received!") from e
+        self.is_active(timeout=30)
 
         return res
 
     def get_launch_files(self, launch_info, rospack):
         return launch_info.info
+
+    def heart_beat_check(self, timeout):
+        try:
+            msg = rospy.wait_for_message("/clock", ClockMsg, 30)
+        except rospy.exceptions.ROSException as e:
+            print("Error! clock not received!")
+            raise self.exc_type("No clock message received!") from e
+        else:
+            return True
 
 GazeboLauncher.init()
 
@@ -541,10 +562,13 @@ class RobotLauncher(RosLauncherHelper):
         rospy.loginfo("Launching Gazebo Robot [" + robot + "] with args [" + str(robot_args) + "]")
 
         if robot == self.current_value and robot_args == self.current_args:
-            if not self.shutting_down():
-                return
-            else:
+            try:
+                self.is_active(timeout=5)
+            except self.exc_type as e:
                 print("Error with robot, restarting")
+            else:
+                print("No need to spawn robot again, already running!")
+                return True
 
         self.current_value = robot
         self.current_args = robot_args
@@ -552,15 +576,7 @@ class RobotLauncher(RosLauncherHelper):
         info = LaunchInfo(info=robot, args=robot_args)
         res = RosLauncherHelper.launch(self=self, launch_info=info)
 
-        odom_topic = "/odom"
-        if 'odom_topic' in robot_args:
-            odom_topic = robot_args['odom_topic']
-        # Wait for robot to be loaded
-        try:
-            msg = rospy.wait_for_message(odom_topic, Odometry, 30)
-        except rospy.exceptions.ROSException as e:
-            print("Error! Odometry not received on topic [" + str(odom_topic) + "]")
-            raise self.exc_type_launch("No message received on odom_topic [" + odom_topic + "]") from e
+        self.is_active(timeout=30)
 
         return res
 
@@ -576,5 +592,18 @@ class RobotLauncher(RosLauncherHelper):
                 raise RuntimeError("Cannot find robot " + str(robot))
 
         return [robot_path]
+
+    def heart_beat_check(self, timeout):
+        odom_topic = "/odom"
+        if 'odom_topic' in self.current_args:
+            odom_topic = self.current_args['odom_topic']
+        # Wait for robot to be loaded
+        try:
+            msg = rospy.wait_for_message(odom_topic, Odometry, timeout)
+        except rospy.exceptions.ROSException as e:
+            print("Error! Odometry not received on topic [" + str(odom_topic) + "]")
+            raise self.exc_type("No message received on odom_topic [" + odom_topic + "]") from e
+        else:
+            return True
 
 RobotLauncher.init()
