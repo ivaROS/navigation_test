@@ -213,8 +213,8 @@ class GeneralScenario(TestingScenario):
         self.gazebo_driver.unpause()
         rospy.loginfo("Done!")
 
-    @staticmethod
-    def getUniqueFieldNames():
+    @classmethod
+    def getUniqueFieldNames(cls):
         return ["world", "seed", 'init_pose', 'target_pose']
 
 TestingScenarios.registerScenario(GeneralScenario)

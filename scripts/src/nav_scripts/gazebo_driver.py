@@ -35,6 +35,15 @@ import std_srvs.srv as std_srvs
   
 import std_msgs.msg as std_msgs
 
+from nav_scripts.task_pipeline import TaskProcessingException
+
+class GazeboDriverException(TaskProcessingException):
+  pass
+
+  def __init__(self, targets=None, **kwargs):
+    targets = ['gazebo'] if targets is None else targets
+    super().__init__(targets=targets, **kwargs)
+
 
 
 #Copied from pips_test: gazebo_driver.py
@@ -160,10 +169,14 @@ class GazeboDriver(object):
         else:
           rospy.logwarn("Error setting model pose: " + str(response.status_message))
           retval = False
+          raise GazeboDriverException(msg="Error setting model pose: " + str(response.status_message))
+
       except rospy.ServiceException as e:
         rospy.logwarn("Error setting pose: " + str(e))
         retval = False
-        #TODO: raise TaskProcessingException
+        raise GazeboDriverException(msg="Error setting pose") from e
+    else:
+        raise GazeboDriverException(msg="Model does not appear to exist!")
 
     #time.sleep(.01)
     return retval
@@ -229,7 +242,7 @@ class GazeboDriver(object):
     self.odom_pub.publish()
     
   def moveRobot(self, pose):
-    self.setPose(self.robotName, pose)
+    return self.setPose(self.robotName, pose)
 
   def resetBarrels(self, n):
       name = None
@@ -311,6 +324,8 @@ class GazeboDriver(object):
 
     success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
                                                       robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+    if not success:
+      raise GazeboDriverException(msg=f"Unable to spawn model [{model_name}] of type [{model_type}] at target pose {initial_pose}")
 
     #time.sleep(.1)
     return success

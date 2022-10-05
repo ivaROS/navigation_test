@@ -179,6 +179,7 @@ class GazeboMaster(Worker):
     def __init__(self, num, use_existing_roscore, exit_on_error=False):
         super(GazeboMaster, self).__init__(num=num)
         self.use_existing_roscore = use_existing_roscore
+        self.exit_on_error = exit_on_error
 
     ##NOTE: Due to the use of certain class variables and writing of environment variables, this needs to happen in the new process and can't be done in __init__
     def setup(self):
@@ -235,8 +236,8 @@ class GazeboMaster(Worker):
             result = {"result": "UNEXPECTED_ERROR", "error_details": str(e)}
             import traceback
             traceback.print_exc()
-            if self.exit_on_error:
-                signal.raise_signal(signal.SIGINT)
+            #if self.exit_on_error:
+            #    signal.raise_signal(signal.SIGINT)
 
             #raise GracefulShutdownException() from e
 
@@ -317,7 +318,8 @@ class LauncherArgHelper(object):
 
     # The way using this system, don't want to close launchers on exit
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None and issubclass(exc_type, type(self.launcher).exc_type):
+        if exc_type is not None and (issubclass(exc_type, type(self.launcher).exc_type) or \
+                                     (issubclass(exc_type, TaskProcessingException) and self.name in exc_val.targets)):
             print("Caught error from [" + str(self.launcher.name) + "], shutting it down. Error was:\n" + str(
                 exc_val) + "\n" + ''.join(
                 traceback.format_exception(None, value=exc_val, tb=exc_tb)))
@@ -382,19 +384,30 @@ class ScenarioHelper(object):
 
     def setup(myself):
         class ScenarioSetup(object):
+            exc_type = type(myself.gazebo).launcher.exc_type
 
             def __enter__(gzself):
-                myself.scenario.setupScenario()
+                try:
+                    myself.scenario.setupScenario()
+                except (rospy.ROSException, rospy.ServiceException) as e:
+                    raise gzself.exc_type(msg="Error during scenario setup", task=myself.task) from e
+                    #gzself.__exit__(*sys.exc_info())
+                return gzself
 
-            def __exit__(gzself, exc_type, exc_val, exc_tb):  # NOTE: could these be replaced by 'args' and/or 'kwargs'?
+            def __exit__(gzself, exc_type, exc_val, exc_tb):
                 if isinstance(exc_val, (rospy.ROSException, rospy.ServiceException)):
-                    raise TestingScenarioError(str(exc_val)) from exc_val
+                    #raise TestingScenarioError(str(exc_val)) from exc_val
+                    raise gzself.exc_type(msg="Error during scenario execution!", task=myself.task) from exc_val
                 elif exc_val is None:
                     try:
                         myself.scenario.cleanup()
                     except (rospy.ROSException, rospy.ServiceException) as e:
                         print(str(e))
-                        raise type(myself.gazebo).launcher.exc_type(msg="Error during cleanup, but still have result", result=myself.result, task=self.task) from e
+                        raise gzself.exc_type(msg="Error during cleanup, but still have result", result=myself.result, task=myself.task) from e
+                else:
+                    raise
+
+
 
         return ScenarioSetup()
 
