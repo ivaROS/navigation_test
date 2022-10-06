@@ -21,9 +21,12 @@ class Rate(rospy.Rate):
         @raise ROSTimeMovedBackwardsException: if ROS time is set
         backwards
         """
+        def poll_func():
+            raise InterruptedSleepException
+
         curr_time = rospy.rostime.get_rostime()
         try:
-            sleep(duration=self._remaining(curr_time), timeout=self.timeout)
+            sleep(duration=self._remaining(curr_time), wall_poll_period=self.timeout, poll_func=poll_func)
         except rospy.exceptions.ROSTimeMovedBackwardsException:
             if not self._reset:
                 raise
@@ -75,9 +78,12 @@ class ActionClient(actionlib.action_client.ActionClient):
     ## the user wait until the network connection to the server is negotiated
     def wait_for_server(self, timeout=rospy.Duration(0.0), wall_timeout=None):
         # return super(SimpleActionClient,self).wait_for_server(timeout=timeout)
+        #if not isinstance(timeout, genpy.Duration):
+        #    timeout = genpy.Duration.from_sec(timeout)
 
         started = False
         ros_timeout_time = rospy.get_rostime() + timeout
+        #print("ros_timeout_time:" + str(ros_timeout_time))
         wall_timeout_time = time.time() + wall_timeout if wall_timeout is not None else None
         while not rospy.is_shutdown():
             if self.last_status_msg:
@@ -106,6 +112,7 @@ class ActionClient(actionlib.action_client.ActionClient):
                     if status_num_pubs > 0 and result_num_pubs > 0 and feedback_num_pubs > 0:
                         started = True
                         break
+            #print("ros_time:" + str(rospy.get_rostime()))
 
             if timeout != rospy.Duration(0.0) and rospy.get_rostime() >= ros_timeout_time:
                 break
@@ -132,8 +139,7 @@ class SimpleActionClient(actionlib.simple_action_client.SimpleActionClient):
         return self.action_client.wait_for_server(timeout, wall_timeout)
 
 
-
-def sleep(duration, timeout=None):
+def sleep(duration, wall_poll_period=None, poll_func=None):
     """
     sleep for the specified duration in ROS time. If duration
     is negative, sleep immediately returns.
@@ -145,6 +151,7 @@ def sleep(duration, timeout=None):
     @raise ROSTimeMovedBackwardsException: if ROS time is set
     backwards
     """
+    #TODO: support wallclock as well
     if rospy.rostime.is_wallclock():
         return rospy.sleep(duration=duration)
     else:
@@ -158,15 +165,16 @@ def sleep(duration, timeout=None):
             return time.time()
 
         initial_walltime = walltime()
-        max_walltime = initial_walltime + timeout
+        max_walltime = initial_walltime + wall_poll_period
 
         def get_wait_time(max_time):
-            if timeout is None:
+            if wall_poll_period is None:
                 wait_time = max_time
             else:
                 rem_time = max_walltime - walltime()
                 if rem_time < 0:
-                    raise InterruptedSleepException
+                    if callable(poll_func):
+                        poll_func()
                 wait_time = min(max_time, rem_time)
             #print("Wait time: " + str(wait_time))
             return wait_time

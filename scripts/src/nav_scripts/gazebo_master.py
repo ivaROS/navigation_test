@@ -26,6 +26,7 @@ from nav_scripts.testing_scenarios import TestingScenarios, TestingScenarioError
 from nav_scripts.controller_launcher import ControllerLauncher
 from nav_scripts.ros_launcher_helper import GazeboLauncher, RobotLauncher, RoscoreLauncher, LauncherErrorCatcher, RosLauncherMonitor
 from nav_scripts.task_pipeline import TaskProcessingPipeline, ResultRecorder, Worker, TaskProcessingException, ExceptionLevels, GracefulShutdownException
+from nav_scripts.monitor import TaskProcessingMonitor
 
 import rospy
 import csv
@@ -183,12 +184,15 @@ class GazeboMaster(Worker):
 
     ##NOTE: Due to the use of certain class variables and writing of environment variables, this needs to happen in the new process and can't be done in __init__
     def setup(self):
+        TaskProcessingMonitor.init()
         self.roscore = RoscoreLauncher(use_existing_roscore=self.use_existing_roscore)
         self.robot_launcher = RobotLauncher()
         self.gazebo_launcher = GazeboLauncher(robot_launcher=self.robot_launcher)
         self.controller_launcher = ControllerLauncher()
         self.monitor = RosLauncherMonitor(
             launchers=[self.roscore, self.robot_launcher, self.gazebo_launcher, self.controller_launcher])
+
+
 
         self.gui = True
 
@@ -208,6 +212,9 @@ class GazeboMaster(Worker):
         #TODO: Add top level loop to allow restarting if roscore dies or something like that
         self.setup()
         self.monitor.append(self.interrupt_monitor)
+        self.monitor = None
+
+        TaskProcessingMonitor.enable_monitor(self.interrupt_monitor)
 
         #Starts roscore if needed; does not launch anything else, but ensures they all get shutdown properly
         with self.roscore, self.gazebo_launcher, self.robot_launcher:
@@ -242,7 +249,7 @@ class GazeboMaster(Worker):
             #raise GracefulShutdownException() from e
 
         #finally:
-        if True:
+        if True: #NOTE: Can't use finally here, since there may not be any result
             task["worker"] = self.name
 
             if isinstance(result, dict):
@@ -318,7 +325,7 @@ class LauncherArgHelper(object):
 
     # The way using this system, don't want to close launchers on exit
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None and (issubclass(exc_type, type(self.launcher).exc_type) or \
+        if exc_type is not None and (issubclass(exc_type, type(self.launcher).exc_type) or
                                      (issubclass(exc_type, TaskProcessingException) and self.name in exc_val.targets)):
             print("Caught error from [" + str(self.launcher.name) + "], shutting it down. Error was:\n" + str(
                 exc_val) + "\n" + ''.join(
@@ -354,7 +361,7 @@ class ScenarioHelper(object):
                 try:
                     gzself.value = myself.scenario.getGazeboLaunchFile()
                 except Exception as e:
-                    raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=self.task) from e
+                    raise TestingScenarioError(msg="Unable to get gazebo launch file for scenario!", exc_level=ExceptionLevels.BAD_CONFIG, task=myself.task) from e
 
         myself.gazebo = GazeboHelper(task=myself.task)
         return myself.gazebo

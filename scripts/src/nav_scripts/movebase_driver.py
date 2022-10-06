@@ -23,7 +23,8 @@ import threading
 import time
 import angles
 from std_msgs.msg import Int16 as Int16msg
-from nav_scripts.interruptible import Rate, InterruptedSleepException, SimpleActionClient
+from nav_scripts.interruptible import InterruptedSleepException #, Rate, SimpleActionClient
+from nav_scripts.monitor import SimpleActionClient, Rate
 from nav_scripts.task_pipeline import TaskProcessingException, ExceptionLevels
 
 class RobotImplException(TaskProcessingException):
@@ -378,18 +379,14 @@ class MoveBaseTask:
         # except TypeError as e:
         #     pass
 
-        while rospy.Time.now() < end_time or not action_server_wait_time:
-            try:
-                if self.client.wait_for_server(timeout=rospy.Duration(secs=action_server_wait_time), wall_timeout=wall_timeout):
-                    print("Done!")
-                    rospy.loginfo("Found MoveBaseActionServer!")
-                    break
-                else:
-                    rospy.logerr("MoveBaseActionServer not found!")
-                    return TaskProcessingException("MoveBaseActionServer not found!")
-            except InterruptedSleepException as e:
-                if self.monitor is not None:
-                    self.monitor.update()
+
+        if self.client.wait_for_server(timeout=rospy.Duration(secs=action_server_wait_time), wall_poll_period=0.2):
+            print("Done!")
+            rospy.loginfo("Found MoveBaseActionServer!")
+        else:
+            rospy.logerr("MoveBaseActionServer not found!")
+            raise TaskProcessingException("MoveBaseActionServer not found!")
+
 
         time.sleep(3)
 
@@ -429,7 +426,7 @@ class MoveBaseTask:
 
 
     def wait_for_finish(self):
-        r = Rate(hz=5, timeout=1)
+        r = Rate(hz=5, wall_poll_period=0.4)
 
         self.result={}
         self.start_time = rospy.Time.now()
@@ -440,14 +437,7 @@ class MoveBaseTask:
             if result:
                 break
             else:
-                try:
-                    r.sleep()
-                except InterruptedSleepException as e:
-                    print("Interrupted sleep")
-                    pass
-                finally:
-                    if self.monitor is not None:
-                        self.monitor.update()
+                r.sleep()
 
             rospy.loginfo_throttle(period=5, msg="Waiting for result...")
 

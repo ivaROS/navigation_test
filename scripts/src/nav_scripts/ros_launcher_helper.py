@@ -21,6 +21,7 @@ import sys
 import cProfile
 import nav_scripts.patch_roslaunch
 from nav_scripts.task_pipeline import TaskProcessingException, ExceptionLevels
+from nav_scripts.monitor import TaskProcessingMonitor
 import traceback
 
 
@@ -92,6 +93,7 @@ def source_workspace(bash_file):
 
 import errno
 
+#TODO: Allow passing a list of bash files to apply
 class EnvironmentSourcer(object):
     def __init__(self, bash_source_file=None):
         self.bash_source_file = None
@@ -355,7 +357,7 @@ class RosLauncherHelper(object):
                         except roslaunch.core.RLException as e:
                             raise type(self).exc_type_launch(msg="launching error") from e
 
-
+        TaskProcessingMonitor.enable_monitor(self)
         return True
 
 
@@ -372,10 +374,10 @@ class RosLauncherHelper(object):
         try:
             if self.roslaunch_object.pm.is_shutdown:
                 #self.shutdown()
-                raise self.exc_type_runtime(msg="Monitor update failed")
+                raise self.exc_type_runtime(msg=f"[{self.name}] launcher shutdown")
         except AttributeError as e: #If any of those don't exist, something is wrong
             print(str(e))
-            raise self.exc_type_runtime(msg="Monitor update failed") from e
+            raise self.exc_type_runtime(msg=f"[{self.name}] launcher is in an unexpected state") from e
 
 
 
@@ -397,6 +399,7 @@ class RosLauncherHelper(object):
 
     #TODO: shutdown 'dependent' launchers as well?
     def shutdown(self):
+        TaskProcessingMonitor.disable_monitor(self)
         self.current_value=None
         self.current_args=None
         if self.roslaunch_object is not None:
@@ -411,7 +414,7 @@ class RosLauncherHelper(object):
         return self.roslaunch_object._shutting_down if self.roslaunch_object is not None else False
 
     def is_active(self, timeout=30):
-        if self.shutting_down():
+        if self.roslaunch_object is None or self.shutting_down():
             return False
         return self.heart_beat_check(timeout=timeout)
 
