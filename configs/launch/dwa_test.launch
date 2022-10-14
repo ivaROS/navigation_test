@@ -1,7 +1,0 @@
-<launch>
-
-
-
-    <!-- Base to laser transform -->
-    <node name="duo_3d_driver" pkg="duo3d_driver" type="duo3d_node" />
-</launch>
