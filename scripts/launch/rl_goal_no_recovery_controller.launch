@@ -1,9 +1,0 @@
-<launch>
-  
-  <arg name="num_inferred_paths" default="5"/>
-  <arg name="debug" default="false"/>
-  
-  <arg name="use_recovery_behaviors" value="false"/>
-  <include file="$(find nav_scripts)/launch/rl_goal_controller.launch" pass_all_args="true"/>
-  
-</launch>

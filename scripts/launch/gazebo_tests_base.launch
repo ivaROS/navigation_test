@@ -1,6 +1,0 @@
-<launch>
-  <!-- Turtlebot Gazebo bringup -->
-  <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch">
-    <arg name="world_file" value="$(find nav_configs)/world/rectangular_room.world"/>
-  </include>
-</launch>
