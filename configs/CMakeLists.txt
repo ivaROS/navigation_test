@@ -5,10 +5,6 @@ project(nav_configs)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  map_server
-  move_base
-  tf
-  turtlebot_bringup
 )
 
 ## System dependencies are found with CMake's conventions

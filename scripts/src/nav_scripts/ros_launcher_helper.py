@@ -436,7 +436,6 @@ class RosLauncherMonitor(object):
             l.update()
 
 class RoscoreLauncher(RosLauncherHelper):
-    #roscore_launch_mutex = mp.Lock()
 
     def __init__(self, use_existing_roscore):
         super(RoscoreLauncher, self).__init__(name="core", hide_stdout=False, profile=False, is_core=True)
@@ -445,7 +444,6 @@ class RoscoreLauncher(RosLauncherHelper):
 
     def __enter__(self):
         if not self.use_existing_roscore:
-            #with RoscoreLauncher.roscore_launch_mutex:
             self.launch()
         else:
             print("Not starting a new ROS Core")

@@ -5,17 +5,12 @@ from builtins import object
 import rospy
 #import actionlib
 from move_base_msgs.msg import *
-from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, PoseArray
-from pprint import pprint
 import tf
 import tf.transformations
 from actionlib_msgs.msg import GoalStatus
 from nav_msgs.msg import Odometry
-import tf2_ros
 import math
 import std_srvs.srv as std_srvs
-from sensor_msgs.msg import LaserScan, Image
-import rosbag
 import datetime
 import os
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseActionFeedback
@@ -48,11 +43,8 @@ class RobotImpls(object):
         try:
             robot_impl_type = task["robot_impl"]
         except KeyError as e:
-            rospy.logwarn("Warning! Task does not specify robot_impl type [" + str(task) + "], using 'turtlebot' as default")
-            robot_impl_type = "turtlebot"
-        except TypeError as e:
-            rospy.logwarn("Warning! Task was not provided, using 'turtlebot' as default")
-            robot_impl_type = "turtlebot"
+            rospy.logwarn("Warning! Task does not specify robot_impl type [" + str(task) + "]!")
+            raise RobotImplException("No robot_impl type provided!", exc_level=ExceptionLevels.BAD_CONFIG, task=task) from e
 
         try:
             return RobotImpls.impls[robot_impl_type](task=task)
@@ -125,165 +117,6 @@ class TrajTypeRecorder(object):
     def get_results(self):
         return {"num_traj_type_none": self.traj_results["none"], "num_traj_type_radial": self.traj_results["radial"], "num_traj_type_axial": self.traj_results["axial"]}
 
-class ResultRecorder(object):
-    def __init__(self):
-        from laser_classifier_ros.msg import GlobalSample
-        self.lock = threading.Lock()
-
-        bagpath = "~/simulation_data/" + str(datetime.datetime.now()) + ".bag"
-        self.bagfilepath = os.path.expanduser(bagpath)
-        print("bag file = " + self.bagfilepath + "\n")
-        self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
-
-        #self.vel_sub = rospy.Subscriber("navigation_velocity_smoother/raw_cmd_vel", Twist, self.twistCB, queue_size=1)
-        self.sample_sub = rospy.Subscriber("/move_base/TebLocalPlannerROS/teb_poses", PoseArray, self.sampleCB, queue_size=4)
-        self.scan_sub = rospy.Subscriber("point_scan", LaserScan, self.scanCB, queue_size=1)
-        self.rgb_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.imageCB, queue_size=1)
-        self.odom_sub = rospy.Subscriber("/odom", Odometry, self.odomCB, queue_size=1)
-
-
-        self.scan = None
-        self.feedback = None
-        self.odom = None
-        self.rgb_image = None
-        self.last_sample = None
-        self.sample_period = rospy.Duration(1)
-
-
-    def record(self, odom, scan, rgb_image, feedback, trajectory):
-        self.lock.acquire()
-        if odom is None or scan is None or rgb_image is None or feedback is None or trajectory is None:
-            return
-
-        current_time = rospy.Time.now()
-
-        if True: #self.last_sample is None or current_time - self.last_sample > self.sample_period:
-
-            start_t = time.time()
-            self.bagfile.write("scan", scan, scan.header.stamp)
-            self.bagfile.write("odom", odom, scan.header.stamp)
-            self.bagfile.write('rgb_image', rgb_image, scan.header.stamp)
-            self.bagfile.write("feedback", feedback, scan.header.stamp)
-            self.bagfile.write("trajectory", trajectory, scan.header.stamp)
-            self.last_sample = current_time
-
-            rospy.logdebug("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
-
-        self.lock.release()
-
-
-    def twistCB(self, data):
-        rospy.logdebug("Command received!")
-
-        if(self.scan is not None and self.feedback is not None):
-            self.record(data, self.scan, self.feedback)
-
-    def sampleCB(self, data):
-        rospy.logdebug("Trajectory received!")
-
-        self.record(self.odom, self.scan, self.rgb_image, self.feedback, data)
-
-    def scanCB(self, data):
-        rospy.logdebug("Scan received!")
-
-        self.lock.acquire()
-        self.scan = data
-        self.lock.release()
-        rospy.logdebug("Scan updated!")
-
-    def imageCB(self, data):
-        rospy.logdebug("RGB image received!")
-
-        self.lock.acquire()
-        self.rgb_image = data
-        self.lock.release()
-        rospy.logdebug("RGB image updated!")
-
-    def setGoal(self, data):
-        rospy.logdebug("Goal received!")
-
-        self.lock.acquire()
-        self.bagfile.write("goal", data, data.target_pose.header.stamp)
-        self.lock.release()
-        rospy.logdebug("Goal recorded!")
-
-
-    def feedback_cb(self, data):
-        rospy.logdebug("Pose received!")
-
-        self.lock.acquire()
-        self.feedback = data
-        self.lock.release()
-        rospy.logdebug("Pose recorded!")
-
-    def odomCB(self, data):
-        rospy.logdebug("Odom received!")
-
-        self.lock.acquire()
-        self.odom = data
-        self.lock.release()
-        rospy.logdebug("Odom recorded!")
-
-    def done(self):
-        rospy.logdebug("'Done' Commanded!")
-
-        self.lock.acquire()
-        #self.vel_sub.unregister()
-        self.scan_sub.unregister()
-        self.sample_sub.unregister()
-        self.rgb_sub.unregister()
-        self.odom_sub.unregister()
-        self.bagfile.close()
-        self.lock.release()
-        rospy.logdebug("'Done' accomplished!")
-
-
-
-#Not currently in use
-class OdomChecker(object):
-    def __init__(self):
-        #self.odom_timer = rospy.Timer(period = rospy.Duration(1), callback = self.checkOdom)
-        self.not_moving = False
-        self.collided = False
-
-    def checkOdom(self, event=None):
-        try:
-            print("timer callback")
-            now = rospy.Time.now()
-            past = now - rospy.Duration(5.0)
-            trans = self.tfBuffer.lookup_transform_full(
-                target_frame='odom',
-                target_time=rospy.Time.now(),
-                source_frame='base_footprint',
-                source_time=past,
-                fixed_frame='odom',
-                timeout=rospy.Duration(1.0)
-            )
-            print(str(trans))
-            displacement = math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y)
-            print("Odom displacement: " + str(displacement))
-            if(displacement < .05):
-                self.not_moving = True
-
-            past = now - rospy.Duration(1.0)
-            trans = self.tfBuffer.lookup_transform_full(
-                target_frame='map',
-                target_time=now,
-                source_frame='odom',
-                source_time=past,
-                fixed_frame='odom',
-                timeout=rospy.Duration(1.0)
-            )
-            print(str(trans))
-            displacement = math.sqrt(trans.transform.translation.x*trans.transform.translation.x + trans.transform.translation.y*trans.transform.translation.y)
-            print("map displacement: " + str(displacement))
-            if(displacement >.1):
-                self.collided = True
-
-
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            print(e)
-            pass
 
 class OdomAccumulator(object):
     def __init__(self):

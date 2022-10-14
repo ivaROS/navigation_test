@@ -615,15 +615,3 @@ class GazeboDriver(object):
     path = self.rospack.get_path("nav_configs")
     self.model_path = path + "/models/"
 
-
-
-
-  
-
-
-if __name__ == '__main__':
-  try:
-    a = GazeboDriver()
-    a.run()
-  except rospy.ROSInterruptException:
-    rospy.loginfo("exception")

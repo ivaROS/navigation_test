@@ -7,7 +7,6 @@ from past.utils import old_div
 from builtins import object
 import rospkg, rospy
 from nav_scripts.gazebo_driver import GazeboDriver
-from nav_scripts.costmap_driver import CostmapDriver
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion
 import numpy as np
 import random
