@@ -256,19 +256,6 @@ class LauncherErrorCatcher(object):
         pass
 
 
-
-
-class NavBenchException(BaseException):
-    pass
-
-#Raising this should cause everything to shutdown ASAP
-class FatalNavBenchException(NavBenchException):
-    pass
-
-#Raising this should cause the worker to move on to the next task
-class NonFatalNavBenchException(NavBenchException):
-    pass
-
 class RosLauncherException(TaskProcessingException):
     def __init__(self, launcher_type=None, exc_type="", launch_files="", msg="", **kwargs):
         super().__init__(msg=str(launcher_type) + " encountered a " + str(exc_type) + " error: " + str(msg), **kwargs)
