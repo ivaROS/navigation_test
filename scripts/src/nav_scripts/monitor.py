@@ -302,7 +302,7 @@ class Rate(rospy.Rate):
             wall_time = time.time()
             time_diff = self.target_wall_time - wall_time
             period = max(0, time_diff)
-            print(f"Remaining wall time: {time_diff}, period: {period}")
+            #print(f"Remaining wall time: {time_diff}, period: {period}")
             return period
 
         def poll_func():
@@ -317,7 +317,7 @@ class Rate(rospy.Rate):
             self.last_time = rospy.rostime.get_rostime()
             return
         except InterruptedSleepException as e:
-            print("Returning from sleep early!")
+            #print("Returning from sleep early!")
             if get_remaining_wall_time() == 0:
                 TaskProcessingMonitor.check_monitor()
                 reset_wall_time()
