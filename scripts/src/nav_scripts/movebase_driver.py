@@ -321,5 +321,3 @@ def run_test(goal_pose, monitor=None, task=None, timeout=None, record=None):
 
     mt = MoveBaseTask(goal_pose=goal_pose, monitor=monitor, task=task)
     return mt.run()
-
-import nav_scripts.turtlebot_impl
