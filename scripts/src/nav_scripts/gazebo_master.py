@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
+
+import pathlib
+
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
@@ -50,11 +53,13 @@ class ConsoleResultRecorder(ResultRecorder):
 
 class CSVResultRecorder(ConsoleResultRecorder):
 
-    def __init__(self):
+    def __init__(self, data_dir="/tmp/aerial_pips_simulation_data"):
         super(CSVResultRecorder, self).__init__()
+        self.data_dir = data_dir
 
     def run(self):
-        outputfile_name = "~/simulation_data/results_" + str(datetime.datetime.now())
+        pathlib.Path(self.data_dir).mkdir(parents=True, exist_ok=True)
+        outputfile_name = os.path.join(self.data_dir, "results_" + str(datetime.datetime.now()))
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'w') as self.csvfile:
@@ -74,7 +79,7 @@ class CSVResultRecorder(ConsoleResultRecorder):
 
 
 class MultiMasterCoordinator(TaskProcessingPipeline):
-    def __init__(self, num_masters=1, save_results = True, use_existing_roscore=False, exit_on_error=False):
+    def __init__(self, num_masters=1, save_results = True, use_existing_roscore=False, exit_on_error=False, data_dir="/tmp/aerial_pips_simulation_data"):
         super(MultiMasterCoordinator, self).__init__()
 
         self.started = False
@@ -86,12 +91,12 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
         self.use_existing_roscore = use_existing_roscore
         self.save_results = save_results
         self.exit_on_error = exit_on_error
+        self.data_dir = data_dir
 
         self.fieldnames = ["controller"]
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot","total_rotation"])
-        #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight', 'timeout', 'bash_source_file']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", 'controller_freq', 'timeout', 'bash_source_file'])
 
         super(MultiMasterCoordinator,self).setup_stages(num_workers=num_masters)
 
@@ -105,7 +110,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
         return GazeboMaster(num=num, use_existing_roscore=self.use_existing_roscore, exit_on_error=self.exit_on_error)
 
     def get_result_recorder(self):
-        return CSVResultRecorder() if self.save_results else ConsoleResultRecorder()
+        return CSVResultRecorder(data_dir=self.data_dir) if self.save_results else ConsoleResultRecorder()
 
     #TODO: maybe replace all 'wait_for_finish' functions with 'wait_to_finish' to avoid confusion
     def wait_to_finish(self, source="Unknown"):
@@ -114,17 +119,6 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
     def add_tasks(self, tasks):
         return super(MultiMasterCoordinator, self).add_tasks(tasks=tasks)
 
-        if False:
-            if(not self.started):
-                self.add_task_fieldnames(tasks=tasks)
-
-                print("Adding tasks asynchronously in separate thread...")
-                self.task_thread = threading.Thread(target=self.add_tasks_impl,args=[tasks])
-                self.task_thread.daemon=True
-                self.task_thread.start()
-            else:
-                print("Adding tasks...")
-                self.add_tasks_impl(tasks=tasks)
 
     #TODO: handle cases where tasks are in the form of a generator
     def add_tasks_impl(self, tasks):
