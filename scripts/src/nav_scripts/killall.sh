@@ -1,0 +1,1 @@
+killall -9 gzserver python3 robot_state_publisher map_server nodelet move_base_virtual gazebo_fake_localization rosmaster rosout nodelet ego_circle

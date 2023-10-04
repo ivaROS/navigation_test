@@ -1,0 +1,126 @@
+<launch>
+  <arg name="use_recovery_behaviors" default="true"/>
+  
+  <arg name="egocircle" default="true"/>
+  
+  <arg name="gaps" default="$(arg egocircle)"/>
+  
+  <arg name="converter" default="false" if="$(arg egocircle)"/>
+  <arg name="converter" default="true" unless="$(arg egocircle)"/>
+  
+  <arg name="simple_exploration" default="false"/>
+  
+  <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
+
+  <arg name="ec_radius" default="$(optenv GM_PARAM_EC_RADIUS 3)"/>
+  <node name="egocircle_node" pkg="egocircle" type="ego_circle" if="$(arg egocircle)">
+    <param name="max_depth" value="$(arg ec_radius)"/>
+  </node>
+  
+  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
+  <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
+  <arg name="global_potential_weight" default="$(optenv GM_PARAM_GLOBAL_POTENTIAL_WEIGHT 1)"/>
+  
+  <arg name="max_number_classes" default="$(optenv GM_PARAM_MAX_NUMBER_CLASSES 5)"/>
+  
+  <arg name="cost_factor" default="$(optenv GM_PARAM_COST_FACTOR 0.01)"/>
+  
+  <arg name="selection_obst_cost_scale" default="$(optenv GM_SELECTION_OBST_COST_SCALE 0)"/>
+  <arg name="enable_standard_costs" default="$(optenv GM_ENABLE_STANDARD_COSTS false)"/>
+  <arg name="selection_alternative_time_cost" default="$(optenv GM_SELECTION_ALTERNATIVE_TIME_COST true)"/>
+  <arg name="add_initial_plan" default="$(optenv GM_ADD_INITIAL_PLAN false)"/>
+  <arg name="gradient_descent_exploration" default="$(optenv GM_GRADIENT_DESCENT_EXPLORATION false)"/>
+  <arg name="gradient_descent_max_iterations" default="$(optenv GM_GRADIENT_DESCENT_MAX_ITERATIONS -1)"/>
+  <arg name="switching_blocking_period" default="$(optenv GM_SWITCHING_BLOCKING_PERIOD 1)"/>
+
+
+  <arg name="gap_merge_scale" default="$(optenv GM_PARAM_GAP_MERGE_SCALE 1.0)"/>
+  <arg name="gap_merge_offset" default="$(optenv GM_PARAM_GAP_MERGE_OFFSET 0.3)"/>
+  <arg name="gap_merge_max_size" default="$(optenv GM_PARAM_GAP_MERGE_MAX_SIZE 0.8)"/>
+  <arg name="gap_merge_min_radius" default="$(optenv GM_PARAM_GAP_MERGE_MIN_RADIUS 0.4)"/>
+  <arg name="enable_radial_gap_conversion" default="$(optenv GM_PARAM_ENABLE_RADIAL_GAP_CONVERSION false)"/>
+  <arg name="gap_conversion_rotation_angle" default="$(eval optenv('GM_PARAM_GAP_CONVERSION_ROTATION_ANGLE pi/4'))"/>
+
+
+
+  <arg name="debug" default="false"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
+  <!-- "xterm -e valgrind - -tool=memcheck - -leak-check=no - -num-callers=40 - -undef-value-errors=no - -track-origins=no - -keep-stacktraces=alloc-and-free" -->
+  
+  <!-- xterm -e gdb -ex run - -args -->
+  
+  
+  <!--<env name="ROSCONSOLE_CONFIG_FILE" value="$(find teb_multigoal_testing)/cfg/rosconsole.conf"/>-->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+      
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="TebLocalPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      
+      <rosparam file="$(find global_planner_plus)/config/global_planner.yaml" command="load" ns="GlobalPlannerPlus"/>
+      
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+
+      <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+      <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
+      
+
+      <param name="TebLocalPlannerROS/include_costmap_obstacles" value="false" if="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/include_egocircle_obstacles" value="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/gap_h_signature" value="$(arg gaps)"/>
+      <param name="TebLocalPlannerROS/gap_exploration" value="$(arg gaps)"/>
+      <param name="TebLocalPlannerROS/egocircle_feasibility" value="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/simple_exploration" value="$(arg simple_exploration)"/>
+      <param name="TebLocalPlannerROS/weight_gap" value="0"/>
+      <param name="TebLocalPlannerROS/weight_global_potential" value="$(arg global_potential_weight)"/>
+      <param name="TebLocalPlannerROS/gap_boundary_exponent" value="2" unless="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/feasibility_check_no_tebs" value="1" if="$(arg egocircle)"/>
+      <param name="TebLocalPlannerROS/gap_theta_start" value="3.15"/>
+      <param name="TebLocalPlannerROS/use_global_potentials" value="true"/>
+      <param name="TebLocalPlannerROS/max_global_plan_lookahead_dist" value="0"/>
+      <param name="TebLocalPlannerROS/selection_prefer_initial_plan" value="0.95"/>
+      <param name="TebLocalPlannerROS/detour_threshold" value="-1.0"/>
+      <param name="TebLocalPlannerROS/switching_blocking_period" value="$(arg switching_blocking_period)"/>
+      <param name="TebLocalPlannerROS/force_reinit_new_goal_dist" value="1.0"/>
+      <param name="TebLocalPlannerROS/max_number_classes" value="$(arg max_number_classes)"/>
+      <param name="TebLocalPlannerROS/selection_alternative_time_cost" value="$(arg selection_alternative_time_cost)"/>
+      <param name="TebLocalPlannerROS/enable_standard_costs" value="$(arg enable_standard_costs)"/>
+      <param name="TebLocalPlannerROS/selection_obst_cost_scale" value="$(arg selection_obst_cost_scale)"/>
+      <param name="TebLocalPlannerROS/add_initial_plan" value="$(arg add_initial_plan)"/>
+
+      <param name="TebLocalPlannerROS/gradient_descent_exploration" value="$(arg gradient_descent_exploration)"/>
+      <param name="TebLocalPlannerROS/gradient_descent_max_iterations" value="$(arg gradient_descent_max_iterations)"/>
+
+      <param name="base_global_planner" value="global_planner_plus/GlobalPlannerPlus"/>
+      
+      <rosparam file="$(find nav_configs)/config/teb_costmap_converter_params.yaml" command="load" if="$(arg converter)"/> 
+
+      <param name="controller_frequency" value="$(arg controller_freq)" />
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+      <!-- Disable the local costmap observation sources if they will not be used -->
+      <param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>
+      <remap from="cmd_vel" to="navigation_velocity_smoother/raw_cmd_vel"/>
+  </node>
+
+
+    <param name="/move_base/GlobalPlannerPlus/cost_factor" value="$(arg cost_factor)"/>
+
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_scale" value="$(arg gap_merge_scale)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_offset" value="$(arg gap_merge_offset)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_max_size" value="$(arg gap_merge_max_size)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_merge_min_radius" value="$(arg gap_merge_min_radius)"/>
+  <param name="/move_base/TebLocalPlannerROS/enable_radial_gap_conversion" value="$(arg enable_radial_gap_conversion)"/>
+  <param name="/move_base/TebLocalPlannerROS/gap_conversion_rotation_angle" value="$(arg gap_conversion_rotation_angle)"/>
+
+    <param name="/move_base/base_frame_id" value="base_footprint"/>
+    <param name="/move_base/fixed_frame_id" value="map"/>
+    <param name="/move_base/odom_frame_id" value="odom"/>
+
+</launch>

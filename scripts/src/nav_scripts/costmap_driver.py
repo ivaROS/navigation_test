@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 import rospy
 import random
 import sys, os, time
@@ -38,6 +42,7 @@ class CostmapDriver(object):
         map = rospy.wait_for_message(self.inflated_ground_truth_map_topic, OccupancyGrid)
         self.mapCB(map)
 
+        # This is just for debugging/testing purposes
         self.pose_sub = rospy.Subscriber("/clicked_point", PointStamped, self.pointCB, queue_size=1)
 
         self.random = random.Random()
@@ -46,22 +51,19 @@ class CostmapDriver(object):
         self.nprandom = np.random.RandomState(seed)
 
     def mapCB(self, map):
-        self.lock.acquire()
-
-        self.size_x = map.info.width
-        self.size_y = map.info.height
-        self.resolution = map.info.resolution
-        self.origin_x = map.info.origin.position.x
-        self.origin_y = map.info.origin.position.y
-        self.data = map.data
-        self.preprocessMap()
-        self.lock.release()
+        with self.lock:
+            self.size_x = map.info.width
+            self.size_y = map.info.height
+            self.resolution = map.info.resolution
+            self.origin_x = map.info.origin.position.x
+            self.origin_y = map.info.origin.position.y
+            self.data = map.data
+            self.preprocessMap()
 
     def pointCB(self, point):
-        self.lock.acquire()
-        issafe = self.isSafe(point.point.x, point.point.y)
-        self.lock.release()
-        print issafe
+        with self.lock:
+            issafe = self.isSafe(point.point.x, point.point.y)
+        print(issafe)
 
     def preprocessMap(self):
         map = np.reshape(np.array(self.data), newshape=(self.size_y, self.size_x))
@@ -72,22 +74,21 @@ class CostmapDriver(object):
 
 
     def getSafePose(self):
-        self.lock.acquire()
-        num_poses = self.safe_poses.shape[0]
-        if num_poses == 0:
-            return None
+        with self.lock:
+            num_poses = self.safe_poses.shape[0]
+            if num_poses == 0:
+                return None
 
-        rand_ind = self.nprandom.randint(low=0, high=num_poses)
-        pos = self.safe_poses[rand_ind,:]
-        self.lock.release()
+            rand_ind = self.nprandom.randint(low=0, high=num_poses)
+            pos = self.safe_poses[rand_ind,:]
 
-        pos += self.nprandom.random_sample(size=2)*self.resolution/2
+        pos += old_div(self.nprandom.random_sample(size=2)*self.resolution,2)
 
         return pos
 
     def isSafe(self, wx, wy):
         cost = self.getCost(wx,wy)
-        print cost
+        print(cost)
         return cost < self.thresh
 
     def getCost(self, wx, wy):
@@ -97,15 +98,15 @@ class CostmapDriver(object):
         return cost
 
     def worldToMap(self, wx, wy):
-        mx = (int)((wx - self.origin_x) / self.resolution)
-        my = (int)((wy - self.origin_y) / self.resolution)
+        mx = (int)(old_div((wx - self.origin_x), self.resolution))
+        my = (int)(old_div((wy - self.origin_y), self.resolution))
         return mx, my
 
     def cellsToIndex(self, mx, my):
         return my * self.size_x + mx
 
     def indexToCells(self, index):
-        my = index / self.size_x
+        my = old_div(index, self.size_x)
         mx = index - (my * self.size_x)
         return mx, my
     
@@ -119,7 +120,7 @@ class CostmapDriver(object):
 
 if __name__ == '__main__':
     try:
-        print "Costmap Driver Main\n"
+        print("Costmap Driver Main\n")
         rospy.init_node("costmap_driver_test")
 
         driver = CostmapDriver(seed=0)

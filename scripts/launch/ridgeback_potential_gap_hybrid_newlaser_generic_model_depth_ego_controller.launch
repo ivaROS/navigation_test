@@ -1,0 +1,184 @@
+<launch>
+  <arg name="enable_visual" default="false"/>
+
+  <arg name="use_recovery_behaviors" default="true"/>
+  
+  <!-- <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/> -->
+
+  <arg name="sensor_frame_id" default="camera_depth_frame"/>
+
+  <arg name="image_to_use" default="egocylinder/image"/>
+  <arg name="info_to_use" default="egocylinder/egocylinder_info"/>
+  
+  <arg name="use_provided_manager" default="false" />
+  <arg name="provided_manager" default="camera/camera_nodelet_manager"/>
+  <arg name="nodelet_manager" default="egocylindrical_nodelet_manager" unless="$(arg use_provided_manager)" />
+  <arg name="nodelet_manager" default="$(arg provided_manager)" if="$(arg use_provided_manager)" />
+
+  <arg name="depth_image" default="/realsense_plugin/depth/image_raw"/>
+  <arg name="depth_info" default="/realsense_plugin/depth/camera_info"/>
+  <arg name="fixed_frame_id" default="odom"/>
+  <arg name="base_frame_id" default="base_link"/>
+
+  <group ns="egocylinder">
+    <node name="$(arg nodelet_manager)" pkg="nodelet" type="nodelet" args="manager" unless="$(arg use_provided_manager)" output="log" required="true">
+
+    </node>
+
+    <node name="depth_to_egocylindrical_nodelet" pkg="nodelet" type="nodelet" args="load egocylindrical/egocylindrical_propagator_nodelet $(arg nodelet_manager)" required="true">
+     <!-- <remap from="/camera/depth/image_raw" to="$(arg depth_image)"/> -->
+      <param name="vfov" value="3.141592654"/>
+      <param name="image_in" value="$(arg depth_image)"/>
+      <param name="info_in" value="$(arg depth_info)"/>
+      <param name="points_out" value="data"/>
+      <param name="filtered_points" value="filtered_points"/>
+      <param name="fixed_frame_id" value="$(arg fixed_frame_id)"/>
+      <param name="orientation_fixed_frame_id" value="$(arg base_frame_id)"/>
+      <param name="origin_fixed_frame_id" value="camera_depth_frame"/>
+    </node>
+    
+    <node name="egocylindrical_to_pointcloud_nodelet" pkg="nodelet" type="nodelet" args="load egocylindrical/point_cloud_nodelet $(arg nodelet_manager)" required="true" if="$(arg enable_visual)">
+      <remap from="egocylindrical_points" to="data"/>
+      <remap from="cylindrical" to="points"/>
+    </node>
+
+    <node name="egocylindrical_to_projected_pointcloud_nodelet" pkg="nodelet" type="nodelet" args="load egocylindrical/projected_point_cloud_nodelet $(arg nodelet_manager)" required="true" if="$(arg enable_visual)">
+      <remap from="egocylindrical_points" to="data"/>
+
+    </node>
+    
+    <node name="egocylindrical_to_range_image_nodelet" pkg="nodelet" type="nodelet" args="load egocylindrical/range_image_nodelet $(arg nodelet_manager)" required="true">
+      <remap from="egocylindrical_points" to="data"/>
+      <param name="use_raw" value="False"/>
+      <param name="image_topic" value="image"/>
+    </node>
+
+  </group>
+
+  <group ns="egocylinder">
+
+    <arg name="ec_im" default="image"/>
+    <arg name="ec_info" default="egocylinder_info"/>
+
+
+    <node name="egocylindrical_image_to_laserscan_node" pkg="egocylindrical_image_to_laserscan" type="egocylindrical_image_to_laserscan_node" >
+      <remap from="image_in" to="$(arg ec_im)"/>
+      <remap from="info_in" to="$(arg ec_info)"/>
+      <remap from="camera_info" to="$(arg depth_info)"/>
+      
+      <param name="fixed_frame_id" value="$(arg fixed_frame_id)"/>
+      <param name="scan_frame_id" value="egocan_stabilized"/>
+      <param name="floor_dist" value="0.38"/>
+      <param name="overhead_dist" value="0.2"/>
+    </node>
+
+  </group>
+
+  <node name="egocircle_node" pkg="egocircle" type="ego_circle" required="true">
+    <remap from="scan" to="/egocylinder/scan"/>
+    <param name="base_frame_id" value="$(arg base_frame_id)"/>
+  </node>
+
+  <!-- <arg name="vel_topic" default="/robot0/cmd_vel"/> -->
+  <arg name="holonomic" default="$(optenv GM_PARAM_HOLONOMIC true)"/>
+  <arg name="projection_operator" default="false"/>
+  <arg name="planning_inflated" default="$(optenv GM_PARAM_PLANNING_INFLATED false)"/>
+  <arg name="far_feasible" default="$(optenv GM_PARAM_FAR_FEASIBLE true)"/>
+  <arg name="full_fov" default="$(optenv GM_PARAM_FULL_FOV false)"/>
+  <arg name="inf_ratio" value="1.1" unless="$(arg planning_inflated)"/>
+  <arg name="inf_ratio" value="0.0" if="$(arg planning_inflated)"/>
+  
+  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
+  <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
+
+  <arg name="debug" default="false"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
+
+  <!-- xterm -e gdb -ex run - -args -->
+  
+  
+  <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/> -->
+  
+  <node pkg="move_base_virtual" type="move_base_virtual" respawn="false" name="move_base_gpf" output="screen" clear_params="true" required="true" launch-prefix="$(arg debug_prefix)">
+      <rosparam file="$(find quadruped_nav_benchmark)/config/gpfx/common_costmap_params_egocylinder_compensation.yaml" command="load" ns="global_costmap"/>
+      <rosparam file="$(find quadruped_nav_benchmark)/config/gpfx/common_costmap_params_egocylinder_compensation.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find quadruped_nav_benchmark)/config/gpfx/local_costmap_params_ridgeback.yaml" command="load"/>
+      <rosparam file="$(find quadruped_nav_benchmark)/config/gpfx/global_costmap_params_ridgeback.yaml" command="load"/>
+
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="PotentialGapPlanner"/>
+      <rosparam file="$(find nav_configs)/config/move_base_rb_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+
+      <param name="controller_frequency" value="$(arg controller_freq)" />
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+      <remap from="cmd_vel" to="/cmd_vel"/>
+
+      <!-- <remap from="cmd_vel" to="$(arg vel_topic)"/> -->
+      <!-- <remap from="/odom" to="/ground_truth/state"/> -->
+      <remap from="/odom" to="/ground_truth/corrected_odom"/>
+
+      <param name="base_local_planner" value="potential_gap/PotentialGapPlanner" />
+      <param name="PotentialGapPlanner/cc/GenAndTest/collision_details" value="false"/>
+
+      <param name="PotentialGapPlanner/cc/cc_enable" value="true"/>
+      <param name="PotentialGapPlanner/cc/cc_type" value="1"/>
+      <param name="PotentialGapPlanner/cc/egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg image_to_use)" />
+      <param name="PotentialGapPlanner/cc/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg info_to_use)" />
+      <param name="PotentialGapPlanner/cc/egocylindrical_image_cc_wrapper/robot_model/param_name" value="simplified_robot_description" />
+      <param name="PotentialGapPlanner/cc/egocylindrical_image_cc_wrapper/base_frame_id" value="$(arg base_frame_id)" />
+      <param name="PotentialGapPlanner/cc/egocylindrical_image_cc_wrapper/fixed_frame_id" value="$(arg fixed_frame_id)" />
+      
+      <!-- <param name="PotentialGapPlanner/map_frame_id" value="known_map"/>
+      <param name="PotentialGapPlanner/odom_frame_id" value="map_static"/> -->
+      <param name="PotentialGapPlanner/robot_frame_id" value="$(arg base_frame_id)"/>
+      <param name="PotentialGapPlanner/sensor_frame_id" value="$(arg sensor_frame_id)"/> 
+
+      <param name="PotentialGapPlanner/holonomic" value="$(arg holonomic)"/>
+      <param name="PotentialGapPlanner/projection_operator" value="$(arg projection_operator)"/>
+
+      <!-- <param name="PotentialGapPlanner/v_lin_x_const" value="0.0"/>
+      <param name="PotentialGapPlanner/v_lin_y_const" value="0.0"/>
+      <param name="PotentialGapPlanner/k_drive_x" value="3.5"/> -->
+      <!--<param name="PotentialGapPlanner/k_turn" value="0.1"/>
+      <param name="PotentialGapPlanner/k_drive_y" value="0.1"/>-->
+
+      <!-- Approach-specific parameters/remappings/etc -->
+      
+      <rosparam file="$(find quadruped_nav_benchmark)/config/potential_gap/potentialgap_local_planner_params.yaml" command="load"/>
+      <param name="PotentialGapPlanner/inf_ratio" value="$(arg inf_ratio)"/>
+      <param name="PotentialGapPlanner/k_po" value="1"/>
+      <param name="PotentialGapPlanner/planning_inflated" value="$(arg planning_inflated)"/>
+      <param name="PotentialGapPlanner/far_feasible" value="$(arg far_feasible)"/>
+      <param name="PotentialGapPlanner/ctrl_ahead_pose" value="3"/>
+      <param name="PotentialGapPlanner/r_min" value="0.36"/>
+      <param name="PotentialGapPlanner/radial_extend" value="false"/>
+
+      <param name="PotentialGapPlanner/terminal_weight" value="20"/>
+
+      <param name="PotentialGapPlanner/vx_absmax" value="0.7"/>
+      <param name="PotentialGapPlanner/vy_absmax" value="0.3"/>
+      <param name="PotentialGapPlanner/ang_absmax" value="1"/>
+
+      <param name="PotentialGapPlanner/decay_factor" value="1"/>
+      <param name="PotentialGapPlanner/avg_lin_speed" value="0.2"/>
+      <param name="PotentialGapPlanner/avg_rot_speed" value="0.2"/>
+      <param name="PotentialGapPlanner/speed_factor" value="5"/>
+      <param name="PotentialGapPlanner/virtual_path_decay_enable" value="true"/>
+
+      <param name="PotentialGapPlanner/robot_geo_scale" value="1.5"/>
+      <param name="PotentialGapPlanner/bezier_cp_scale" value="1."/>
+
+      <!-- Disable the local costmap observation sources if they will not be used -->
+      <!--<param name="local_costmap/obstacle_layer/observation_sources" value="false" if="$(arg egocircle)"/>-->
+  </node>
+
+
+
+
+
+</launch>

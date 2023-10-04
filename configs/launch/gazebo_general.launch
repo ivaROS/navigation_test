@@ -1,0 +1,75 @@
+<launch>
+  <arg name="world_file" default="$(optenv GM_PARAM_GAZEBO_WORLD_FILE)"/>
+  <arg name="map_file" default="$(optenv GM_PARAM_GAZEBO_MAP_FILE)"/>
+  <arg name="world_frame_id" default="map"/>
+
+  <!--<arg name="publish_ground_truth_map" default="$(optenv GM_PARAM_PUBLISH_GROUND_TRUTH_MAP)"/> -->
+  <arg name="ground_truth_map_file" default="$(optenv GM_PARAM_GAZEBO_GROUND_TRUTH_MAP_FILE)"/>
+  <arg name="gui" default="$(optenv GM_PARAM_GAZEBO_GUI true)"/>
+  <arg name="recording" default="$(optenv GM_PARAM_GAZEBO_RECORDING false)"/>
+  <arg name="recording_path" default="$(optenv GM_PARAM_GAZEBO_RECORDING_PATH '')"/>
+  <arg name="command_arg2_5t" default="" if="$(eval recording_path=='')"/>
+  <arg name="command_arg2_5t" default="--record_path $(arg recording_path)" unless="$(eval recording_path=='')"/>
+
+  <arg name="command_arg2_5" default="" unless="$(arg recording)"/>
+  <arg name="command_arg2_5" default="$(arg command_arg2_5t)" if="$(arg recording)"/>
+
+
+      <!-- NOTE: we can't just use gazebo_ros empty_world.launch because we want 'required=true' -->
+      <!--BEGIN gazebo_ros empty_world.launch-->
+      <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+      <arg name="paused" default="false"/>
+      <arg name="use_sim_time" default="true"/>
+      <arg name="extra_gazebo_args" default=""/>
+      <!-- Note that 'headless' is currently non-functional.  See gazebo_ros_pkgs issue #491 (-r arg does not disable
+           rendering, but instead enables recording). The arg definition has been left here to prevent breaking downstream
+           launch files, but it does nothing. -->
+      <arg name="headless" default="false"/>
+      <arg name="debug" default="false"/>
+      <arg name="physics" default="ode"/>
+      <arg name="verbose" default="false"/>
+      <arg name="respawn_gazebo" default="false"/>
+      <arg name="use_clock_frequency" default="false"/>
+      <arg name="pub_clock_frequency" default="100"/>
+
+      <!-- set use_sim_time flag -->
+      <group if="$(arg use_sim_time)">
+        <param name="/use_sim_time" value="true" />
+      </group>
+
+      <!-- set command arguments -->
+      <arg unless="$(arg paused)" name="command_arg1" value=""/>
+      <arg     if="$(arg paused)" name="command_arg1" value="-u"/>
+      <arg unless="$(arg recording)" name="command_arg2" value=""/>
+      <arg     if="$(arg recording)" name="command_arg2" value="-r"/>
+      <arg unless="$(arg verbose)" name="command_arg3" value=""/>
+      <arg     if="$(arg verbose)" name="command_arg3" value="--verbose"/>
+      <arg unless="$(arg debug)" name="script_type" value="gzserver"/>
+      <arg     if="$(arg debug)" name="script_type" value="debug"/>
+
+      <!-- start gazebo server-->
+      <group if="$(arg use_clock_frequency)">
+        <param name="gazebo/pub_clock_frequency" value="$(arg pub_clock_frequency)" />
+      </group>
+      <node name="gazebo" pkg="gazebo_ros" type="$(arg script_type)" respawn="$(arg respawn_gazebo)" output="screen"
+	    args="$(arg command_arg1) $(arg command_arg2) $(arg command_arg2_5) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)" required="true"/>
+	
+      <!-- start gazebo client -->
+      <group if="$(arg gui)">
+        <node name="gazebo_gui" pkg="gazebo_ros" type="gzclient" respawn="false" output="screen"/>
+      </group>
+
+    <!--END gazebo_ros empty_world.launch-->
+
+    <param name="temp_args" value="$(arg command_arg1) $(arg command_arg2) $(arg command_arg2_5) $(arg command_arg3) -e $(arg physics) $(arg extra_gazebo_args) $(arg world_file)"/>
+
+  <node name="map" pkg="map_server" type="map_server" args="$(arg map_file)" required="true" unless="$(eval map_file=='')">
+    <param name="frame_id" value="$(arg world_frame_id)"/>
+  </node>
+
+  <node name="groundtruth_map" pkg="map_server" type="map_server" args="$(arg ground_truth_map_file)" required="true" if="$(eval ground_truth_map_file!='')">
+    <remap from="map" to="groundtruth/map"/>
+    <param name="frame_id" value="$(arg world_frame_id)"/>
+  </node>
+
+</launch>

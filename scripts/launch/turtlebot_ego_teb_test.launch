@@ -1,0 +1,36 @@
+<launch>
+  <arg name="simple_exploration" default="false"/>
+
+
+  <arg name="debug" default="false"/>
+
+  <arg name="debug_prefix" value="" unless="$(arg debug)"/> <!-- valgrind - -tool=callgrind -->
+  <arg name="debug_prefix" value="xterm -e gdb -ex run --args" if="$(arg debug)"/>
+
+  <!-- xterm -e gdb -ex run - -args -->
+  
+  
+  <!--<env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/custom_teb_rosconsole.conf"/> -->
+
+  <node pkg="teb_local_planner" type="test_optim_node" respawn="false" name="test_optim_node" output="screen" clear_params="true" launch-prefix="$(arg debug_prefix)">
+      
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load"/>
+
+      <rosparam file="$(find nav_configs)/config/teb_local_planner_params.yaml" command="load"/>
+
+      <param name="gap_h_signature" value="true"/>
+      <param name="gap_exploration" value="true"/>
+      <param name="egocircle_feasibility" value="true"/>
+      <param name="simple_exploration" value="$(arg simple_exploration)"/>
+      <param name="weight_gap" value="1"/>
+      <param name="feasibility_check_no_tebs" value="1"/>
+      
+      <param name="max_global_plan_lookahead_dist" value="0"/>
+
+  </node>
+
+
+
+
+
+</launch>

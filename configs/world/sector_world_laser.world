@@ -1,7 +1,7 @@
 <sdf version='1.6'>
   <world name='default'>
     <light name='sun' type='directional'>
-      <cast_shadows>1</cast_shadows>
+      <cast_shadows>0</cast_shadows>
       <pose frame=''>0 0 10 0 -0 0</pose>
       <diffuse>0.8 0.8 0.8 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
@@ -50,8 +50,8 @@
           </geometry>
           <material>
             <ambient>1.0 1.0 1.0 1.0</ambient>
-  	    <diffuse>0.8 0.8 0.8 1.0</diffuse>
-  	    <specular>0.01 0.01 0.01 1.000000</specular>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.01 0.01 0.01 1.000000</specular>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -69,7 +69,7 @@
     <scene>
       <ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background>
-      <shadows>1</shadows>
+      <shadows>0</shadows>
     </scene>
     <spherical_coordinates>
       <surface_model>EARTH_WGS84</surface_model>
@@ -78,6 +78,14 @@
       <elevation>0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
+    <model name='NamedLocations'>
+      <static>true</static>
+      <link name='DefaultStart'>
+        <pose frame=''> 8.5 0 0 0 0 3.14</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
     <state world_name='default'>
       <sim_time>5303 779000000</sim_time>
       <real_time>368 186622224</real_time>
@@ -104,50 +112,50 @@
         </link>
       </model>
       <model name='Mailbox'>
-        <pose frame=''>-7.86259 2.81753 0.049991 5e-06 -2e-06 -1e-06</pose>
+        <pose frame=''>-7.86259 2.81753 0 5e-06 -2e-06 -1e-06</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>-7.86259 2.81753 0.049991 5e-06 -2e-06 -1e-06</pose>
+          <pose frame=''>-7.86259 2.81753 0 5e-06 -2e-06 -1e-06</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 -9.8 0 -0 0</acceleration>
           <wrench>0 0 -9.8 0 -0 0</wrench>
         </link>
       </model>
       <model name='Mailbox_0'>
-        <pose frame=''>4.561 6.09092 0.05005 2e-06 0.00269 -0.000968</pose>
+        <pose frame=''>4.561 6.09092 0 2e-06 0.00269 -0.000968</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>4.561 6.09092 0.05005 2e-06 0.00269 -0.000968</pose>
+          <pose frame=''>4.561 6.09092 0 2e-06 0.00269 -0.000968</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 -9.8 0 -0 0</acceleration>
           <wrench>0 0 -9.8 0 -0 0</wrench>
         </link>
       </model>
       <model name='Speed limit'>
-        <pose frame=''>-1.61226 -2.53974 0 0 -0 0</pose>
+        <pose frame=''>-1.61226 -2.53974 0 0 -0 1.57</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>-1.61226 -2.53974 0 0 -0 0</pose>
+          <pose frame=''>-1.61226 -2.53974 0 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='Stop Sign'>
-        <pose frame=''>7.33869 -6.37249 0.05 -6e-06 -5e-06 -2e-06</pose>
+        <pose frame=''>7.33869 -6.37249 0 -6e-06 -5e-06 -1.57</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>7.33869 -6.37249 0.05 -6e-06 -5e-06 -2e-06</pose>
+          <pose frame=''>7.33869 -6.37249 0 -6e-06 -5e-06 -1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 -0.010496 -0.107938 0.303443 0</acceleration>
           <wrench>0 0 -0.010496 0 -0 0</wrench>
         </link>
       </model>
       <model name='Stop Sign_0'>
-        <pose frame=''>-1.74966 8.13901 0.050001 0 -2.4e-05 -1e-06</pose>
+        <pose frame=''>-1.74966 8.13901 0 0 -2.4e-05 -1.57</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>-1.74966 8.13901 0.050001 0 -2.4e-05 -1e-06</pose>
+          <pose frame=''>-1.74966 8.13901 0 0 -2.4e-05 -1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 -0.010604 -0.107937 0.303543 0</acceleration>
           <wrench>0 0 -0.010604 0 -0 0</wrench>
@@ -224,30 +232,30 @@
         </link>
       </model>
       <model name='cardboard_box'>
-        <pose frame=''>2.64497 7.95934 0.199 0 -0 0</pose>
+        <pose frame=''>2.64497 7.95934 0.15 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>2.64497 7.95934 0.199 0 -0 0</pose>
+          <pose frame=''>2.64497 7.95934 0.15 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cardboard_box_0'>
-        <pose frame=''>-4.96944 -3.45523 0.199 0 -0 0</pose>
+        <pose frame=''>-4.96944 -3.45523 0.15 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>-4.96944 -3.45523 0.199 0 -0 0</pose>
+          <pose frame=''>-4.96944 -3.45523 0.15 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cardboard_box_clone'>
-        <pose frame=''>5.13312 -4.40498 0.199 0 -0 0</pose>
+        <pose frame=''>5.13312 -4.40498 0.15 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>5.13312 -4.40498 0.199 0 -0 0</pose>
+          <pose frame=''>5.13312 -4.40498 0.15 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -263,7 +271,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='door_4x8'>
+      <model name='cylinder_gf_1'>
         <pose frame=''>-2.36883 3.8194 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='door'>
@@ -273,20 +281,20 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='drc_practice_blue_cylinder'>
+      <model name='cylinder_gf'>
         <pose frame=''>7.43366 3.42375 0 0 -0 0</pose>
         <scale>1 1 1</scale>
-        <link name='link'>
+        <link name='door'>
           <pose frame=''>7.43366 3.42375 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='drc_practice_blue_cylinder_0'>
+      <model name='cylinder_gf_0'>
         <pose frame=''>-7.71707 5.42121 0 0 -0 0</pose>
         <scale>1 1 1</scale>
-        <link name='link'>
+        <link name='door'>
           <pose frame=''>-7.71707 5.42121 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
@@ -423,11 +431,11 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='ground_plane'>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <scale>1 1 1</scale>
+      <model name='mud_box'>
+        <pose frame=''>11 -12 -0.1 0 -0 0</pose>
+        <scale>6 5 1</scale>
         <link name='link'>
-          <pose frame=''>0 0 0 0 -0 0</pose>
+          <pose frame=''>11 -12 -0.1 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -1430,7 +1438,7 @@
     </model>
     <model name='cardboard_box'>
       <static>1</static>
-      <pose frame=''>3.54479 6.82893 0.15 0 -0 0</pose>
+      <pose frame=''>3.54479 6.82893 0 0 -0 0</pose>
       <link name='link'>
         <inertial>
           <mass>2</mass>
@@ -1444,9 +1452,10 @@
           </inertia>
         </inertial>
         <collision name='collision'>
+	  <pose frame=''>0 0 0.05 0 -0 0</pose>
           <geometry>
             <box>
-              <size>0.5 0.4 0.3</size>
+              <size>0.4 0.4 0.4</size>
             </box>
           </geometry>
           <surface>
@@ -1868,10 +1877,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <collision name='front_right_leg'>
           <pose frame=''>0.68 -0.38 0.5 0 -0 0</pose>
@@ -1905,10 +1915,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <collision name='back_right_leg'>
           <pose frame=''>-0.68 -0.38 0.5 0 -0 0</pose>
@@ -1942,10 +1953,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <collision name='back_left_leg'>
           <pose frame=''>-0.68 0.38 0.5 0 -0 0</pose>
@@ -1979,10 +1991,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -2302,6 +2315,26 @@
       <pose frame=''>-1.0388 -1.3037 0.4 0 -0 0</pose>
       <static>1</static>
       <link name='link'>
+	<collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://number1/meshes/number.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
         <visual name='visual'>
           <geometry>
             <mesh>
@@ -2310,11 +2343,11 @@
           </geometry>
           <material>
             <script>
-              <uri>model://number1/materials/scripts</uri>
-              <uri>model://number1/materials/textures</uri>
-              <name>Number/One</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -2324,6 +2357,26 @@
       <pose frame=''>4.73822 -4.67114 0.4 0 -0 0</pose>
       <static>1</static>
       <link name='link'>
+	<collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://number1/meshes/number.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
         <visual name='visual'>
           <geometry>
             <mesh>
@@ -2332,11 +2385,11 @@
           </geometry>
           <material>
             <script>
-              <uri>model://number2/materials/scripts</uri>
-              <uri>model://number2/materials/textures</uri>
-              <name>Number/Two</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -2346,6 +2399,26 @@
       <pose frame=''>0.089841 7.67204 0.4 0 -0 0</pose>
       <static>1</static>
       <link name='link'>
+	<collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://number1/meshes/number.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
         <visual name='visual'>
           <geometry>
             <mesh>
@@ -2354,11 +2427,11 @@
           </geometry>
           <material>
             <script>
-              <uri>model://number4/materials/scripts</uri>
-              <uri>model://number4/materials/textures</uri>
-              <name>Number/Four</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -2693,7 +2766,7 @@
     </model>
     <model name='cardboard_box_0'>
       <static>1</static>
-      <pose frame=''>-2.16436 -2.75221 0.15 0 -0 0</pose>
+      <pose frame=''>-2.16436 -2.75221 0 0 -0 0</pose>
       <link name='link'>
         <inertial>
           <mass>2</mass>
@@ -2707,9 +2780,10 @@
           </inertia>
         </inertial>
         <collision name='collision'>
+	  <pose frame=''>0 0 0.05 0 -0 0</pose>
           <geometry>
             <box>
-              <size>0.5 0.4 0.3</size>
+              <size>0.4 0.4 0.4</size>
             </box>
           </geometry>
           <surface>
@@ -2739,7 +2813,7 @@
           <geometry>
             <mesh>
               <uri>model://cardboard_box/meshes/cardboard_box.dae</uri>
-              <scale>1.25932 1.00745 0.755591</scale>
+              <scale>1 1 1</scale>
             </mesh>
           </geometry>
         </visual>
@@ -2779,6 +2853,13 @@
               <scale>0.8 0.8 0.8</scale>
             </mesh>
           </geometry>
+	  <material>
+            <script>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
+            </script>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -2794,6 +2875,13 @@
               <uri>model://control_console/meshes/console.dae</uri>
             </mesh>
           </geometry>
+	  <material>
+            <script>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
+            </script>
+      	  </material>
         </visual>
         <visual name='backvisual'>
           <pose frame=''>0 0.29388 1.30113 0 -0 0</pose>
@@ -2802,6 +2890,13 @@
               <size>1.78 0.05 2.60225</size>
             </box>
           </geometry>
+	  <material>
+            <script>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
+            </script>
+      	  </material>
         </visual>
         <collision name='back_collision'>
           <pose frame=''>0 0.29388 1.30113 0 -0 0</pose>
@@ -2997,111 +3092,174 @@
       </link>
       <pose frame=''>-5.9713 -6.72921 0 0 -0 0</pose>
     </model>
-    <model name='door_4x8'>
-      <static>1</static>
-      <link name='door'>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>model://drc_practice_door_4x8/meshes/4x8ftdoor.dae</uri>
-            </mesh>
-          </geometry>
-          <max_contacts>10</max_contacts>
-          <surface>
-            <contact>
-              <ode/>
-            </contact>
-            <bounce/>
-            <friction>
-              <torsional>
-                <ode/>
-              </torsional>
-              <ode/>
-            </friction>
-          </surface>
-        </collision>
-        <visual name='visual'>
-          <geometry>
-            <mesh>
-              <uri>model://drc_practice_door_4x8/meshes/4x8ftdoor.dae</uri>
-            </mesh>
-          </geometry>
-        </visual>
-        <self_collide>0</self_collide>
-        <kinematic>0</kinematic>
-      </link>
-      <pose frame=''>-3.06725 1.88634 0 0 -0 0</pose>
-    </model>
-    <model name='drc_practice_blue_cylinder'>
-      <static>1</static>
-      <link name='link'>
-        <visual name='visual'>
-          <geometry>
-            <mesh>
-              <uri>model://drc_practice_blue_cylinder/meshes/cylinder.dae</uri>
-            </mesh>
-          </geometry>
-        </visual>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>model://drc_practice_blue_cylinder/meshes/cylinder.dae</uri>
-            </mesh>
-          </geometry>
-          <max_contacts>10</max_contacts>
-          <surface>
-            <contact>
-              <ode/>
-            </contact>
-            <bounce/>
-            <friction>
-              <torsional>
-                <ode/>
-              </torsional>
-              <ode/>
-            </friction>
-          </surface>
-        </collision>
-        <self_collide>0</self_collide>
-        <kinematic>0</kinematic>
-      </link>
-      <pose frame=''>3.64356 1.00814 0 0 -0 0</pose>
-    </model>
-    <model name='drc_practice_blue_cylinder_0'>
-      <static>1</static>
-      <link name='link'>
-        <visual name='visual'>
-          <geometry>
-            <mesh>
-              <uri>model://drc_practice_blue_cylinder/meshes/cylinder.dae</uri>
-            </mesh>
-          </geometry>
-        </visual>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>model://drc_practice_blue_cylinder/meshes/cylinder.dae</uri>
-            </mesh>
-          </geometry>
-          <max_contacts>10</max_contacts>
-          <surface>
-            <contact>
-              <ode/>
-            </contact>
-            <bounce/>
-            <friction>
-              <torsional>
-                <ode/>
-              </torsional>
-              <ode/>
-            </friction>
-          </surface>
-        </collision>
-        <self_collide>0</self_collide>
-        <kinematic>0</kinematic>
-      </link>
-      <pose frame=''>-7.23631 6.61018 0 0 -0 0</pose>
-    </model>
+    <model name='cylinder_gf_1'>
+	  <static>true</static>
+	  <pose frame=''>0 0 0 0 -0 0</pose>
+	  <link name='link'>
+	    <pose frame=''>0 0 1 0 -0 0</pose>
+	    <inertial>
+	      <mass>100</mass>
+	      <inertia>
+		<ixx>0.166667</ixx>
+		<ixy>0</ixy>
+		<ixz>0</ixz>
+		<iyy>0.166667</iyy>
+		<iyz>0</iyz>
+		<izz>0.166667</izz>
+	      </inertia>
+	    </inertial>
+	    <collision name='collision'>
+	      <geometry>
+		<cylinder>
+	    	  <radius>0.3</radius>
+	    	  <length>2</length>
+		</cylinder>
+	      </geometry>
+	      <max_contacts>10</max_contacts>
+	      <surface>
+		<contact>
+		  <ode/>
+		</contact>
+		<bounce/>
+		<friction>
+		  <torsional>
+		    <ode/>
+		  </torsional>
+		  <ode/>
+		</friction>
+	      </surface>
+	    </collision>
+	    <visual name='visual'>
+	      <geometry>
+		<cylinder>
+	    	  <radius>0.3</radius>
+	    	  <length>2</length>
+		</cylinder>
+	      </geometry>
+	      <material>
+		<script>
+		    <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+		    <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+		    <name>BrickBox/Diffuse</name>
+		</script>
+	      </material>
+	    </visual>
+	    <self_collide>0</self_collide>
+	    <kinematic>0</kinematic>
+	  </link>
+	</model>
+    <model name='cylinder_gf'>
+	  <static>true</static>
+	  <pose frame=''>0 0 0 0 -0 0</pose>
+	  <link name='link'>
+	    <pose frame=''>0 0 1 0 -0 0</pose>
+	    <inertial>
+	      <mass>100</mass>
+	      <inertia>
+		<ixx>0.166667</ixx>
+		<ixy>0</ixy>
+		<ixz>0</ixz>
+		<iyy>0.166667</iyy>
+		<iyz>0</iyz>
+		<izz>0.166667</izz>
+	      </inertia>
+	    </inertial>
+	    <collision name='collision'>
+	      <geometry>
+		<cylinder>
+	    	  <radius>0.3</radius>
+	    	  <length>2</length>
+		</cylinder>
+	      </geometry>
+	      <max_contacts>10</max_contacts>
+	      <surface>
+		<contact>
+		  <ode/>
+		</contact>
+		<bounce/>
+		<friction>
+		  <torsional>
+		    <ode/>
+		  </torsional>
+		  <ode/>
+		</friction>
+	      </surface>
+	    </collision>
+	    <visual name='visual'>
+	      <geometry>
+		<cylinder>
+	    	  <radius>0.3</radius>
+	    	  <length>2</length>
+		</cylinder>
+	      </geometry>
+	      <material>
+		<script>
+		    <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+		    <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+		    <name>BrickBox/Diffuse</name>
+		</script>
+	      </material>
+	    </visual>
+	    <self_collide>0</self_collide>
+	    <kinematic>0</kinematic>
+	  </link>
+	</model>
+    <model name='cylinder_gf_0'>
+  <static>true</static>
+  <pose frame=''>0 0 0 0 -0 0</pose>
+  <link name='link'>
+    <pose frame=''>0 0 1 0 -0 0</pose>
+    <inertial>
+      <mass>100</mass>
+      <inertia>
+        <ixx>0.166667</ixx>
+        <ixy>0</ixy>
+        <ixz>0</ixz>
+        <iyy>0.166667</iyy>
+        <iyz>0</iyz>
+        <izz>0.166667</izz>
+      </inertia>
+    </inertial>
+    <collision name='collision'>
+      <geometry>
+        <cylinder>
+    	  <radius>0.3</radius>
+    	  <length>2</length>
+        </cylinder>
+      </geometry>
+      <max_contacts>10</max_contacts>
+      <surface>
+        <contact>
+          <ode/>
+        </contact>
+        <bounce/>
+        <friction>
+          <torsional>
+            <ode/>
+          </torsional>
+          <ode/>
+        </friction>
+      </surface>
+    </collision>
+    <visual name='visual'>
+      <geometry>
+        <cylinder>
+    	  <radius>0.3</radius>
+    	  <length>2</length>
+        </cylinder>
+      </geometry>
+      <material>
+        <script>
+            <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+            <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+            <name>BrickBox/Diffuse</name>
+        </script>
+      </material>
+    </visual>
+    <self_collide>0</self_collide>
+    <kinematic>0</kinematic>
+  </link>
+</model>
     <model name='nist_elevated_floor_120'>
       <static>1</static>
       <link name='nist_elevated_floor_120'>
@@ -3134,6 +3292,13 @@
               <scale>1 1 1</scale>
             </mesh>
           </geometry>
+	  <material>
+            <script>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
+            </script>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -3144,6 +3309,26 @@
       <pose frame=''>7.54798 6.39545 0.4 0 -0 0</pose>
       <static>1</static>
       <link name='link'>
+	<collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://number1/meshes/number.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
         <visual name='visual'>
           <geometry>
             <mesh>
@@ -3152,11 +3337,11 @@
           </geometry>
           <material>
             <script>
-              <uri>model://number3/materials/scripts</uri>
-              <uri>model://number3/materials/textures</uri>
-              <name>Number/Three</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -3166,6 +3351,26 @@
       <pose frame=''>7.29211 1.1784 0.4 0 -0 0</pose>
       <static>1</static>
       <link name='link'>
+	<collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>model://number1/meshes/number.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
         <visual name='visual'>
           <geometry>
             <mesh>
@@ -3174,11 +3379,11 @@
           </geometry>
           <material>
             <script>
-              <uri>model://number5/materials/scripts</uri>
-              <uri>model://number5/materials/textures</uri>
-              <name>Number/Five</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -3294,10 +3499,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <collision name='front_right_leg'>
           <pose frame=''>0.68 -0.38 0.5 0 -0 0</pose>
@@ -3331,10 +3537,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <collision name='back_right_leg'>
           <pose frame=''>-0.68 -0.38 0.5 0 -0 0</pose>
@@ -3368,10 +3575,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <collision name='back_left_leg'>
           <pose frame=''>-0.68 0.38 0.5 0 -0 0</pose>
@@ -3405,10 +3613,11 @@
           </geometry>
           <material>
             <script>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-              <name>Gazebo/Grey</name>
+              <uri>model://brick_box_0.5x0.5x3/materials/scripts</uri>
+              <uri>model://brick_box_0.5x0.5x3/materials/textures</uri>
+              <name>BrickBox/Diffuse</name>
             </script>
-          </material>
+      	  </material>
         </visual>
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
@@ -3475,7 +3684,7 @@
     </model>
     <model name='cardboard_box_clone'>
       <static>1</static>
-      <pose frame=''>5.79604 -3.76808 0.199 0 -0 0</pose>
+      <pose frame=''>5.79604 -3.76808 0 0 -0 0</pose>
       <link name='link'>
         <inertial>
           <mass>2</mass>
@@ -3489,9 +3698,10 @@
           </inertia>
         </inertial>
         <collision name='collision'>
+	  <pose frame=''>0 0 0.05 0 -0 0</pose>
           <geometry>
             <box>
-              <size>0.5 0.4 0.3</size>
+              <size>0.4 0.4 0.4</size>
             </box>
           </geometry>
           <surface>

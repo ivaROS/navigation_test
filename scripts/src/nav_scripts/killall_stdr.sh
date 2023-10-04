@@ -1,0 +1,1 @@
+killall -9 stdr_server_node python3 robot_state_publisher static_transform_publisher map_server nodelet move_base_virtual map_transform_publisher rosmaster rosout costmap_2d_node ego_circle

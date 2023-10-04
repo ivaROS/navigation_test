@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import rospy
 import random
 import sys, os, time
@@ -21,6 +27,10 @@ from gazebo_msgs.srv import DeleteModel
 import numpy as np
 
 from gazebo_ros import gazebo_interface
+#from gazebo_msgs.msg import *
+from gazebo_msgs.srv import SpawnModel
+
+
 import std_srvs.srv as std_srvs
   
 import std_msgs.msg as std_msgs
@@ -30,27 +40,28 @@ import std_msgs.msg as std_msgs
 #Copied from pips_test: gazebo_driver.py
 # Load model xml from file
 def load_model_xml(filename):
+  #TODO: raise exceptions rather than exiting
   if os.path.exists(filename):
       if os.path.isdir(filename):
-          print "Error: file name is a path?", filename
+          print("Error: file name is a path?", filename)
           sys.exit(0)
 
       if not os.path.isfile(filename):
-          print "Error: unable to open file", filename
+          print("Error: unable to open file", filename)
           sys.exit(0)
   else:
-      print "Error: file does not exist", filename
+      print("Error: file does not exist", filename)
       sys.exit(0)
 
-  f = open(filename,'r')
-  model_xml = f.read()
+  with open(filename,'r') as f:
+      model_xml = f.read()
   if model_xml == "":
-      print "Error: file is empty", filename
+      print("Error: file is empty", filename)
       sys.exit(0)
 
   return model_xml
 
-class GazeboDriver():
+class GazeboDriver(object):
   # Copied from pips_test: gazebo_driver.py
   def barrel_points(self,xmins, ymins, xmaxs, ymaxs, min_dist, num_barrels, max_tries =500):
     '''
@@ -75,8 +86,8 @@ class GazeboDriver():
     ymins = np.array(ymins)
 
     region_weights = (xmaxs - xmins)*(ymaxs - ymins)
-    region_weights = region_weights / (np.sum(region_weights))
-    region_inds = range(len(xmins))
+    region_weights = old_div(region_weights, (np.sum(region_weights)))
+    region_inds = list(range(len(xmins)))
 
     sampled_regions = self.nprandom.choice(region_inds,replace=True,p=region_weights,size=max_tries)
 
@@ -152,6 +163,7 @@ class GazeboDriver():
       except rospy.ServiceException as e:
         rospy.logwarn("Error setting pose: " + str(e))
         retval = False
+        #TODO: raise TaskProcessingException
 
     #time.sleep(.01)
     return retval
@@ -225,7 +237,43 @@ class GazeboDriver():
           name = "barrel{}".format(i)
           pose = self.poses[i]
           self.setPose(name, pose)
-      
+
+
+  # Note: using a persistent connection does not have a significant impact on spawning speed
+  def spawn_sdf_model_client(self, model_name, model_xml, robot_namespace, initial_pose, reference_frame,
+                             gazebo_namespace):
+    def init_service_client():
+      rospy.loginfo("Waiting for service %s/spawn_sdf_model" % gazebo_namespace)
+      #rospy.wait_for_service(gazebo_namespace + '/spawn_sdf_model')
+      self.spawn_sdf_model = rospy.ServiceProxy(gazebo_namespace + '/spawn_sdf_model', SpawnModel, persistent=True)
+      self.spawn_sdf_model.wait_for_service(timeout=self.service_timeout)
+
+    def call_service():
+      rospy.loginfo("Calling service %s/spawn_sdf_model" % gazebo_namespace)
+      resp = self.spawn_sdf_model(model_name, model_xml, robot_namespace, initial_pose, reference_frame)
+      rospy.loginfo("Spawn status: %s" % resp.status_message)
+      return resp.success
+
+    if self.spawn_sdf_model is None:
+      init_service_client()
+
+    num_attempts = 3
+
+    for attempt in range(num_attempts):
+      try:
+        rospy.loginfo("custom spawn model function")
+        return call_service()
+      except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
+        if attempt < num_attempts - 1:
+          print("Reinitializing service client...")
+          init_service_client()
+        else:
+          raise
+
+
+
+
   #Adapted from pips_test: gazebo_driver.py
   def spawn_barrel(self, model_name, initial_pose):
     # Must be unique in the gazebo world - failure otherwise
@@ -250,7 +298,7 @@ class GazeboDriver():
     # Spawning on top of something else leads to bizarre behavior
 
     # model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf'}
-    model_filenames = {'box':'box_lus.sdf', 'cylinder':'cylinder.sdf', 'pole':'pole_005_06.sdf', 'square_post':'box_02_02_05.sdf'}
+    model_filenames = {'box':'box_lus.sdf', 'box_high':'box_lus_high.sdf', 'cylinder':'cylinder.sdf', 'pole':'pole_005_06.sdf', 'square_post':'box_02_02_05.sdf'}
 
     if model_type not in model_filenames:
       rospy.logerr("Model type [" + str(model_type) + "] is unknown! Known types are: ") #TODO: print list of types; maybe model_filenames.iter()?
@@ -265,6 +313,22 @@ class GazeboDriver():
                                                       robot_namespace, initial_pose, reference_frame, gazebo_namespace)
 
     #time.sleep(.1)
+    return success
+
+  def spawn_sdf_file(self, model_name, model_file, initial_pose=None):
+    if initial_pose is None:
+      initial_pose = Pose()
+      initial_pose.orientation.w = 1
+
+    model_xml = load_model_xml(model_file)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+                                                      robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+    # time.sleep(.1)
     return success
 
   def spawn_package_model(self, model_name, package_name, model_path, initial_pose):
@@ -312,8 +376,8 @@ class GazeboDriver():
       pose.orientation.w = 1
       self.poses.append(pose)
       if not self.setPose(name, pose):
-	    self.spawn_barrel(name, pose)
-	
+        self.spawn_barrel(name, pose)
+
   def moveBarrels(self,n,minx=None,miny=None,maxx=None,maxy=None,grid_spacing=None):
     self.poses = []
 
@@ -356,9 +420,9 @@ class GazeboDriver():
     for name in barrel_names:
       res = self.deleteModel(name=name)
       if not res.success:
-        print res.status_message
+        print(res.status_message)
 
-  def moveObstacles(self, n, minx=None, miny=None, maxx=None, maxy=None, grid_spacing=None, model_types = ['box','cylinder']):
+  def moveObstacles(self, n, minx=None, miny=None, maxx=None, maxy=None, grid_spacing=None, model_types = ['box_high','cylinder']):
     self.poses = []
 
     minx = self.minx if minx is None else minx
@@ -413,10 +477,10 @@ class GazeboDriver():
         self.spawn_obstacle(name, model_type, pose)
 
     for name in barrel_names:
-      print "Deleting: " + str(name)
+      print("Deleting: " + str(name))
       res = self.deleteModel(name=name)
       if not res.success:
-        print res.status_message
+        print(res.status_message)
       
   def shutdown(self):
     self.unpause()
@@ -433,7 +497,7 @@ class GazeboDriver():
     self.nprandom = np.random.RandomState(self.seed)
   
   def getRandInt(self, lower, upper):
-    a = range(lower, upper + 1)
+    a = list(range(lower, upper + 1))
     start = self.random.choice(a)
     a.remove(start)
     end = self.random.choice(a)
@@ -443,7 +507,7 @@ class GazeboDriver():
   def updateModels(self, timeout=2):
     self.models = rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=timeout)
 
-  #TODO: make return value depend on results of checks
+  #Raises ROSException if timeout reached
   def checkServicesTopics(self, timeout=2):
     self.updateModels(timeout)
     rospy.wait_for_service(self.get_model_state_service_name, timeout=timeout)
@@ -483,7 +547,7 @@ class GazeboDriver():
     self.odom_pub = rospy.Publisher(
       '/mobile_base/commands/reset_odometry', std_msgs.Empty, queue_size=1)
 
-    self.rospack = rospkg.RosPack()
+    self.rospack = rospkg.RosPack() #TODO: allow specifying environment
 
     self.models = None
     
@@ -499,6 +563,7 @@ class GazeboDriver():
 
     #rospy.loginfo("Waiting for service...")
     #rospy.wait_for_service(self.get_model_state_service_name)
+    #Note: Setting this one persistent decreases time by about 40%
     self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
     #rospy.loginfo("Service found...")
 
@@ -520,6 +585,7 @@ class GazeboDriver():
     self.deleteModelService = rospy.ServiceProxy(self.delete_model_service_name, DeleteModel)
     #rospy.loginfo("Service found...")
 
+    self.spawn_sdf_model = None
     
     #self.stateSub = rospy.Subscriber(self.model_state_topic_name, ModelStates, self.statesCallback, queue_size=self.queue_size)
 

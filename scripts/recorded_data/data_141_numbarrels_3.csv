@@ -1,0 +1,12 @@
+"test 141"
+-0.610973285645,3.14542541221 -0.731490223474,4.2005268783 -0.961281027114,2.44815334722
+"Base Result" ['fail_noFinding']
+"Base Time" [95.08480787277222]
+"Eband Result" ['fail_bumped']
+"Eband Time" [74.63165521621704]
+"TEB Result" ['success']
+"TEB Time" [30.457191228866577]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [94.29928493499756]
+"PIPS Result" ['fail_noFinding']
+"PIPS Time" [92.35930895805359]

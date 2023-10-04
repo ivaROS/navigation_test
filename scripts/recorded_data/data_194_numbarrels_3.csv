@@ -1,0 +1,12 @@
+"test 194"
+-1.54149353643,3.17099012257 -0.882611836323,4.4257791035 -1.70804721995,2.29777411653
+"Base Result" ['fail_noFinding']
+"Base Time" [148.71827697753906]
+"Eband Result" ['success']
+"Eband Time" [67.19543385505676]
+"TEB Result" ['fail_noFinding']
+"TEB Time" [152.84947085380554]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [146.54341387748718]
+"PIPS Result" ['fail_noFinding']
+"PIPS Time" [145.29369807243347]

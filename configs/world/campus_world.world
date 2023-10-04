@@ -2,7 +2,7 @@
   <world name='default'>
     <light name='sun' type='directional'>
       <cast_shadows>1</cast_shadows>
-      <pose frame=''>0 0 10 0 -0 0</pose>
+      <pose frame=''>0 0 1000 0 -0 0</pose>
       <diffuse>0.8 0.8 0.8 1</diffuse>
       <specular>0.2 0.2 0.2 1</specular>
       <attenuation>
@@ -13,6 +13,11 @@
       </attenuation>
       <direction>-0.5 0.1 -0.9</direction>
     </light>
+    <plugin name='gazebo_occupancy_map' filename='libgazebo_2Dmap_plugin.so'>
+      <map_resolution>0.05</map_resolution>
+      <map_topic>/groundtruth/map</map_topic>
+      <map_height>0.01</map_height>
+    </plugin>
     <model name='ground_plane'>
       <static>1</static>
       <link name='link'>
@@ -50,8 +55,8 @@
           </geometry>
           <material>
             <ambient>1.0 1.0 1.0 1.0</ambient>
-  	    <diffuse>0.8 0.8 0.8 1.0</diffuse>
-  	    <specular>0.01 0.01 0.01 1.000000</specular>
+  	        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+  	        <specular>0.01 0.01 0.01 1.000000</specular>
           </material>
         </visual>
         <self_collide>0</self_collide>
@@ -78,6 +83,22 @@
       <elevation>0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
+    <model name='NamedLocations'>
+      <static>true</static>
+      <link name='DefaultStart'>
+        <pose frame=''> -14 0.3 0 0 0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='HighNamedLocations'>
+      <static>true</static>
+      <link name='HighDefaultStart'>
+        <pose frame=''> -14 0.3 0.65 0 0 0</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
     <model name='Untitled'>
       <pose frame=''>-0.599498 1.70429 0 0 -0 0</pose>
       <link name='Wall_101'>
@@ -5702,15 +5723,14 @@
         </link>
       </model>
       <light name='sun'>
-        <pose frame=''>0 0 10 0 -0 0</pose>
+        <pose frame=''>0 0 1000 0 -0 0</pose>
       </light>
     </state>
-    <plugin name='gazebo_occupancy_map' filename='libgazebo_2Dmap_plugin.so'>
-      <map_resolution>0.05</map_resolution> <!-- in meters, optional, default 0.1 -->
-      <map_height>0.01</map_height>         <!-- in meters, optional, default 0.3 -->
-      <map_size_x>50</map_size_x>          <!-- in meters, optional, default 10 -->
-      <map_size_y>50</map_size_y>          <!-- in meters, optional, default 10 -->
-    </plugin>
+    <!--<plugin name='gazebo_occupancy_map' filename='libgazebo_2Dmap_plugin.so'>
+      <map_topic>groundtruth/map</map_topic>
+      <map_resolution>0.025</map_resolution>
+      <map_height>0.01</map_height>
+    </plugin> -->
     <gui fullscreen='0'>
       <camera name='user_camera'>
         <pose frame=''>-5.40201 -28.8959 66.8303 0 1.07779 1.5882</pose>

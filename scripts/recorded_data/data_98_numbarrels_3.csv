@@ -1,0 +1,12 @@
+"test 98"
+-3.87272723484,2.05797493725 -3.79038845992,1.32820404262 -1.93540623728,3.09072896387
+"Base Result" ['success']
+"Base Time" [23.034696102142334]
+"Eband Result" ['fail_bumped']
+"Eband Time" [35.54892897605896]
+"TEB Result" ['success']
+"TEB Time" [18.827527046203613]
+"DWA Result" ['success']
+"DWA Time" [32.2493109703064]
+"PIPS Result" ['fail_noFinding']
+"PIPS Time" [59.135026931762695]

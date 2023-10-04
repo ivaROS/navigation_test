@@ -1,0 +1,14 @@
+<launch>
+  <arg name="world_file" default="$(find nav_configs)/world/big_zigzag.world"/>
+  <arg name="map_file" default="$(find nav_configs)/maps/ground_truth/big_zigzag.yaml"/>
+  <!--<arg name="ground_truth_map_file" default="$(find nav_configs)/maps/ground_truth/campus.yaml"/> -->
+  <arg name="gui" default="$(optenv GM_PARAM_GAZEBO_GUI true)"/>
+
+  <include file="$(find nav_configs)/launch/gazebo_general.launch">
+    <arg name="world_file" value="$(arg world_file)"/>
+    <arg name="map_file" value="$(arg map_file)"/>
+  <!--  <arg name="ground_truth_map_file" value="$(arg ground_truth_map_file)"/> -->
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+
+</launch>

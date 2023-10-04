@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find nav_scripts)/launch/turtlebot_ego_teb_multi_trajectory_controller.launch">
+    <arg name="use_global_potentials" value="false"/>
+    <arg name="verifier_num_poses" value="5"/>
+    <arg name="replan_min_ttc" value="-1"/>
+  </include>
+</launch>

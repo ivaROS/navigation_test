@@ -78,6 +78,22 @@
       <elevation>0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
+    <model name='NamedLocations'>
+      <static>true</static>
+      <link name='DefaultStart'>
+        <pose frame=''> 38 -1.7 0 0 0 3.14</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='HighNamedLocations'>
+      <static>true</static>
+      <link name='HighDefaultStart'>
+        <pose frame=''> 38 -1.7 0.65 0 0 3.14</pose>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
     <model name="floorPlan">
       <pose frame="">-1.03517 -1.87284 0 0 -0 0</pose>
       <link name="Wall_101">
@@ -7305,6 +7321,11 @@
         <pose frame="">0 0 10 0 -0 0</pose>
       </light>
     </state>
+    <plugin name='gazebo_occupancy_map' filename='libgazebo_2Dmap_plugin.so'>
+      <map_resolution>0.05</map_resolution>
+      <map_topic>/groundtruth/map</map_topic>
+      <map_height>0.01</map_height>
+    </plugin>
     <gui fullscreen="0">
       <camera name="user_camera">
         <pose frame="">-5.58565 -55.9619 122.314 -0 1.2018 1.56419</pose>

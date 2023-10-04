@@ -1,0 +1,12 @@
+"test 153"
+-0.794340904084,3.12989562323 -3.909724311,4.31290783746 -1.79806693395,1.13389037568
+"Base Result" ['fail_noFinding']
+"Base Time" [104.71919417381287]
+"Eband Result" ['fail_noFinding']
+"Eband Time" [111.84853792190552]
+"TEB Result" ['success']
+"TEB Time" [35.41600704193115]
+"DWA Result" ['success']
+"DWA Time" [56.43644690513611]
+"PIPS Result" ['success']
+"PIPS Time" [72.82724905014038]

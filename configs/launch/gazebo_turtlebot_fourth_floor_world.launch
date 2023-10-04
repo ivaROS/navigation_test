@@ -60,7 +60,7 @@
     <!--END gazebo_ros empty_world.launch-->
 
     <!--BEGIN turtlebot_gazebo kobuki.launch.xml-->
-      <arg name="urdf_file" default="$(find xacro)/xacro.py '$(find turtlebot_description)/robots/$(arg base)_$(arg stacks)_$(arg 3d_sensor).urdf.xacro'" />
+      <arg name="urdf_file" default="$(find xacro)/xacro '$(find turtlebot_description)/robots/$(arg base)_$(arg stacks)_$(arg 3d_sensor).urdf.xacro'" />
       <param name="robot_description" command="$(arg urdf_file)" />
       
       <!-- Gazebo model spawner -->
@@ -101,6 +101,6 @@
 
   <node name="map" pkg="map_server" type="map_server" args="$(find nav_configs)/maps/fourth_floor_gazebo.yaml" required="true"/>
 
-  <node name="map_odom_publisher" pkg="gazebo_fake_localization" type="gazebo_fake_localization" required="true"/>
+  <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/>
 
 </launch>

@@ -1,0 +1,12 @@
+"test 179"
+-1.98553460756,3.02130475434 -0.621461953135,3.07722359012 -0.826596722439,2.44257435406
+"Base Result" ['fail_noFinding']
+"Base Time" [131.71410703659058]
+"Eband Result" ['fail_bumped']
+"Eband Time" [116.61202192306519]
+"TEB Result" ['success']
+"TEB Time" [44.158255100250244]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [130.2206768989563]
+"PIPS Result" ['fail_noFinding']
+"PIPS Time" [127.40595507621765]

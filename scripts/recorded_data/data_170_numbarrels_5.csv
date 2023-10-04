@@ -1,0 +1,12 @@
+"test 170"
+-1.61553786743,3.0128099305 -0.801298610365,4.07653749485 -3.72697623434,2.4931201691 -3.95131506347,4.32366978317 -0.793834201577,1.09768854204
+"Base Result" ['fail_noFinding']
+"Base Time" [231.55218291282654]
+"Eband Result" ['fail_noFinding']
+"Eband Time" [233.1862668991089]
+"TEB Result" ['fail_noFinding']
+"TEB Time" [233.08392310142517]
+"DWA Result" ['fail_noFinding']
+"DWA Time" [233.1037859916687]
+"PIPS Result" ['fail_noFinding']
+"PIPS Time" [232.9043369293213]

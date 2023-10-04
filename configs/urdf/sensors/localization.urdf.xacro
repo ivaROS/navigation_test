@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+
+<robot name="localization_sensors" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="sensor_gps" params="parent">
+    <gazebo>
+      <plugin name='gps_sensor' filename='libhector_gazebo_ros_gps.so'>
+        <updateRate>1</updateRate>
+        <bodyName>${parent}</bodyName>
+        <frameId>${parent}</frameId>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+  <xacro:macro name="sensor_magnetic" params="parent">
+    <gazebo>
+      <plugin name='magnetic_sensor' filename='libhector_gazebo_ros_magnetic.so'>
+        <updateRate>10</updateRate>
+        <topicName>magnetic</topicName>
+        <bodyName>${parent}</bodyName>
+        <frameId>${parent}</frameId>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+  <xacro:macro name="sensor_imu" params="parent">
+    <gazebo>
+      <plugin name='imu_sensor' filename='libhector_gazebo_ros_imu.so'>
+        <updateRate>10</updateRate>
+        <topicName>imu</topicName>
+        <bodyName>${parent}</bodyName>
+        <frameId>${parent}</frameId>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+  <xacro:macro name="sensor_imu2" params="parent">
+    <gazebo>
+      <sensor name="imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <visualize>true</visualize>
+        <topic>__default_topic__</topic>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_sensor2">
+          <topicName>imu</topicName>
+          <bodyName>${parent}</bodyName>
+          <updateRateHZ>100.0</updateRateHZ>
+          <gaussianNoise>0.0</gaussianNoise>
+          <xyzOffset>0 0 0</xyzOffset>
+          <rpyOffset>0 0 0</rpyOffset>
+          <frameName>${parent}</frameName>
+        </plugin>
+        <pose>0 0 0 0 0 0</pose>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

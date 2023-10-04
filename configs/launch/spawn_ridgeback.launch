@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Input parameters -->
+  <arg name="robot_name" default="a1"/>
+  <arg name="world_name" default="sector_world_laser_stixel"/>
+  <arg name="world_format" default="world"/>
+  <arg name="init_x" default="0.0"/>
+  <arg name="init_y" default="0.0"/>
+  <arg name="init_z" default="0.0"/>
+  <arg name="init_yaw" default="0.0"/>
+  <arg name="laser_name" default="hokuyo"/>
+  <arg name="camera_name" default="kinect"/>
+  <arg name="frame_prefix" default=""/>
+  <arg name="rviz" default="true"/>
+
+  <arg name="robot_path" value="(find $(arg robot_name)_description)"/>
+  <arg name="dollar" default="$"/>
+
+  <!-- Load the XACRO/URDF into the ROS Parameter Server -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro --inorder '$(find quadruped_nav_benchmark)/robots/ridgeback_quadruped_stereo_po.urdf.xacro'"/>
+  
+  <arg name="urdf_file2" default="$(find xacro)/xacro '$(find quadruped_nav_benchmark)/urdf/box.urdf.xacro' --inorder" />
+      <param name="simplified_robot_description" command="$(arg urdf_file2)" />
+  <!-- param name="robot_description" command="cat '$(find a1_description)/urdf/a1.urdf'" / -->
+
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <!-- Set trunk and joint positions at startup -->
+  <node pkg="gazebo_ros" type="spawn_model" name="urdf_spawner" respawn="false" output="screen"
+        args="-urdf -model $(arg robot_name)_gazebo -param robot_description -unpause -reference_frame DefaultStart -b"/>
+
+  <!-- Velocity muxer -->
+    <!-- <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"  required="true"/>
+    <node pkg="nodelet" type="nodelet" name="cmd_vel_mux"
+        args="load yocs_cmd_vel_mux/CmdVelMuxNodelet mobile_base_nodelet_manager"  required="true">
+    <param name="yaml_cfg_file" value="$(find turtlebot_bringup)/param/mux.yaml" />
+    <remap from="cmd_vel_mux/output" to="mobile_base/commands/velocity"/>
+    </node> -->
+
+    <!-- Bumper/cliff to pointcloud (not working, as it needs sensors/core messages) -->
+    <!-- <include file="$(find turtlebot_bringup)/launch/includes/kobuki/bumper2pc.launch.xml"/> -->
+
+  <!-- Load joint PID controller configurations from YAML file to parameter server -->
+  <rosparam file="$(arg dollar)$(arg robot_path)/config/robot_control.yaml" command="load"/>
+
+  <!-- load the controllers -->
+  <node pkg="controller_manager" type="spawner" name="controller_spawner" respawn="false"
+        output="screen" ns="/$(arg robot_name)_gazebo" args="joint_state_controller
+        FL_hip_controller FL_thigh_controller FL_calf_controller
+        FR_hip_controller FR_thigh_controller FR_calf_controller
+        RL_hip_controller RL_thigh_controller RL_calf_controller
+        RR_hip_controller RR_thigh_controller RR_calf_controller --namespace /$(arg robot_name)_gazebo/"/>
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"
+        respawn="false" output="screen">
+      <remap from="/joint_states" to="/$(arg robot_name)_gazebo/joint_states"/>
+  </node>
+
+  <include file="$(find quadruped_nav_benchmark)/launch/controller/ridgeback_control_po.launch" />
+
+  <!-- <node pkg="unitree_gazebo" type="servo" name="seturtlebot3_houservo" required="true" output="screen"/> -->
+
+  <!-- load the parameter unitree_controller -->
+  <!-- <include file="$(find unitree_controller)/launch/set_ctrl.launch">
+      <arg name="robot_name" value="$(arg robot_name)"/>
+  </include> -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="odom_map_broadcaster" args="0 0 0 0 0 0 /map /odom 50" /> -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="robot_base_broadcaster" args="0 0 0 0 0 0 /a1_gazebo /base 50" /> -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="odom_base_broadcaster" args="0 0 0 0 0 0 /odom /base_footprint 50" /> -->
+
+  <!--<node name="map_odom_publisher" pkg="gazebo_fake_localization" type="gazebo_fake_localization" required="true" output="screen" launch-prefix="">
+    <param name="odom_frame_id" value="odom"/>
+    <param name="model_name" value="$(arg robot_name)_gazebo"/>
+    <param name="base_frame_id" value="base_link"/>
+    <param name="zero_z" type="bool" value="true"/>
+  </node>-->
+
+  <node name="map_odom_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom"/>
+  <node name="world_map_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 world map"/>
+  <node name="ground_truth_base_tf" pkg="nav_quadruped" type="perfect_odom.py"/>
+
+  <node pkg="quadruped_nav_benchmark" type="ground_truth_odom_twist_correction" name="ground_truth_odom_twist_correction" required="true"/>
+
+  <node name="bumper_collision_detector" pkg="nav_scripts" type="bumper_collision_detector.py" required="true"/>
+
+</launch>

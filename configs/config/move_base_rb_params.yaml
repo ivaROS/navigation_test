@@ -1,0 +1,34 @@
+# Move base node parameters. For full documentation of the parameters in this file, please see
+#
+#  http://www.ros.org/wiki/move_base
+#
+shutdown_costmaps: false
+
+controller_frequency: 5.0
+controller_patience: 3.0
+
+
+planner_frequency: 1.0
+planner_patience: 3.0
+max_planning_retries: 20
+
+oscillation_timeout: 10.0
+oscillation_distance: 0.2
+
+# local planner - default is trajectory rollout
+#base_local_planner: "dwa_local_planner/DWAPlannerROS"
+
+base_global_planner: "global_planner/GlobalPlanner" #alternatives: navfn/NavfnROS, global_planner/GlobalPlanner, carrot_planner/CarrotPlanner
+
+recovery_behaviors:
+  - name: 'limited_angle_rotate_recovery'
+    type: 'customized_rotate_recovery/LimitedAngleRotateRecovery'
+  - name: 'conservative_reset'
+    type: 'clear_costmap_recovery/ClearCostmapRecovery'
+  - name: 'rotate_recovery'
+    type: 'rotate_recovery/RotateRecovery'
+  - name: 'aggressive_reset'
+    type: 'clear_costmap_recovery/ClearCostmapRecovery'
+
+conservative_reset/reset_distance: 3.0
+aggressive_reset/reset_distance: 1.84

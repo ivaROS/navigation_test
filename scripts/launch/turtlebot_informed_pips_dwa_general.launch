@@ -1,0 +1,114 @@
+<launch>
+  <arg name="approach_method"/>
+  <arg name="num_inferred_paths"/>
+  <arg name="num_paths"/>
+  <arg name="model_filepath"/>
+  <arg name="run_predictive_service"/>
+  <arg name="enable_cc"/>
+  
+  <arg name="datastats_filepath" default="$(find dl_models)/downloads/depth-image-stats.bag"/>
+  
+  <arg name="controller_freq" default="$(optenv GM_PARAM_CONTROLLER_FREQ 5)"/>
+  <arg name="global_planning_freq" default="$(optenv GM_PARAM_GLOBAL_PLANNING_FREQ 1)"/>
+
+  <arg name="debug" default="false"/>
+  
+  <arg name="use_recovery_behaviors" default="true"/>
+
+  <arg name="egocylindrical_image" default="/egocylinder/image"/>
+  <arg name="egocylindrical_info" default="/egocylinder/data"/>
+  
+  
+  <arg name="pips_namespace" default="/move_base/PipsDWAPlannerROS"/>
+  <arg name="depth_image_raw" default="/camera/depth/image_raw"/>
+  <arg name="depth_info_raw" default="/camera/depth/camera_info"/>
+  <arg name="rgb_image_raw" default="/camera/rgb/image_raw"/>
+  
+  <arg name="depth_image_topic" value="$(arg depth_image_raw)"/>
+  <arg name="depth_info_topic" value="$(arg depth_info_raw)"/>
+  
+  <arg name="depth_image" default="$(arg depth_image_topic)"/>
+  <arg name="depth_info" default="$(arg depth_info_topic)"/>
+  
+  <arg name="launch_prefix" default="xterm -e gdb --args" if="$(arg debug)"/>
+  <arg name="launch_prefix" default="" unless="$(arg debug)"/>
+
+  <arg name="decimation"        default="4"/>
+  <arg name="decimated_image"   default="/camera/depth_decimated/image_raw"/>
+  <arg name="decimated_info"    default="/camera/depth_decimated/camera_info"/>
+
+  <arg name="propagated_image"   default="/camera/depth_p/image_raw"/>
+  <arg name="propagated_info"    default="/camera/depth_p/camera_info"/>
+
+  <arg name="samples_topic"     default="gazebo_data"/>
+
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find nav_configs)/config/disable_logging.conf"/>
+
+  <include file="$(find depth_learning)/launch/decimation.launch">
+    <arg name="image_in"        value="$(arg depth_image)"/>
+    <arg name="info_in"         value="$(arg depth_info)"/>
+    <arg name="image_out"       value="$(arg decimated_image)"/>
+    <arg name="info_out"        value="$(arg decimated_info)"/>
+    <arg name="decimation"      value="$(arg decimation)"/>
+    <arg name="interpolate_cam_info" value="false"/>
+  </include>
+  
+  <!--
+  <include file="$(find egocylindrical)/launch/nodelets.launch" if="$(arg enable_cc)"/>
+  -->
+      
+  <include file="$(find informed_pips_dwa)/launch/trajectory_controller.launch">
+  </include>
+  
+  <node name="predictive_service_provider" pkg="depth_learning" type="predictive_service.py" output="screen" if="$(arg run_predictive_service)">
+    <param name="~datastats_filepath" value="$(arg datastats_filepath)"/>
+    <param name="~model_filepath" value="$(arg model_filepath)"/>
+    <remap from="image" to="$(arg decimated_image)"/>
+  </node>
+  
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" clear_params="true" launch-prefix="$(arg launch_prefix)">
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="global_costmap"/>
+      <!-- Temporary, to be replaced with depth template -->
+      <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="local_costmap"/>
+      <rosparam file="$(find nav_configs)/config/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_costmap_params.yaml" command="load"/>
+
+      <rosparam file="$(find nav_configs)/config/local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find nav_configs)/config/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+
+      <param name="controller_frequency" value="$(arg controller_freq)"/>
+      <param name="planner_frequency" value="$(arg global_planning_freq)"/>
+
+
+      <!-- Approach-specific parameters/remappings/etc -->
+      <param name="base_local_planner" value="informed_pips_dwa/PipsDWAPlannerROS"/>
+      <rosparam file="$(find nav_configs)/config/pips_dwa_local_planner_common_params.yaml" command="load" ns="PipsDWAPlannerROS"/>
+
+      <rosparam file="$(find nav_configs)/config/custom_recovery_params.yaml" command="load" if="$(arg use_recovery_behaviors)"/>
+      <param name="recovery_behavior_enabled" value="false" unless="$(arg use_recovery_behaviors)"/>
+
+      <!-- <rosparam file="$(find informed_pips_dwa)/param/pips_dwa_local_planner_params.yaml" command="load"/> -->
+
+      <!--<remap from="/move_base/PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/collisions" to="/collisions"/> -->
+
+      <remap from="/cmd_vel" to="/cmd_vel_mux/input/navi"/>
+      <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_topic" value="$(arg egocylindrical_image)" />
+      <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_info_topic" value="$(arg egocylindrical_info)" />
+      <remap from="$(arg pips_namespace)/odom" to="/odom"/>
+      <remap from="$(arg pips_namespace)/get_confidences" to="/get_confidences"/>
+
+      <param name="approach_method" value="$(arg approach_method)"/>
+      <param name="num_paths" value = "$(arg num_paths)"/>
+      <param name="num_inferred_paths" value = "$(arg num_inferred_paths)"/>
+      <param name="enable_cc" value="$(arg enable_cc)"/>
+      
+      <!--<remap from="$(arg pips_namespace)/PipsDWAController/PipsCollisionChecker/collisions" to="/collisions"/> -->
+      
+      <param name="PipsDWAPlannerROS/lpi/egocylindrical_image_cc_wrapper/egocylindrical_image_collision_checker/model_type" value="6"/>
+
+      <!-- <rosparam file="$(find informed_pips_dwa)/param/cchecker.yaml" command="load" ns="$(arg pips_namespace)/lpi/PipsCollisionChecker"/> -->
+
+  </node> 
+</launch>
+

@@ -1,0 +1,59 @@
+<launch>
+
+  <!--BEGIN turtlebot_gazebo turtlebot_world.launch -->
+
+    <arg name="base"      value="$(optenv TURTLEBOT_BASE kobuki)"/> <!-- create, roomba -->
+    <arg name="battery"   value="$(optenv TURTLEBOT_BATTERY /proc/acpi/battery/BAT0)"/>  <!-- /proc/acpi/battery/BAT0 --> 
+    <arg name="stacks"    value="$(optenv TURTLEBOT_STACKS hexagons)"/>  <!-- circles, hexagons --> 
+    <arg name="3d_sensor" value="$(optenv TURTLEBOT_3D_SENSOR kinect)"/>  <!-- kinect, asus_xtion_pro --> 
+    
+    <!--BEGIN turtlebot_gazebo kobuki.launch.xml-->
+      <arg name="robot_model" default="'$(find nav_configs)/robots/turtle_pioneer.urdf.xacro'"/>
+      <arg name="urdf_file" default="$(find xacro)/xacro $(arg robot_model) --inorder" />
+      <param name="robot_description" command="$(arg urdf_file)" />
+
+      <arg name="urdf_file2" default="$(find xacro)/xacro '$(find nav_configs)/robots/pioneer3at.urdf.xacro' --inorder details:=false" />
+      <param name="simplified_robot_description" command="$(arg urdf_file2)" />
+
+      <!-- Gazebo model spawner -->
+      <node name="spawn_turtlebot_model" pkg="gazebo_ros" type="spawn_model"
+            args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base -reference_frame DefaultStart -b"/>
+      
+      <!-- Velocity muxer -->
+      <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"  required="true"/>
+      <node pkg="nodelet" type="nodelet" name="cmd_vel_mux"
+            args="load yocs_cmd_vel_mux/CmdVelMuxNodelet mobile_base_nodelet_manager"  required="true">
+        <param name="yaml_cfg_file" value="$(find turtlebot_bringup)/param/mux.yaml" />
+        <remap from="cmd_vel_mux/output" to="mobile_base/commands/velocity"/>
+      </node>
+
+      <!-- Bumper/cliff to pointcloud (not working, as it needs sensors/core messages) -->
+      <include file="$(find turtlebot_bringup)/launch/includes/kobuki/bumper2pc.launch.xml"/>
+
+    <!--END turtlebot_gazebo kobuki.launch.xml-->
+    
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"  required="true">
+      <param name="publish_frequency" type="double" value="30.0" />
+    </node>
+    
+    <!-- Fake laser -->
+    <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"  required="true"/>
+    <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan"
+          args="load full_depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager"  required="true">
+      <param name="scan_height" value="479"/>
+      <param name="output_frame_id" value="depth"/>
+      <param name="range_min" value="0.45"/>
+      <remap from="image" to="/realsense/camera/depth/image_raw"/>
+      <remap from="scan" to="/scan"/>
+      <param name="floor_dist" value=".2"/>
+      <param name="overhead_dist" value=".1"/>
+    </node>
+
+  <!--END turtlebot_gazebo turtlebot_world.launch -->
+  
+ <!-- <node name="map_odom_publisher" pkg="gazebo_utils" type="map_transform_publisher" required="true"/> -->
+  <node name="bumper_collision_detector" pkg="nav_scripts" type="bumper_collision_detector.py" required="true"/>
+  
+  <node name="base_link_footprint_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint"/>
+  
+</launch>
