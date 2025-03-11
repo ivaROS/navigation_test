@@ -37,33 +37,46 @@ def readFile(filename):
             
         return result_list
 
-def getMPCFailedRate(result_list):
-    avg_fail_rate = 0
-    fail_rate_lists = []
+def getFailedRate(result_list):
+    avg_mpc_fail_rate = 0
+    avg_keyhole_fail_rate = 0
+    mpc_fail_rate_lists = []
+    keyhole_fail_rate_lists = []
 
     total_loops = 0
     for result in result_list:
-        if 'bag_file_path' in result.keys():
-            bag_file = rosbag.Bag(f=result['bag_file_path'])
+        if 'stat_bag_file_path' in result.keys():
+            bag_file = rosbag.Bag(f=result['stat_bag_file_path'])
         else:
             continue
 
         for topic, msg, t in bag_file.read_messages(topics=['stats']):
             total_num = msg.total_loop_num
-            fail_num = msg.mpc_fail_num
-            fail_rate = float(fail_num) / total_num
+            mpc_fail_num = msg.mpc_fail_num
+            mpc_fail_rate = float(mpc_fail_num) / total_num
+            keyhole_fail_num = msg.keyhole_fail_num
+            keyhole_fail_rate = float(keyhole_fail_num) / total_num
             total_loops = total_loops + total_num
 
-        fail_rate_lists.append(fail_rate)
+        mpc_fail_rate_lists.append(mpc_fail_rate)
+        keyhole_fail_rate_lists.append(keyhole_fail_rate)
         bag_file.close()
 
-    avg_fail_rate = sum(fail_rate_lists) / len(fail_rate_lists)
+    avg_mpc_fail_rate = sum(mpc_fail_rate_lists) / len(mpc_fail_rate_lists)
+    avg_keyhole_fail_rate = sum(keyhole_fail_rate_lists) / len(keyhole_fail_rate_lists)
 
-    return avg_fail_rate, fail_rate_lists, total_loops
+    return avg_mpc_fail_rate, avg_keyhole_fail_rate, mpc_fail_rate_lists, keyhole_fail_rate_lists, total_loops
 
 
 if __name__ == "__main__":
-    filename = '/home/shiyu/simulation_data/sgap_benchmark/turtlebot/v1/results_1_sg_fast_0.4_b_ni_mpc_k_r_2023-08-09 23:33:08.399327'
+    filepath = '/home/shiyu/simulation_data/sgap_benchmark/turtlebot/v2/mpc_stat/'
+    # filename = filepath + 'results_1_sg_fast_0.4_b_ni_mpc_k_nonstop_po_1.2_1_fix6_1.1_orient_20_rangefix_2024-01-10 19:37:40.556109'
+    # filename = filepath + 'results_1_sg_fast_0.4_b_ni_mpc_k_nonstop_fix8_1.1_orient_20_rangefix_2024-07-30 06:20:18.987409'
+    # filename = filepath + 'results_1_sg_fast_0.4_p_ni_mpc_k_nonstop_fix8_1.1_orient_20_rangefix_2024-07-30 16:02:19.059796'
+    # filename = filepath + 'results_1_sg_fast_0.4_p_ni_nonstop_mr_fix8_1.1_orient_20_rangefix_2025-02-19 14:20:49.642854' # baseline
+    filename = filepath + 'results_1_sg_fast_0.4_p_ni_nonstop_mr_fix8_1.1_orient_20_rangefix_2025-03-02 15:16:28.188516'
+    
     result_list = readFile(filename)
-    avg_fail_rate, fail_rate_lists, total_loops = getMPCFailedRate(result_list)
-    print("Average MPC failure rates: " + str(round(avg_fail_rate * 100, 2)) + "% with [" + str(len(fail_rate_lists)) + "] tests and [" + str(total_loops) + "] loops.")
+    avg_mpc_fail_rate, avg_keyhole_fail_rate, mpc_fail_rate_lists, keyhole_fail_rate_lists, total_loops = getFailedRate(result_list)
+    print("Average MPC failure rates: " + str(round(avg_mpc_fail_rate * 100, 2)) + "% with [" + str(len(mpc_fail_rate_lists)) + "] tests and [" + str(total_loops) + "] loops.")
+    print("Average Keyhole failure rates: " + str(round(avg_keyhole_fail_rate * 100, 2)) + "% with [" + str(len(keyhole_fail_rate_lists)) + "] tests and [" + str(total_loops) + "] loops.")

@@ -19,13 +19,13 @@ use_bezier = True
 use_pose_controller = False
 use_keyhole = True
 use_ni = True
-use_po = True
+use_po = False
 has_feedforward = True
 v_des = 0.4
 
 def getTasks():
-    for scenario in ["dense"]: # "sector_laser", "dense", "campus_obstacle", "fourth_floor_obstacle"
-        for seed in [18]:
+    for scenario in ["campus_obstacle"]: # "sector_laser", "dense", "campus_obstacle", "fourth_floor_obstacle"
+        for seed in [3]:
             if scenario != "fourth_floor_obstacle" and scenario != "campus_obstacle":
                 far_feasible = True
             else:
@@ -33,9 +33,9 @@ def getTasks():
             task = {'scenario': scenario, 'seed': seed, 'controller': controller, 'robot': 'turtlebot', 'robot_impl': 'turtlebot', 
             'controller_args': {'far_feasible': far_feasible, 'use_bezier': use_bezier, 'use_pose_controller': use_pose_controller,
                                 'use_keyhole': use_keyhole, 'use_ni': use_ni, 'use_po': use_po, 'has_feedforward' : has_feedforward, 'v_des' : v_des,
-                                'enable_vis': False},  
+                                'enable_vis': True},  
             'min_obstacle_spacing': min_obstacle_spacing, 'timeout': 600,
-            'record': False, 'stat_record': False, 'world_args': {'gazebo_gui': True}, 'robot_args': {'odom_topic': '/odom'}}
+            'record': False, 'stat_record': False, 'timing_record': False, 'world_args': {'gazebo_gui': True}, 'robot_args': {'odom_topic': '/odom'}}
 
             if scenario != 'sector_laser' and scenario != "dense":
                 task['num_obstacles'] = 50

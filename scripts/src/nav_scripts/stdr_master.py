@@ -307,7 +307,7 @@ class MultiMasterCoordinator:
 
     def processResults(self,my_queue):
 
-        outputfile_name = "~/simulation_data/sgap_benchmark/stdr/v2/results_1_sg_fast_0.4_b_pose_noff_4_4_0.5_fix6_rfix_" + str(datetime.datetime.now())
+        outputfile_name = "~/simulation_data/sgap_benchmark/stdr/v2/results_1_sg_fast_0.4_p_pose_po_more_gp1_fix8_rfix_" + str(datetime.datetime.now())
         #outputfile_name = "/data/fall2018/chapter_experiments/chapter_experiments_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
@@ -373,8 +373,8 @@ class MultiMasterCoordinator:
     def addTasks(self):
         worlds = ["office_laser"] # "dense_laser", "campus_laser", "office_laser", "sector_laser"
         fovs = ['360'] # ['90', '120', '180', '240', '300', '360']
-        # seeds = list(range(25))
-        seeds = [5,15,15,20]
+        seeds = list(range(200,225))
+        seeds = [202]
         seeds = [ele for ele in seeds for i in range(1)]
         controllers = ['bgap_mpc_casadi'] # 'teb', 'bgap_mpc_casadi'
         taskid = 0
@@ -398,11 +398,12 @@ class MultiMasterCoordinator:
                                     'controller_args': {
                                         'far_feasible' : str((world != 'office_laser' and world != 'campus_laser')),
                                         'v_des' : 0.4,
-                                        'use_bezier' : str(True),
+                                        'use_bezier' : str(False),
                                         'use_pose_controller' : str(True),
                                         'use_keyhole' : str(False),
                                         'use_ni' : str(False),
-                                        'use_po' : str(False),
+                                        'use_po' : str(True),
+                                        'po_always_triggered' : str(False),
                                         'has_feedforward' : str(False)
                                         }
                                     }
@@ -735,7 +736,7 @@ class STDRMaster(mp.Process):
 
 
 if __name__ == "__main__":
-    master = MultiMasterCoordinator(25, record=False)
+    master = MultiMasterCoordinator(15, record=False)
     start_time = time.time()
     master.start()
     master.addTasks()

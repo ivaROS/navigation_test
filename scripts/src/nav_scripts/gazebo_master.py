@@ -53,7 +53,7 @@ class CSVResultRecorder(ConsoleResultRecorder):
         super(CSVResultRecorder, self).__init__()
 
     def run(self):
-        outputfile_name = "~/simulation_data/sgap_benchmark/turtlebot/v2/results_1_sg_fast_0.4_p_pose_2_3.5_0.5_po_1.2_1_fix6_1.1_rangefix_" + str(datetime.datetime.now())
+        outputfile_name = "~/simulation_data/sgap_benchmark/turtlebot/v2/results_1_sg_fast_0.4_p_ni_nonstop_mr_fix8_1.1_orient_20_rangefix_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'w') as self.csvfile:
@@ -89,7 +89,7 @@ class MultiMasterCoordinator(TaskProcessingPipeline):
         self.fieldnames.extend(TestingScenarios.getFieldNames())
         self.fieldnames.extend(["pid","result","time","path_length","robot","total_rotation"])
         #self.fieldnames.extend(["sim_time", "obstacle_cost_mode", "sum_scores"])
-        self.fieldnames.extend(["bag_file_path", "stat_bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight', 'timeout', 'bash_source_file']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
+        self.fieldnames.extend(["bag_file_path", "stat_bag_file_path", "timing_bag_file_path", 'global_planning_freq', 'controller_freq', 'num_inferred_paths', 'num_paths', 'enable_cc', 'gazebo_gui', 'record', 'global_potential_weight', 'timeout', 'bash_source_file']) #,'converter', 'costmap_converter_plugin', 'global_planning_freq', 'feasibility_check_no_poses', 'simple_exploration', 'weight_gap', 'gap_boundary_exponent', 'egocircle_early_pruning', 'gap_boundary_threshold', 'gap_boundary_ratio', 'feasibility_check_no_tebs', 'gap_exploration', 'gap_h_signature', ])
 
         super(MultiMasterCoordinator,self).setup_stages(num_workers=num_masters)
 
@@ -251,10 +251,19 @@ class GazeboMaster(Worker):
                 with scenario.launch_robot() as robot: #same here
                     robot.launch()
                     with scenario.setup():
-                        with scenario.launch_controller() as controller:
-                            controller.launch()
-                            result = scenario.run()
-                            return result
+                        if "scenario_only" in task:
+                            if task["scenario_only"]:
+                                return {}
+                            else:
+                                with scenario.launch_controller() as controller:
+                                    controller.launch()
+                                    result = scenario.run()
+                                    return result
+                        else:
+                            with scenario.launch_controller() as controller:
+                                controller.launch()
+                                result = scenario.run()
+                                return result
 
     #def get_scenario_helper(self):
 

@@ -1,0 +1,493 @@
+#!/usr/bin/env python
+
+import rospy
+import random
+import sys, os, time
+from geometry_msgs.msg import PoseStamped, Pose, PoseArray, Point, Quaternion, Transform, TransformStamped
+from sensor_msgs.msg import Image, CameraInfo
+from copy import deepcopy
+import rospkg
+
+from tf2_ros import TransformListener, Buffer, LookupException, ConnectivityException, ExtrapolationException, StaticTransformBroadcaster
+import tf2_ros
+import tf
+#from pips_test import gazebo_driver
+
+from gazebo_msgs.msg import ModelStates, ModelState
+from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.srv import GetModelState
+from gazebo_msgs.srv import DeleteModel
+
+import numpy as np
+
+from gazebo_ros import gazebo_interface
+import std_srvs.srv as std_srvs
+  
+import std_msgs.msg as std_msgs
+import math
+import tf2_geometry_msgs
+
+
+#Copied from pips_test: gazebo_driver.py
+# Load model xml from file
+def load_model_xml(filename):
+  if os.path.exists(filename):
+      if os.path.isdir(filename):
+          print(" Error: file name is a path?", filename)
+          sys.exit(0)
+
+      if not os.path.isfile(filename):
+          print(" Error: unable to open file", filename)
+          sys.exit(0)
+  else:
+      print(" Error: file does not exist", filename)
+      sys.exit(0)
+
+  f = open(filename,'r')
+  model_xml = f.read()
+  if model_xml == "":
+      print(" Error: file is empty", filename)
+      sys.exit(0)
+
+  return model_xml
+
+class GazeboDriver():
+  # Copied from pips_test: gazebo_driver.py
+  def barrel_points(self,xmins, ymins, xmaxs, ymaxs, min_dist, num_barrels, max_tries =500):
+    '''
+    # Get a dense grid of points
+    points = np.mgrid[xmin:xmax:grid_size, ymin:ymax:grid_size]
+    points = points.swapaxes(0, 2)
+    points = points.reshape(points.size / 2, 2)
+    # Choose random indexes
+    idx = self.random.sample(range(points.shape[0]), num_barrels)
+    print idx
+
+    # Generate offsets
+    off = self.nprandom.rand(num_barrels, 2) * grid_size / 2.0
+
+    # Compute barrel points
+    barrels = points[idx] + off
+    '''
+
+    xmaxs = np.array(xmaxs)
+    xmins = np.array(xmins)
+    ymaxs = np.array(ymaxs)
+    ymins = np.array(ymins)
+
+    region_weights = (xmaxs - xmins)*(ymaxs - ymins)
+    region_weights = region_weights / (np.sum(region_weights))
+    region_inds = range(len(xmins))
+
+    sampled_regions = self.nprandom.choice(region_inds,replace=True,p=region_weights,size=max_tries)
+
+
+
+
+    n = 0
+    i = 0
+    barrels = []
+    while n < num_barrels and i < max_tries:
+      a = self.random.random()
+      b = self.random.random()
+
+      region_ind = sampled_regions[i]
+
+      xmax = xmaxs[region_ind]
+      xmin = xmins[region_ind]
+      ymax = ymaxs[region_ind]
+      ymin = ymins[region_ind]
+
+      depth = xmax - xmin
+      width = ymax - ymin
+
+      length = max(depth, width)
+
+      if a * length < depth and b * length < width:
+        x = xmin + a * length
+        y = ymin + b * length
+        point = np.array((x,y))
+
+        barrel_valid = True
+        for barrel in barrels:
+          if np.linalg.norm(point-barrel) < min_dist:
+            barrel_valid = False
+            break
+
+        if barrel_valid:
+          barrels.append(point)
+          n+=1
+      i+=1
+
+
+    for barrel in barrels:
+      yield barrel
+
+  def statesCallback(self, data): #This comes in at ~100hz
+    self.models = data
+
+
+  def newScene(self):
+    self.pause()
+    self.resetRobot()
+    self.moveBarrels(self.num_barrels)
+    self.unpause()
+
+  def setPose(self, model_name, pose):
+    print(" Start set model pose")
+    ## Check if our model exists yet
+    if True: # ( self.models is not None and model_name in self.models.name):
+
+      try:
+        state = ModelState(model_name=model_name, pose=pose)
+
+        response = self.setModelState(state)
+
+        if(response.success):
+          print(" Successfully set model pose")
+          #rospy.loginfo("Successfully set model pose")
+          return True
+      except rospy.ServiceException as e:
+        pass
+      return False
+    
+    #rospy.loginfo("failed to set model pose")
+    #return False
+
+  def pause(self):
+    rospy.wait_for_service(self.pause_service_name, timeout=self.service_timeout)
+    return self.pauseService()
+
+  def unpause(self):
+    rospy.wait_for_service(self.unpause_service_name, timeout=self.service_timeout)
+    return self.unpauseService()
+
+  def resetWorld(self):
+    rospy.wait_for_service(self.reset_world_service_name, timeout=self.service_timeout)
+    return self.resetWorldService()
+
+  def setModelState(self, state):
+    rospy.wait_for_service(self.set_model_state_service_name, timeout=self.service_timeout)
+    return self.setModelStateService(state)
+
+  def deleteModel(self, name):
+    rospy.wait_for_service(self.delete_model_service_name, timeout=self.service_timeout)
+    return self.deleteModelService(model_name=name)
+
+  def resetRobotImpl(self, pose, frame="map"):
+    print(" calling reset?")
+    
+    p = Pose()
+    p.position.x = pose[0]
+    p.position.y = pose[1]
+    p.position.z = pose[2]
+    quaternion = tf.transformations.quaternion_from_euler(pose[3], pose[4], pose[5])
+    #print quaternion
+    p.orientation.x = quaternion[0]
+    p.orientation.y = quaternion[1]
+    p.orientation.z = quaternion[2]
+    p.orientation.w = quaternion[3]
+
+    orig_point = PoseStamped()
+    orig_point.header.frame_id = frame
+    orig_point.header.stamp = rospy.Time(0)
+    orig_point.pose = p
+
+    tran = self.tfBuffer.transform(orig_point, "map", timeout=rospy.Duration(3))
+    p = tran.pose
+    self.pause()
+    self.setPose('mobile_base', p)
+    self.unpause()
+
+  def resetOdom(self):
+    self.odom_pub.publish()
+    
+  def moveRobot(self, pose):
+    self.setPose(self.robotName, pose)
+
+  def resetBarrels(self, n):
+      name = None
+      for i in range(n):
+          name = "barrel{}".format(i)
+          pose = self.poses[i]
+          self.setPose(name, pose)
+      
+  #Adapted from pips_test: gazebo_driver.py
+  def spawn_barrel(self, model_name, initial_pose):
+    # Must be unique in the gazebo world - failure otherwise
+    # Spawning on top of something else leads to bizarre behavior
+    model_path = os.path.expanduser("~/.gazebo/models/first_2015_trash_can/model.sdf")
+    model_xml = load_model_xml(model_path)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+    
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+        robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+  # Adapted from pips_test: gazebo_driver.py
+  def spawn_obstacle(self, model_name, initial_pose):
+    # Must be unique in the gazebo world - failure otherwise
+    # Spawning on top of something else leads to bizarre behavior
+
+
+    path = self.rospack.get_path("nav_configs")
+    model_path = path + "/models/"
+
+    model_types = ['box_02_02_05.srdf', 'pole_005_06.srdf']
+    model_type = self.random.choice(model_types)
+
+
+    model_xml = load_model_xml(model_path + model_type)
+    robot_namespace = rospy.get_namespace()
+    gazebo_namespace = "/gazebo"
+    reference_frame = ""
+
+    success = gazebo_interface.spawn_sdf_model_client(model_name, model_xml,
+                                                      robot_namespace, initial_pose, reference_frame, gazebo_namespace)
+
+  # def moveBarrelsTest(self,n, x, y):
+  #   self.poses = []
+  #   for i in range(n):
+  #     name = "barrel{}".format(i)
+  #     pose = Pose()
+  #     pose.position.x = x[i]
+  #     pose.position.y = y[i]
+  #     pose.orientation.w = 1
+  #     self.poses.append(pose)
+  #     if not self.setPose(name, pose):
+  #     self.spawn_barrel(name, pose)
+  
+  def moveBarrels(self,n,minx=None,miny=None,maxx=None,maxy=None,grid_spacing=None):
+    self.poses = []
+
+    minx=self.minx if minx is None else minx
+    maxx=self.maxx if maxx is None else maxx
+    miny=self.miny if miny is None else miny
+    maxy=self.maxy if maxy is None else maxy
+    grid_spacing=self.grid_spacing if grid_spacing is None else grid_spacing
+
+
+
+    barrel_names = [name for name in self.models.name if  "barrel" in name]
+
+    for i, xy in enumerate(self.barrel_points(xmins=minx,ymins=miny,xmaxs=maxx,ymaxs=maxy,min_dist=grid_spacing, num_barrels=n)):
+      #print i, xy
+      name = "barrel{}".format(i)
+      #print name
+
+      if name in barrel_names : barrel_names.remove(name)
+      
+      pose = Pose()
+      pose.position.x = xy[0]
+      pose.position.y = xy[1]
+
+      pose.orientation.w = 1
+      
+      self.poses.append(pose)
+
+      #print str(pose)
+      
+      if not self.setPose(name,pose):
+        self.spawn_barrel(name, pose)
+
+    for name in barrel_names:
+      res = self.deleteModel(name=name)
+      if not res.success:
+        print(res.status_message)
+
+  def moveObstacles(self, n, minx=None, miny=None, maxx=None, maxy=None, grid_spacing=None):
+    self.poses = []
+
+    minx = self.minx if minx is None else minx
+    maxx = self.maxx if maxx is None else maxx
+    miny = self.miny if miny is None else miny
+    maxy = self.maxy if maxy is None else maxy
+    grid_spacing = self.grid_spacing if grid_spacing is None else grid_spacing
+
+    barrel_names = [name for name in self.models.name if "obstacle" in name]
+
+    for i, xy in enumerate(
+            self.barrel_points(xmins=minx, ymins=miny, xmaxs=maxx, ymaxs=maxy, min_dist=grid_spacing, num_barrels=n)):
+      # print i, xy
+      name = "obstacle{}".format(i)
+      # print name
+
+      if name in barrel_names: barrel_names.remove(name)
+
+      pose = Pose()
+      pose.position.x = xy[0]
+      pose.position.y = xy[1]
+
+      pose.orientation.w = 1
+
+      self.poses.append(pose)
+
+      # print str(pose)
+
+      if not self.setPose(name, pose):
+        self.spawn_obstacle(name, pose)
+
+    for name in barrel_names:
+      res = self.deleteModel(name=name)
+      if not res.success:
+        print(res.status_message)
+      
+  def shutdown(self):
+    self.unpause()
+    self.resetWorld()
+
+  def run(self):
+    rospy.spin()
+
+
+  def reset(self, seed=None):
+    if seed is not None:
+      self.seed = seed
+    self.random.seed(self.seed)
+    self.nprandom = np.random.RandomState(self.seed)
+  
+  def getRandInt(self, lower, upper):
+    a = range(lower, upper + 1)
+    start = self.random.choice(a)
+    a.remove(start)
+    end = self.random.choice(a)
+    output = [start, end]
+    return output
+  
+
+  def checkServicesTopics(self, timeout):
+    self.models = rospy.wait_for_message(self.model_state_topic_name, ModelStates, timeout=timeout)
+    rospy.wait_for_service(self.get_model_state_service_name, timeout=timeout)
+    rospy.wait_for_service(self.pause_service_name, timeout=timeout)
+    rospy.wait_for_service(self.reset_world_service_name, timeout=timeout)
+    rospy.wait_for_service(self.unpause_service_name, timeout=timeout)
+    rospy.wait_for_service(self.delete_model_service_name, timeout=timeout)
+
+  def __init__(self, as_node = True, seed=None):
+    if as_node:
+      rospy.init_node('gazebo_state_recorder')
+    
+      rospy.loginfo("gazebo_state_recorder node started")
+    
+    self.robotName = 'mobile_base'
+
+    self.queue_size = 50
+    self.num_barrels = 3
+    self.minx = -3.5
+    self.maxx = 0.5
+    self.miny = 1.0
+    self.maxy = 5.0
+    self.grid_spacing = 1.0
+    
+    self.service_timeout = 2.0
+    
+    self.poses = []
+    self.robotPose = Pose()
+
+
+    self.random = random.Random()
+    self.seed = 0
+    self.random.seed(seed)
+    self.nprandom = np.random.RandomState(seed)
+
+    self.odom_pub = rospy.Publisher(
+      '/mobile_base/commands/reset_odometry', std_msgs.Empty, queue_size=1)
+
+    self.rospack = rospkg.RosPack()
+
+    self.models = None
+    
+    self.set_model_state_service_name = 'gazebo/set_model_state'
+    self.pause_service_name = 'gazebo/pause_physics'
+    self.unpause_service_name = 'gazebo/unpause_physics'
+    self.get_model_state_service_name = 'gazebo/get_model_state'
+    self.reset_world_service_name = "gazebo/reset_world"
+    self.delete_model_service_name = "gazebo/delete_model"
+
+    self.model_state_topic_name = 'gazebo/model_states'
+
+    #rospy.loginfo("Waiting for service...")
+    #rospy.wait_for_service(self.get_model_state_service_name)
+    self.setModelStateService = rospy.ServiceProxy(self.set_model_state_service_name, SetModelState)
+    #rospy.loginfo("Service found...")
+    
+    #rospy.wait_for_service(self.pause_service_name)
+    self.pauseService = rospy.ServiceProxy(self.pause_service_name, std_srvs.Empty)
+    #rospy.loginfo("Service found...")
+
+    #rospy.wait_for_service(self.reset_world_service_name)
+    self.resetWorldService = rospy.ServiceProxy(self.reset_world_service_name, std_srvs.Empty)
+    #rospy.loginfo("Service found...")
+
+    #rospy.wait_for_service(self.unpause_service_name)
+    self.unpauseService = rospy.ServiceProxy(self.unpause_service_name, std_srvs.Empty)
+    #rospy.loginfo("Service found...")
+
+    #rospy.wait_for_service(self.delete_model_service_name)
+    self.deleteModelService = rospy.ServiceProxy(self.delete_model_service_name, DeleteModel)
+    #rospy.loginfo("Service found...")
+
+    self.tfBuffer = tf2_ros.Buffer()
+    self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
+    
+    #self.stateSub = rospy.Subscriber(self.model_state_topic_name, ModelStates, self.statesCallback, queue_size=self.queue_size)
+
+    #rospy.wait_for_message(self.model_state_topic_name, ModelStates)
+        #self.statePub = rospy.Publisher('gazebo_data', GazeboState, queue_size=self.queue_size)
+    
+    #self.resetWorldService()
+    #self.unpauseService()
+    
+    #rospy.on_shutdown(self.shutdown)
+
+
+
+def euler_from_quaternion(x, y, z, w):
+  """
+  Convert a quaternion into euler angles (roll, pitch, yaw)
+  roll is rotation around x in radians (counterclockwise)
+  pitch is rotation around y in radians (counterclockwise)
+  yaw is rotation around z in radians (counterclockwise)
+  """
+  t0 = +2.0 * (w * x + y * z)
+  t1 = +1.0 - 2.0 * (x * x + y * y)
+  roll_x = math.atan2(t0, t1)
+
+  t2 = +2.0 * (w * y - z * x)
+  t2 = +1.0 if t2 > +1.0 else t2
+  t2 = -1.0 if t2 < -1.0 else t2
+  pitch_y = math.asin(t2)
+
+  t3 = +2.0 * (w * z + x * y)
+  t4 = +1.0 - 2.0 * (y * y + z * z)
+  yaw_z = math.atan2(t3, t4)
+
+  return roll_x, pitch_y, yaw_z # in radians
+  
+
+
+if __name__ == '__main__':
+  try:
+    if len(sys.argv) == 1:
+      init_pose = [9,-5,0,0,0,3.14159265359];
+      frame = "map"
+    elif len(sys.argv) == 4:
+      init_pose = [floar(sys.argv[1]),float(sys.argv[2]),0,0,0,float(sys.argv[3])];
+      frame = "map"
+    elif len(sys.argv) == 8:
+      _, _, yaw = euler_from_quaternion(float(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]))
+      init_pose = [float(sys.argv[1]),float(sys.argv[2]),0,0,0,yaw];
+      frame = sys.argv[7]
+    else:
+      rospy.logerr("Wrong number of args")
+      sys.exit()
+
+    a = GazeboDriver()
+    a.resetRobotImpl(init_pose, frame)
+    # a.resetOdom();
+    # a.resetWorld()
+    # a.deleteModel('mobile_base')
+  except rospy.ROSInterruptException:
+    rospy.loginfo("exception")

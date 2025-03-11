@@ -15,10 +15,10 @@ from stdr_master import *
 seed = 3
 
 num_barrels = 50
-min_obstacle_spacing = 0.75
+min_obstacle_spacing = 1
 
 
-task = {'seed': 5, 'fov':360, 'robot':'nonholonomic', 'controller':'bgap_mpc_casadi', 'world':'dense_laser', 'taskid':0}
+task = {'seed': 8, 'fov':360, 'robot':'nonholonomic', 'controller':'bgap_mpc_casadi', 'world':'office_laser', 'taskid':0}
 
 rospy.init_node('test_driver', anonymous=True)
 

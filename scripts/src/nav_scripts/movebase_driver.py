@@ -139,7 +139,7 @@ class MPCStatsRecorder(object):
                                 + str(controller_args["use_keyhole"]) + str(controller_args["use_ni"]) \
                                 + str(controller_args["use_po"]) + str(controller_args["has_feedforward"])
 
-        bagpath = "~/simulation_data/sgap_benchmark/rosbag/" + scenario + "_" + str(seed) + states_ind + "_" + str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")) + ".bag"
+        bagpath = "~/simulation_data/sgap_benchmark/rosbag/mpc_stat/" + scenario + "_" + str(seed) + states_ind + "_" + str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")) + ".bag"
         self.bagfilepath = os.path.expanduser(bagpath)
         print("bag file = " + self.bagfilepath + "\n")
         self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
@@ -184,7 +184,7 @@ class ResultRecorder(object):
                                 + str(controller_args["use_keyhole"]) + str(controller_args["use_ni"]) \
                                 + str(controller_args["use_po"]) + str(controller_args["has_feedforward"])
 
-        bagpath = "~/simulation_data/sgap_benchmark/rosbag/debug/" + scenario + "_" + str(seed) + states_ind + "_" + str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")) + ".bag"
+        bagpath = "~/simulation_data/sgap_benchmark/rosbag/debug/abort/" + scenario + "_" + str(seed) + states_ind + "_" + str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")) + ".bag"
         self.bagfilepath = os.path.expanduser(bagpath)
         print("bag file = " + self.bagfilepath + "\n")
         self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
@@ -392,6 +392,70 @@ class ResultRecorder(object):
         self.lock.release()
         rospy.logdebug("'Done' accomplished!")
 
+class TimingRecorder(object):
+    def __init__(self, scenario, seed, controller_args=None):
+        from potential_gap_mpc.msg import TimingStats
+
+        self.lock = threading.Lock()
+
+        states_ind = "_"
+        if controller_args is not None:
+            if 'use_bezier' in controller_args.keys():
+                states_ind = "_" + str(controller_args["use_bezier"]) + str(controller_args["use_pose_controller"]) \
+                                + str(controller_args["use_keyhole"]) + str(controller_args["use_ni"]) \
+                                + str(controller_args["use_po"]) + str(controller_args["has_feedforward"])
+
+        bagpath = "~/simulation_data/sgap_benchmark/rosbag/timing_stat/" + scenario + "_" + str(seed) + states_ind + "_" + str(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")) + ".bag"
+        self.bagfilepath = os.path.expanduser(bagpath)
+        print("bag file = " + self.bagfilepath + "\n")
+        self.bagfile = rosbag.Bag(f=self.bagfilepath, mode='w', compression=rosbag.Compression.LZ4)
+        self.start_bag = True
+
+        self.stats = None
+
+        topic_name = "/move_base/" + controller_args["planner_name"] + "/timing_stats"
+        self.stats_sub = rospy.Subscriber(topic_name, TimingStats, self.statsCB, queue_size=4)
+
+    def record(self, stats):
+        self.lock.acquire()
+        # if odom is None or scan is None or rgb_image is None or feedback is None or trajectory is None:
+        #     return
+
+        current_time = rospy.Time.now()
+
+        if self.start_bag: #self.last_sample is None or current_time - self.last_sample > self.sample_period:
+
+            start_t = time.time()
+            
+            if stats is not None:
+                self.bagfile.write("timing_stats", stats, current_time)
+
+            self.last_sample = current_time
+
+            rospy.logdebug("Sample recorded! Took: " + str((time.time() - start_t)*1000) + "ms")
+
+        self.lock.release()
+
+    def bagfile_path(self):
+        return self.bagfilepath
+
+    def statsCB(self, data):
+        rospy.logdebug("Stats received!")
+        self.stats = data
+        self.record(self.stats)
+        rospy.logdebug("Stats recorded!")
+
+    def done(self):
+        rospy.logdebug("'Done' Commanded!")
+
+        self.lock.acquire()
+        
+        self.stats_sub.unregister()
+
+        self.bagfile.close()
+        self.start_bag = False
+        self.lock.release()
+        rospy.logdebug("'Done' accomplished!")
 
 
 #Not currently in use
@@ -505,6 +569,9 @@ class MoveBaseTask:
         if self.task["record"]:
             self.recorder = ResultRecorder(self.task["scenario"], self.task["seed"], self.task["controller_args"])
 
+        if self.task["timing_record"]:
+            self.timing_recorder = TimingRecorder(self.task["scenario"], self.task["seed"], self.task["controller_args"])
+
     def run(self):
         self.setup_checkers()   #TODO: give more descriptive name
         self.setup_terminal_conditions()
@@ -518,6 +585,9 @@ class MoveBaseTask:
         if self.task["record"]:
             self.recorder.done()
             self.result["bag_file_path"] = self.recorder.bagfile_path()
+        if self.task["timing_record"]:
+            self.timing_recorder.done()
+            self.result["timing_bag_file_path"] = self.timing_recorder.bagfile_path()
         return self.get_result()
 
 

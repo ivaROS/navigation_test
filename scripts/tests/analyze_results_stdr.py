@@ -90,10 +90,13 @@ if __name__ == "__main__":
                  '/home/shiyu/simulation_data/sgap_benchmark/stdr/v2/results_1_sg_fast_0.4_b_ni_mpc_k_nonstop_a5_fix6_orient_20_rfix_2023-09-11 19:22:56.630124_rename',
                  '/home/shiyu/simulation_data/sgap_benchmark/stdr/v2/results_1_sg_fast_0.4_b_ni_mpc_k_nonstop_po_1.2_1_a5_fix6_orient_20_rfix_2023-09-11 17:25:36.505512_rename']
     
+    filenames = ['/home/shiyu/simulation_data/sgap_benchmark/stdr/v2/results_1_sg_fast_0.4_b_pose_mr_gp1_fix8_rfix_2024-08-20 05:35:54.379717']
+
     # analyzer.readFiles(filenames=filenames)
     # analyzer.generateGenericTable(independent=['world','controller'], dependent='result')
     # analyzer.generateGenericTable(independent=['controller'], dependent='result')
 
+    ## Differentiate
     new_filenames = []
     for i in range(5):
         new_filenames = []
@@ -102,8 +105,10 @@ if __name__ == "__main__":
 
         print(new_filenames)
         analyzer.readFiles(filenames=new_filenames)
-        analyzer.generateGenericTable(independent=['world','controller'], dependent='result')
+        analyzer.generateGenericTable(independent=['controller'], dependent='result')
 
+
+    ## Others
     #analyzer.readFiles(filenames=filenames, whitelist={})
     #analyzer.generateGenericTable(independent=[ 'scenario','controller'], dependent='result')
 

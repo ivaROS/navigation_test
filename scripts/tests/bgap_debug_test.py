@@ -19,15 +19,15 @@ use_bezier = True
 use_pose_controller = False
 use_keyhole = True
 use_ni = True
-use_po = True
+use_po = False
 has_feedforward = True
 v_des = 0.4
 
-seed_list = range(2,25)
-seed_list = [ele for ele in seed_list for i in range(4)]
+seed_list = [1,7,9,13,21,22,23,24]
+seed_list = [ele for ele in seed_list for i in range(10)]
 
 def getTasks():
-    for scenario in ["dense"]: # "sector_laser", "dense", "campus_obstacle", "fourth_floor_obstacle"
+    for scenario in ["fourth_floor_obstacle"]: # "sector_laser", "dense", "campus_obstacle", "fourth_floor_obstacle"
         for seed in seed_list:
             if scenario != "fourth_floor_obstacle" and scenario != "campus_obstacle":
                 far_feasible = True
@@ -38,7 +38,7 @@ def getTasks():
                                 'use_keyhole': use_keyhole, 'use_ni': use_ni, 'use_po': use_po, 'has_feedforward' : has_feedforward, 'v_des' : v_des,
                                 'enable_vis': True}, 
             'min_obstacle_spacing': min_obstacle_spacing, 'timeout': 600,
-            'record': True, 'stat_record': False, 'world_args': {'gazebo_gui': False}, 'robot_args': {'odom_topic': '/odom'}}
+            'record': True, 'stat_record': False, 'timing_record': False, 'world_args': {'gazebo_gui': False}, 'robot_args': {'odom_topic': '/odom'}}
 
             if scenario != 'sector_laser' and scenario != "dense":
                 task['num_obstacles'] = 50
