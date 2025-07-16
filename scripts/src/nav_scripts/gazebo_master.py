@@ -53,7 +53,7 @@ class CSVResultRecorder(ConsoleResultRecorder):
         super(CSVResultRecorder, self).__init__()
 
     def run(self):
-        outputfile_name = "~/simulation_data/sgap_benchmark/turtlebot/v2/results_1_sg_fast_0.4_p_ni_nonstop_mr_fix8_1.1_orient_20_rangefix_" + str(datetime.datetime.now())
+        outputfile_name = "~/simulation_data/sgap_benchmark/turtlebot/v2/public_script_test_" + str(datetime.datetime.now())
         outputfile_name = os.path.expanduser(outputfile_name)
 
         with open(outputfile_name, 'w') as self.csvfile:

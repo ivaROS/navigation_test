@@ -24,7 +24,7 @@
 	<arg name="use_bezier" default="$(optenv GM_PARAM_USE_BEZIER true)"/>
 	<arg name="use_pose_controller" default="$(optenv GM_PARAM_USE_POSE_CONTROLLER false)"/>
 	<arg name="use_keyhole" default="$(optenv GM_PARAM_USE_KEYHOLE true)"/>
-	<arg name="use_po" default="$(optenv GM_PARAM_USE_PO false)"/>
+	<arg name="use_po" default="$(optenv GM_PARAM_USE_PO true)"/>
 	<arg name="use_ni" default="$(optenv GM_PARAM_USE_NI true)"/>
 	<arg name="has_feedforward" default="$(optenv GM_PARAM_HAS_FEEDFORWARD true)"/>
 

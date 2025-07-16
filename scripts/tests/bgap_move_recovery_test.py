@@ -24,12 +24,12 @@ has_feedforward = True
 po_always_triggered = False
 v_des = 0.4
 
-seed_list = range(25)
-seed_list = [6]
+seed_list = range(5)
+# seed_list = [6]
 seed_list = [ele for ele in seed_list for i in range(1)]
 
 def getTasks():
-    for scenario in ["fourth_floor_obstacle"]: # "dense", "campus_obstacle", "fourth_floor_obstacle", "sector_laser"
+    for scenario in ["dense", "campus_obstacle", "fourth_floor_obstacle", "sector_laser"]: # "dense", "campus_obstacle", "fourth_floor_obstacle", "sector_laser"
         for seed in seed_list:
             if scenario != "fourth_floor_obstacle" and scenario != "campus_obstacle":
                 far_feasible = True
